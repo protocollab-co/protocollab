@@ -1,0 +1,13 @@
+meta:
+  id: ethernet_frame
+  endian: be
+  title: "Ethernet Frame Header"
+  description: "IEEE 802.3 Ethernet frame header (14 bytes)"
+
+seq:
+  - id: dst_mac
+    type: u1
+    doc: "Destination MAC byte 0 (simplified: one byte)"
+  - id: ethertype
+    type: u2
+    doc: "EtherType field (e.g. 0x0800 = IPv4)"

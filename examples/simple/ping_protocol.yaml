@@ -1,0 +1,16 @@
+meta:
+  id: ping_protocol
+  endian: le
+  title: "Ping Protocol"
+  description: "Simple ICMP-like ping/pong protocol"
+
+seq:
+  - id: type_id
+    type: u1
+    doc: "Message type (0 = request, 1 = reply)"
+  - id: sequence_number
+    type: u4
+    doc: "Sequence number, wraps at 2^32"
+  - id: payload_size
+    type: u2
+    doc: "Size of the payload that follows this header, in bytes"

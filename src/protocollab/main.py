@@ -17,6 +17,7 @@ from protocollab.exceptions import FileLoadError, YAMLParseError
 from protocollab.loader import load_protocol
 from protocollab.utils import check_file_exists, print_data
 from protocollab.validator import validate_protocol
+from protocollab.generators import generate, GeneratorError
 
 
 # ---------------------------------------------------------------------------
@@ -164,6 +165,63 @@ def validate(file: str, schema, strict: bool) -> None:
         for i, err in enumerate(result.errors, 1):
             click.echo(f"  [{i}] {err.path}: {err.message}", err=True)
         sys.exit(3)
+
+
+# ---------------------------------------------------------------------------
+# generate command group
+# ---------------------------------------------------------------------------
+
+@cli.group()
+def generate_cmd() -> None:
+    """Generate parsers and dissectors from a protocol specification."""
+
+
+cli.add_command(generate_cmd, name="generate")
+
+
+def _run_generate(file: str, target: str, output: str) -> None:
+    """Shared implementation for generate sub-commands."""
+    try:
+        check_file_exists(file)
+    except FileNotFoundError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+    try:
+        from protocollab.loader import load_protocol
+        spec = load_protocol(file)
+    except FileLoadError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+    except YAMLParseError as exc:
+        click.echo(f"YAML error: {exc}", err=True)
+        sys.exit(2)
+
+    try:
+        from pathlib import Path as _Path
+        paths = generate(spec, target=target, output_dir=output)
+    except GeneratorError as exc:
+        click.echo(f"Generation error: {exc}", err=True)
+        sys.exit(4)
+
+    for p in paths:
+        click.echo(f"Generated: {p}")
+
+
+@generate_cmd.command(name="python")
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
+def generate_python(file: str, output: str) -> None:
+    """Generate a Python dataclass parser."""
+    _run_generate(file, target="python", output=output)
+
+
+@generate_cmd.command(name="wireshark")
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
+def generate_wireshark(file: str, output: str) -> None:
+    """Generate a Wireshark Lua dissector."""
+    _run_generate(file, target="wireshark", output=output)
 
 
 # ---------------------------------------------------------------------------

@@ -198,3 +198,59 @@ CLI (main.py)
 | Модели данных | Pydantic v2 |
 | Сборка | pyproject.toml (Poetry) + setup.py |
 | Тестирование | pytest + pytest-cov |
+
+---
+
+## Запуск тестов
+
+```bash
+# Все тесты с покрытием
+conda run -n protocollab pytest src/ -q
+
+# Только yaml_serializer (100% покрытие)
+conda run -n protocollab pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+```
+
+---
+
+## Community Edition vs Pro
+
+| | Community (этот репозиторий) | Pro | Enterprise |
+|---|---|---|---|
+| Генерация Python + Lua | ✅ | ✅ | ✅ |
+| Валидация базовой и строгой схемами | ✅ | ✅ | ✅ |
+| Плоский FSM (≤10 состояний) | Планируется | ✅ | ✅ |
+| Генерация C++ / Rust / Java | — | ✅ | ✅ |
+| Иерархические statecharts | — | ✅ | ✅ |
+| Генерация тестов + фаззинг | — | ✅ | ✅ |
+| CI/CD actions, кастомные генераторы | — | — | ✅ |
+
+---
+
+## Участие в разработке
+
+Вклад приветствуется! Пожалуйста, прочитайте [CONTRIBUTING.md](CONTRIBUTING.md) и следуйте нашему [Кодексу поведения](CODE_OF_CONDUCT.md).
+
+1. Сделайте fork репозитория
+2. Создайте ветку для своей фичи от `dev`: `git checkout -b feature/my-feature`
+3. Напишите тесты для новой функциональности
+4. Запустите полный тест-сьют: `conda run -n protocollab pytest src/ -q`
+5. Откройте Pull Request в ветку `dev`
+
+Ветка разработки: `dev` · Remote: [github.com/cherninkiy/protocollab](https://github.com/cherninkiy/protocollab)
+
+---
+
+## Вдохновение
+
+- [Kaitai Struct](https://kaitai.io/) — декларативное описание бинарных форматов
+- [OpenAPI](https://www.openapis.org/) — specification-first дизайн API
+- [Protocol Buffers](https://protobuf.dev/) — строгая типизация и генерация кода
+- [Scapy](https://scapy.net/) — конструирование и тестирование протоколов
+- [Harel statecharts](https://www.sciencedirect.com/science/article/pii/0167642387900359) — формализм реактивных систем
+
+---
+
+## Лицензия
+
+[Apache 2.0](LICENSE)

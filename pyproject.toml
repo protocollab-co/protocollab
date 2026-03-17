@@ -3,7 +3,7 @@ name = "protocollab"
 version = "0.1.0"
 description = "Protocol specification analyser, validator and code generator"
 authors = ["Dmitry Chernikov <d.chernikov@tk-chel.ru>"]
-license = "MIT"
+license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/cherninkiy/protocollab"
 repository = "https://github.com/cherninkiy/protocollab"
@@ -12,7 +12,7 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Code Generators",
-    "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

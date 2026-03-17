@@ -17,8 +17,8 @@ We take the security of `protocollab` seriously. If you believe you've found a s
 We currently support the latest version of `protocollab` with security updates.
 | Version | Supported |
 | ------- | --------- |
-| latest  | ✅        |
-| < latest| ❌        |
+| latest           | ✅        |
+| older than latest | ❌        |
 
 ## Security Measures in `protocollab`
 

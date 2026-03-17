@@ -23,7 +23,7 @@ We currently support the latest version of `protocollab` with security updates.
 ## Security Measures in `protocollab`
 
 `protocollab` includes built-in security hardening in its YAML loader:
-- Protection against Billion Laughs (XML entity expansion)
+- Protection against Billion Laughs (YAML alias/anchor expansion)
 - Path traversal prevention in `!include` directives
 - Recursion depth limits
 - File size restrictions

@@ -238,7 +238,7 @@ pytest tests/
 
 Contributions are welcome! Please read our [Contributing Guidelines](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before submitting a pull request.
 
-If you discover a security vulnerability, **do not** open a public issue; instead, email us at [cherninkiy@gmail.com](mailto:cherninkiy@gmail.com).
+If you discover a security vulnerability, **do not** open a public issue; instead, please follow the steps outlined in our [Security Policy](../../SECURITY.md).
 
 ---
 

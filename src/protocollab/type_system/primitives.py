@@ -1,4 +1,4 @@
-"""Primitive types for ProtocolLab's type system."""
+"""Primitive types for `protocollab's` type system."""
 
 from __future__ import annotations
 

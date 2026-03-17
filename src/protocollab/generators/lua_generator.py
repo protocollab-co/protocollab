@@ -1,4 +1,4 @@
-"""Lua / Wireshark dissector generator for ProtocolLab protocol specifications."""
+"""Lua / Wireshark dissector generator for `protocollab` protocol specifications."""
 
 from pathlib import Path
 from typing import Any, Dict, List

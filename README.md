@@ -1,8 +1,8 @@
-# ProtocolLab
+# `protocollab`
 
 > **Describe once. Generate everything.**
 
-ProtocolLab is an open-source framework for declaring, validating, and generating implementations of **network and binary protocols** from human-readable YAML specifications.
+`protocollab` is an open-source framework for declaring, validating, and generating implementations of **network and binary protocols** from human-readable YAML specifications.
 
 Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, test suites, and documentation — all from the same source of truth.
 
@@ -13,11 +13,11 @@ Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, test s
 
 ---
 
-## Why ProtocolLab?
+## Why `protocollab`?
 
-Most serialization tools (Protobuf, Thrift, FlatBuffers) are **data-first** or **RPC-first**. ProtocolLab is **protocol-first**:
+Most serialization tools (Protobuf, Thrift, FlatBuffers) are **data-first** or **RPC-first**. `protocollab` is **protocol-first**:
 
-| Feature | Protobuf / Thrift | Kaitai Struct | **ProtocolLab** |
+| Feature | Protobuf / Thrift | Kaitai Struct | `protocollab` |
 |---|---|---|---|
 | Stateful protocols (FSM) | No | No | Planned (CE: flat, Pro: hierarchical) |
 | Wireshark dissector generation | No | Yes | Yes |

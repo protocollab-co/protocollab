@@ -1,4 +1,4 @@
-"""File-system utilities for ProtocolLab."""
+"""File-system utilities for `protocollab`."""
 
 import os
 from pathlib import Path

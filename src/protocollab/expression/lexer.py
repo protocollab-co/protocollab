@@ -1,4 +1,4 @@
-"""Lexer — tokenises a ProtocolLab expression string."""
+"""Lexer — tokenises a `protocollab` expression string."""
 
 from __future__ import annotations
 

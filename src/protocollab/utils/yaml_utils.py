@@ -1,4 +1,4 @@
-"""YAML serialization helpers for ProtocolLab output."""
+"""YAML serialization helpers for `protocollab` output."""
 
 import io
 import json

@@ -1,6 +1,6 @@
 # Examples
 
-This directory contains sample protocol specifications in ProtocolLab YAML format
+This directory contains sample protocol specifications in `protocollab` YAML format
 (compatible with [Kaitai Struct](https://kaitai.io/) `.ksy` files).
 
 ## Format overview

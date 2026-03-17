@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ProtocolLab Extended Specification",
-  "description": "Strict schema for ProtocolLab protocol specifications",
+  "title": "`protocollab` Extended Specification",
+  "description": "Strict schema for `protocollab` protocol specifications",
   "type": "object",
   "required": ["meta"],
   "properties": {

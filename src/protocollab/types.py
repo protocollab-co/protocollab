@@ -1,4 +1,4 @@
-"""Common type aliases used across the ProtocolLab package."""
+"""Common type aliases used across the `protocollab` package."""
 
 from typing import Any, Dict, List, Optional, Union
 

@@ -1,4 +1,4 @@
-"""Abstract base class for all ProtocolLab validators."""
+"""Abstract base class for all `protocollab` validators."""
 
 from __future__ import annotations
 

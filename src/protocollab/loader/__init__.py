@@ -1,4 +1,4 @@
-"""Public API for the ProtocolLab loader subsystem."""
+"""Public API for the `protocollab` loader subsystem."""
 
 from typing import Optional
 

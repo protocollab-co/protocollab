@@ -1,4 +1,4 @@
-"""AST node definitions for ProtocolLab expression language."""
+"""AST node definitions for `protocollab` expression language."""
 
 from __future__ import annotations
 

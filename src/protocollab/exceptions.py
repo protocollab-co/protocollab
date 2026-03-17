@@ -1,8 +1,8 @@
-"""Custom exceptions for ProtocolLab CLI and loader."""
+"""Custom exceptions for `protocollab` CLI and loader."""
 
 
 class ProtocolLabError(Exception):
-    """Base exception for all ProtocolLab errors."""
+    """Base exception for all `protocollab` errors."""
 
 
 class FileLoadError(ProtocolLabError):

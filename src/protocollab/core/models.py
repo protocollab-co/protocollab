@@ -1,4 +1,4 @@
-"""Pydantic models for ProtocolLab protocol specifications."""
+"""Pydantic models for `protocollab` protocol specifications."""
 
 from __future__ import annotations
 

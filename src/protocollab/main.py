@@ -1,4 +1,4 @@
-"""CLI entry point for ProtocolLab.
+"""CLI entry point for `protocollab`.
 
 Usage examples::
 
@@ -26,7 +26,7 @@ from protocollab.generators import generate, GeneratorError
 
 @click.group()
 def cli() -> None:
-    """ProtocolLab — protocol specification analyser."""
+    """`protocollab` — protocol specification analyser."""
 
 
 # ---------------------------------------------------------------------------
@@ -129,10 +129,10 @@ def load(
 @click.option(
     "--strict",
     is_flag=True,
-    help="Use the strict ProtocolLab schema (protocol.schema.json).",
+    help="Use the strict `protocollab` schema (protocol.schema.json).",
 )
 def validate(file: str, schema, strict: bool) -> None:
-    """Validate a protocol YAML file against the ProtocolLab schema."""
+    """Validate a protocol YAML file against the `protocollab` schema."""
     from pathlib import Path as _Path
 
     try:
@@ -246,7 +246,7 @@ def generate_cpp(file: str, output: str) -> None:
         from protocollab.generators.cpp_generator import CppGenerator  # noqa: F401
     except ImportError:
         click.echo(
-            "C++ generation requires ProtocolLab Professional. "
+            "C++ generation requires `protocollab` Professional. "
             "The cpp_generator module is not available in this installation.",
             err=True,
         )

@@ -1,4 +1,4 @@
-"""ProtocolLab — framework for protocol specification analysis."""
+"""`protocollab` — framework for protocol specification analysis."""
 
 from protocollab.exceptions import FileLoadError, ProtocolLabError, YAMLParseError
 from protocollab.loader import load_protocol

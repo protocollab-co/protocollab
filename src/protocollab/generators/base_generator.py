@@ -1,4 +1,4 @@
-"""Abstract base class for all ProtocolLab code generators."""
+"""Abstract base class for all `protocollab` code generators."""
 
 from abc import ABC, abstractmethod
 from pathlib import Path

@@ -1,4 +1,4 @@
-"""Validation subsystem for ProtocolLab protocol specifications."""
+"""Validation subsystem for `protocollab` protocol specifications."""
 
 from typing import Optional
 

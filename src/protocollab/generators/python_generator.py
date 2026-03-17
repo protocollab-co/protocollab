@@ -1,4 +1,4 @@
-"""Python parser generator for ProtocolLab protocol specifications."""
+"""Python parser generator for `protocollab` protocol specifications."""
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional

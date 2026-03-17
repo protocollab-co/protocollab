@@ -1,4 +1,4 @@
-"""Public API for ProtocolLab code generators."""
+"""Public API for `protocollab` code generators."""
 
 from pathlib import Path
 from typing import Any, Dict, List, Optional

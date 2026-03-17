@@ -68,7 +68,7 @@ This project and everyone participating in it is governed by our [Code of Conduc
 
 ## Security Notes
 
-Because security is a core feature of `protocollab`, any changes that affect the loading or processing of YAML must be reviewed with extra care. If you discover a potential security vulnerability, please do NOT open an issue; instead, send an email to [cherninkiy@gmail.com](mailto:cherninkiy@gmail.com).
+Because security is a core feature of `protocollab`, any changes that affect the loading or processing of YAML must be reviewed with extra care. If you discover a potential security vulnerability, please do NOT open an issue; instead, follow the instructions in our [SECURITY policy](SECURITY.md).
 
 ## Thank You!
 

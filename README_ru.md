@@ -42,17 +42,27 @@
 ### Установка
 
 ```bash
-# Клонировать репозиторий
+# 1. Клонировать репозиторий
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# Создать окружение (conda)
-conda env create -f environment.yml
-conda activate protocollab
+# 2. Создать и активировать окружение (рекомендуется)
+python -m venv venv
+source venv/bin/activate      # Linux / macOS
+# venv\Scripts\activate       # Windows
 
-# Установить в режиме разработки
+# 3. Установить зависимости
+pip install -r requirements.txt
+
+# 4. Установить пакет режиме разработки
 pip install -e .
 ```
+
+! Для разработки требуется установить дополнительные зависимости:
+
+    pip install -r requirements-dev.txt
+
+
 
 ### Написать спецификацию
 
@@ -205,10 +215,13 @@ CLI (main.py)
 
 ```bash
 # Все тесты с покрытием
-conda run -n protocollab pytest src/ -q
+pytest src/ -q
 
 # Только yaml_serializer (100% покрытие)
-conda run -n protocollab pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+
+# Только protocollab
+pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 ```
 
 ---
@@ -234,10 +247,10 @@ conda run -n protocollab pytest src/yaml_serializer/tests/ --cov=yaml_serializer
 1. Сделайте fork репозитория
 2. Создайте ветку для своей фичи от `dev`: `git checkout -b feature/my-feature`
 3. Напишите тесты для новой функциональности
-4. Запустите полный тест-сьют: `conda run -n protocollab pytest src/ -q`
+4. Запустите полный тест-сьют: `pytest src/ -q`
 5. Откройте Pull Request в ветку `dev`
 
-Ветка разработки: `dev` · Remote: [github.com/cherninkiy/protocollab](https://github.com/cherninkiy/protocollab)
+Ветка разработки: `dev` · Remote: [github.com/cherninkiy/protocollab/tree/dev](https://github.com/cherninkiy/protocollab/tree/dev)
 
 ---
 

@@ -218,18 +218,23 @@ pytest yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ## 🔧 Development Setup
 
 ```bash
-# Create a virtual environment (conda example)
-conda create -n protocollab python=3.12
-conda activate protocollab
+# Clone the repository (if not already done)
+git clone https://github.com/cherninkiy/protocollab
+cd protocollab
+
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate      # On Linux/macOS
+# venv\Scripts\activate       # On Windows
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Install in editable mode
+# Install the package in editable mode
 pip install -e .
 
 # Run tests
-pytest tests/
+pytest yaml_serializer/tests/
 ```
 
 ---

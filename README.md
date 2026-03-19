@@ -42,17 +42,25 @@ Most serialization tools (Protobuf, Thrift, FlatBuffers) are **data-first** or *
 ### Installation
 
 ```bash
-# Clone the repository
+# 1. Clone the repository
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# Create environment (conda)
-conda env create -f environment.yml
-conda activate protocollab
+# 2. Create and activate a virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate      # Linux / macOS
+# venv\Scripts\activate       # Windows
 
-# Install in development mode
+# 3. Install core dependencies
+pip install -r requirements.txt
+
+# 4. Install the package in development mode (editable)
 pip install -e .
 ```
+
+! For development, install additional dependencies:
+
+    pip install -r requirements-dev.txt
 
 ### Write a spec
 
@@ -205,10 +213,13 @@ CLI (main.py)
 
 ```bash
 # All tests with coverage
-conda run -n protocollab pytest src/ -q
+pytest src/ -q
 
 # yaml_serializer only (100% coverage)
-conda run -n protocollab pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+
+# protocollab
+pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 ```
 
 ---
@@ -234,10 +245,10 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and fo
 1. Fork the repository
 2. Create your feature branch from `dev`: `git checkout -b feature/my-feature`
 3. Write tests for any new functionality
-4. Run the full test suite: `conda run -n protocollab pytest src/ -q`
+4. Run the full test suite: `pytest src/ -q`
 5. Open a Pull Request against `dev`
 
-Development branch: `dev` · Remote: [github.com/cherninkiy/protocollab](https://github.com/cherninkiy/protocollab)
+Development branch: `dev` · Remote: [github.com/cherninkiy/protocollab/tree/dev](https://github.com/cherninkiy/protocollab/tree/dev)
 
 ---
 

@@ -250,18 +250,23 @@ pytest tests/ -v --cov=protocollab.yaml_serializer --cov-report=term-missing
 ## 🔧 Настройка окружения для разработки
 
 ```bash
-# Создание виртуального окружения (пример с conda)
-conda create -n protocollab python=3.12
-conda activate protocollab
+# Клонировать репозиторий (если ещё не сделано)
+git clone https://github.com/cherninkiy/protocollab
+cd protocollab
 
-# Установка зависимостей
+# Создать и активировать виртуальное окружение
+python -m venv venv
+source venv/bin/activate      # Linux/macOS
+# venv\Scripts\activate       # Windows
+
+# Установить зависимости
 pip install -r requirements.txt
 
-# Установка в режиме редактирования
+# Установить пакет в режиме редактирования
 pip install -e .
 
-# Запуск тестов
-pytest tests/
+# Запустить тесты
+pytest yaml_serializer/tests/
 ```
 
 ---

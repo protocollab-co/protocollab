@@ -58,9 +58,9 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-! For development, install additional dependencies:
-
-    pip install -r requirements-dev.txt
+> **Note:** For development, install additional dependencies:
+>
+>     pip install -r requirements-dev.txt
 
 ### Write a spec
 

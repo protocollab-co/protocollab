@@ -46,21 +46,21 @@
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# 2. Создать и активировать окружение (рекомендуется)
+# 2. Создать и активировать окружение (необязательно, но рекомендуется)
 python -m venv venv
 source venv/bin/activate      # Linux / macOS
 # venv\Scripts\activate       # Windows
 
-# 3. Установить зависимости
+# 3. Установить основные зависимости
 pip install -r requirements.txt
 
-# 4. Установить пакет режиме разработки
+# 4. Установить пакет в режиме разработки (редактируемый режим)
 pip install -e .
 ```
 
-! Для разработки требуется установить дополнительные зависимости:
-
-    pip install -r requirements-dev.txt
+> **Примечание:** Для разработки требуется установить дополнительные зависимости:
+>
+>     pip install -r requirements-dev.txt
 
 
 

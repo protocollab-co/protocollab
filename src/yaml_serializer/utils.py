@@ -65,9 +65,11 @@ def update_file_attr(node, new_file):
                 update_file_attr(item, new_file)
 
 def is_path_within_root(path: str, root_dir: str) -> bool:
-    """Проверяет, находится ли абсолютный путь внутри корневой директории."""
-    if root_dir is None:
-        return True  # Если root_dir не задан, разрешаем все пути
+    """Проверяет, находится ли абсолютный путь внутри корневой директории.
+    
+    Returns:
+        True, если path находится внутри root_dir, иначе False.    
+    """
     try:
         Path(path).resolve().relative_to(Path(root_dir).resolve())
         return True

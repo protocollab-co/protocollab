@@ -80,10 +80,11 @@ class TestIsPathWithinRoot:
         
         assert utils.is_path_within_root(outside_path, root_dir) is False
     
-    def test_none_root_allows_all(self, temp_dir):
-        """None в качестве root_dir должен разрешать любые пути."""
+    def test_none_root_raises_error(self, temp_dir):
+        """Передача None в root_dir должна вызывать ошибку, так как root_dir обязателен."""
         any_path = os.path.join(temp_dir, 'any.yaml')
-        assert utils.is_path_within_root(any_path, None) is True
+        with pytest.raises(TypeError, match="argument should be a str or an os.PathLike object"):
+            utils.is_path_within_root(any_path, None)
     
     def test_path_traversal_attack(self, temp_dir):
         """Защита от path traversal атак."""

@@ -155,7 +155,9 @@ class TestPythonGeneratorContent:
 class TestPythonGeneratorFunctional:
     def _import_module(self, path: Path):
         spec = importlib.util.spec_from_file_location(path.stem, path)
+        assert spec is not None, f"Could not load spec from {path}"
         mod = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None, f"Could not load module from {path}"
         spec.loader.exec_module(mod)
         return mod
 

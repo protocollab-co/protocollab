@@ -24,6 +24,8 @@ class TestCanonicalRepr:
         data['level1']['level2'] = CommentedSeq(['a', 'b'])
         
         canonical = canonical_repr(data)
+        assert isinstance(canonical, dict)
+        assert isinstance(canonical['level1'], dict)
         assert canonical['level1']['level2'] == ['a', 'b']
     
     def test_sorts_dict_keys(self):
@@ -34,6 +36,7 @@ class TestCanonicalRepr:
         data['m'] = 3
         
         canonical = canonical_repr(data)
+        assert isinstance(canonical, dict)
         keys = list(canonical.keys())
         assert keys == ['a', 'm', 'z']
 

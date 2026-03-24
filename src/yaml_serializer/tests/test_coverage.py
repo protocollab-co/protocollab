@@ -43,11 +43,12 @@ class TestUpdateFileAttrSeq:
     def test_update_file_attr_seq_children(self):
         """update_file_attr recursively updates _yaml_file on CommentedSeq children."""
         root = CommentedSeq()
+        root._yaml_file = "old.yaml"
         child_map = CommentedMap()
         child_map._yaml_file = "old.yaml"
         root.append(child_map)
 
-        update_file_attr(root, "new.yaml")
+        update_file_attr(root, "old.yaml", "new.yaml")
 
         assert root._yaml_file == "new.yaml"
         assert child_map._yaml_file == "new.yaml"

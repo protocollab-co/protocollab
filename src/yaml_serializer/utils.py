@@ -59,16 +59,31 @@ def save_hash_to_file(yaml_path: str, hash_value: str) -> None:
         f.write(hash_value)
 
 
-def update_file_attr(node, new_file):
-    """Recursively update ``_yaml_file`` on all descendant nodes."""
+def update_file_attr(node, old_file, new_file):
+    """Recursively update ``_yaml_file`` from *old_file* to *new_file*."""
     if isinstance(node, (CommentedMap, CommentedSeq)):
+        if getattr(node, "_yaml_file", None) != old_file:
+            return
         node._yaml_file = new_file
         if isinstance(node, CommentedMap):
             for v in node.values():
-                update_file_attr(v, new_file)
+                update_file_attr(v, old_file, new_file)
         elif isinstance(node, CommentedSeq):
             for item in node:
-                update_file_attr(item, new_file)
+                update_file_attr(item, old_file, new_file)
+
+
+def update_parent_file_attr(node, old_file, new_file):
+    """Recursively replace ``_yaml_parent_file`` references from *old_file* to *new_file*."""
+    if isinstance(node, (CommentedMap, CommentedSeq)):
+        if getattr(node, "_yaml_parent_file", None) == old_file:
+            node._yaml_parent_file = new_file
+        if isinstance(node, CommentedMap):
+            for v in node.values():
+                update_parent_file_attr(v, old_file, new_file)
+        elif isinstance(node, CommentedSeq):
+            for item in node:
+                update_parent_file_attr(item, old_file, new_file)
 
 
 def is_path_within_root(path: str, root_dir: str) -> bool:

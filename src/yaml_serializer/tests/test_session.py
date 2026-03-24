@@ -97,6 +97,24 @@ class TestSerializerSessionLoad:
         assert data["child"]["x"] == 42
         assert len(s._file_roots) == 2
 
+    def test_repeated_include_reuses_same_root(self, temp_dir):
+        child = os.path.join(temp_dir, "child.yaml")
+        main = os.path.join(temp_dir, "main.yaml")
+        write(child, "x: 42\n")
+        write(main, "left: !include child.yaml\nright: !include child.yaml\n")
+
+        s = SerializerSession()
+        data = s.load(main)
+
+        assert data["left"] is data["right"]
+        assert len(s._file_roots) == 2
+
+        add_to_dict(data["left"], "extra", "shared")
+        s.save(only_if_changed=False)
+
+        child_text = Path(child).read_text(encoding="utf-8")
+        assert "extra: shared" in child_text
+
     def test_reload_clears_previous_state(self, temp_dir):
         path1 = os.path.join(temp_dir, "a.yaml")
         path2 = os.path.join(temp_dir, "b.yaml")
@@ -108,6 +126,25 @@ class TestSerializerSessionLoad:
         s.load(path2)
         assert len(s._file_roots) == 1
         assert str(Path(path2).resolve()) in s._file_roots
+
+    def test_load_failure_leaves_session_clean(self, temp_dir):
+        """If load raises, session state must be fully reset (not half-populated)."""
+        good = os.path.join(temp_dir, "good.yaml")
+        bad = os.path.join(temp_dir, "bad.yaml")
+        write(good, "ok: 1\n")
+        write(bad, "invalid: [\n")  # malformed YAML
+        s = SerializerSession()
+        s.load(good)
+        assert len(s._file_roots) == 1
+
+        with pytest.raises(Exception):
+            s.load(bad)
+
+        # Session must be clean — no partial state from the failed load
+        assert s._file_roots == {}
+        assert s._loaded_hashes == {}
+        assert s._loading_stack == []
+        assert s._yaml_instance is None
 
 
 # ---------------------------------------------------------------------------
@@ -256,6 +293,31 @@ class TestSerializerSessionRename:
         # !include path attribute updated on the included node
         child_node = s._file_roots[abs_new_child]
         assert child_node._yaml_file == abs_new_child
+
+    def test_rename_parent_across_directories_updates_child_parent_path(self, temp_dir):
+        parent_old_dir = os.path.join(temp_dir, "root")
+        parent_new_dir = os.path.join(parent_old_dir, "moved")
+        child = os.path.join(parent_old_dir, "shared", "child.yaml")
+        parent_old = os.path.join(parent_old_dir, "parent.yaml")
+        parent_new = os.path.join(parent_new_dir, "parent.yaml")
+
+        os.makedirs(os.path.dirname(child), exist_ok=True)
+        os.makedirs(parent_old_dir, exist_ok=True)
+        os.makedirs(parent_new_dir, exist_ok=True)
+
+        write(child, "x: 1\n")
+        write(parent_old, "child: !include shared/child.yaml\n")
+
+        s = SerializerSession()
+        parent_data = s.load(parent_old)
+        child_data = parent_data["child"]
+
+        s.rename(parent_old, parent_new)
+        s.save(only_if_changed=False)
+
+        saved_parent = Path(parent_new).read_text(encoding="utf-8")
+        assert "../shared/child.yaml" in saved_parent
+        assert child_data._yaml_parent_file == str(Path(parent_new).resolve())
 
 
 # ---------------------------------------------------------------------------

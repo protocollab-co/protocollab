@@ -12,6 +12,7 @@ from .utils import (
     mark_includes,
     replace_included,
     update_file_attr,
+    update_parent_file_attr,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,7 +55,13 @@ def _make_include_representer(session):
     def include_representer(dumper, data):
         if hasattr(data, "_yaml_include_path") and hasattr(data, "_yaml_file"):
             if session._current_saving_file and data._yaml_file != session._current_saving_file:
-                include_path = data._yaml_include_path
+                current_dir = Path(session._current_saving_file).parent
+                include_target = Path(data._yaml_file)
+                try:
+                    include_path = include_target.relative_to(current_dir)
+                except ValueError:
+                    include_path = os.path.relpath(include_target, current_dir)
+                include_path = str(include_path).replace("\\", "/")
                 logger.debug("Representing node as !include %s", include_path)
                 return dumper.represent_scalar(INCLUDE_TAG, include_path)
         if isinstance(data, CommentedMap):
@@ -102,6 +109,9 @@ def _make_include_constructor(session):
             raise ValueError(f"Circular include detected: {included_path}")
         if session._max_include_depth and len(session._loading_stack) >= session._max_include_depth:
             raise ValueError(f"Exceeded maximum include depth ({session._max_include_depth})")
+        if included_path in session._file_roots:
+            logger.debug("Reusing already loaded include root for %s", included_path)
+            return session._file_roots[included_path]
 
         base_depth = getattr(loader, "_base_depth", 0) + 1
         yaml_inc = create_yaml_instance(
@@ -226,9 +236,16 @@ class SerializerSession:
         self._file_roots.clear()
         self._loading_stack.clear()
         self._loading_stack.append(main_path)
-        with open(main_path, "r", encoding="utf-8") as f:
-            logger.debug("Loading YAML content from %s", main_path)
-            data = self._yaml_instance.load(f)
+        try:
+            with open(main_path, "r", encoding="utf-8") as f:
+                logger.debug("Loading YAML content from %s", main_path)
+                data = self._yaml_instance.load(f)
+        except Exception:
+            self._loading_stack.clear()
+            self._file_roots.clear()
+            self._loaded_hashes.clear()
+            self._yaml_instance = None
+            raise
         self._loading_stack.pop()
         mark_node(data, main_path)
         self._file_roots[main_path] = data
@@ -291,7 +308,8 @@ class SerializerSession:
         if old_abs in self._loaded_hashes:
             self._loaded_hashes[new_abs] = self._loaded_hashes.pop(old_abs)
         logger.debug("Updated session structures: _file_roots and _loaded_hashes")
-        update_file_attr(root, new_abs)
+        update_file_attr(root, old_abs, new_abs)
+        update_parent_file_attr(root, old_abs, new_abs)
         logger.debug("Updated _yaml_file attributes for root and descendants")
         logger.debug("Updating !include references in other loaded files")
         for fpath, froot in self._file_roots.items():

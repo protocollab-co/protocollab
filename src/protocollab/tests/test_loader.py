@@ -13,10 +13,10 @@ from protocollab.loader import (
 )
 from protocollab.loader.cache.memory_cache import MemoryCache
 
-
 # ---------------------------------------------------------------------------
 # load_protocol() — public API
 # ---------------------------------------------------------------------------
+
 
 class TestLoadProtocol:
     def test_load_simple_returns_dict(self, simple_yaml):
@@ -49,12 +49,11 @@ class TestLoadProtocol:
 # Caching behaviour
 # ---------------------------------------------------------------------------
 
+
 class TestLoadProtocolCache:
     def test_cache_hit_skips_disk_on_second_call(self, simple_yaml):
         _default_loader.clear_cache()
-        with patch.object(
-            _default_loader, "_load_raw", wraps=_default_loader._load_raw
-        ) as spy:
+        with patch.object(_default_loader, "_load_raw", wraps=_default_loader._load_raw) as spy:
             load_protocol(str(simple_yaml))
             load_protocol(str(simple_yaml))
             assert spy.call_count == 1  # second call served from cache
@@ -76,9 +75,7 @@ class TestLoadProtocolCache:
 
     def test_clear_cache_forces_reload(self, simple_yaml):
         _default_loader.clear_cache()
-        with patch.object(
-            _default_loader, "_load_raw", wraps=_default_loader._load_raw
-        ) as spy:
+        with patch.object(_default_loader, "_load_raw", wraps=_default_loader._load_raw) as spy:
             load_protocol(str(simple_yaml))
             _default_loader.clear_cache()
             load_protocol(str(simple_yaml))
@@ -88,6 +85,7 @@ class TestLoadProtocolCache:
 # ---------------------------------------------------------------------------
 # ProtocolLoader — low-level class
 # ---------------------------------------------------------------------------
+
 
 class TestProtocolLoader:
     def test_custom_cache_is_populated(self, simple_yaml):
@@ -129,6 +127,7 @@ class TestProtocolLoader:
 # get_global_loader()
 # ---------------------------------------------------------------------------
 
+
 class TestGetGlobalLoader:
     def test_returns_protocol_loader_instance(self):
         assert isinstance(get_global_loader(), ProtocolLoader)
@@ -147,6 +146,7 @@ class TestGetGlobalLoader:
 # ---------------------------------------------------------------------------
 # configure_global()
 # ---------------------------------------------------------------------------
+
 
 class TestConfigureGlobal:
     def teardown_method(self, _method):
@@ -182,6 +182,7 @@ class TestConfigureGlobal:
 # ---------------------------------------------------------------------------
 # Loader isolation
 # ---------------------------------------------------------------------------
+
 
 class TestLoaderIsolation:
     def test_separate_loaders_have_independent_caches(self, simple_yaml):

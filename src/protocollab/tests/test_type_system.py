@@ -18,7 +18,6 @@ from protocollab.type_system import (
 )
 from protocollab.type_system.primitives import _UNSIGNED_ALIASES  # noqa: PLC2701
 
-
 # ---------------------------------------------------------------------------
 # PrimitiveType dataclass
 # ---------------------------------------------------------------------------
@@ -142,8 +141,10 @@ class TestCompositeType:
 
     def test_from_def(self) -> None:
         td = TypeDef(
-            seq=[FieldDef.model_validate({"id": "seconds", "type": "u4"}),
-                 FieldDef.model_validate({"id": "microseconds", "type": "u4"})],
+            seq=[
+                FieldDef.model_validate({"id": "seconds", "type": "u4"}),
+                FieldDef.model_validate({"id": "microseconds", "type": "u4"}),
+            ],
             doc="Timestamp",
         )
         reg = TypeRegistry()
@@ -372,8 +373,12 @@ class TestCalculateSize:
         ct = CompositeType(
             name="ts",
             fields=[
-                ResolvedField(field_def=FieldDef.model_validate({"id": "s", "type": "u4"}), resolved_type=u4),
-                ResolvedField(field_def=FieldDef.model_validate({"id": "us", "type": "u4"}), resolved_type=u4),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "s", "type": "u4"}), resolved_type=u4
+                ),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "us", "type": "u4"}), resolved_type=u4
+                ),
             ],
         )
         assert calculate_size(ct) == 8
@@ -384,8 +389,13 @@ class TestCalculateSize:
         ct = CompositeType(
             name="mixed",
             fields=[
-                ResolvedField(field_def=FieldDef.model_validate({"id": "len", "type": "u4"}), resolved_type=u4),
-                ResolvedField(field_def=FieldDef.model_validate({"id": "name", "type": "str"}), resolved_type=strtype),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "len", "type": "u4"}), resolved_type=u4
+                ),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "name", "type": "str"}),
+                    resolved_type=strtype,
+                ),
             ],
         )
         assert calculate_size(ct) is None
@@ -437,15 +447,25 @@ class TestCalculateSize:
         inner = CompositeType(
             name="inner",
             fields=[
-                ResolvedField(field_def=FieldDef.model_validate({"id": "a", "type": "u4"}), resolved_type=u4),
-                ResolvedField(field_def=FieldDef.model_validate({"id": "b", "type": "u4"}), resolved_type=u4),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "a", "type": "u4"}), resolved_type=u4
+                ),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "b", "type": "u4"}), resolved_type=u4
+                ),
             ],
         )  # inner size = 8
         outer = CompositeType(
             name="outer",
             fields=[
-                ResolvedField(field_def=FieldDef.model_validate({"id": "hdr", "type": "inner"}), resolved_type=inner),
-                ResolvedField(field_def=FieldDef.model_validate({"id": "extra", "type": "u4"}), resolved_type=u4),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "hdr", "type": "inner"}),
+                    resolved_type=inner,
+                ),
+                ResolvedField(
+                    field_def=FieldDef.model_validate({"id": "extra", "type": "u4"}),
+                    resolved_type=u4,
+                ),
             ],
         )
         assert calculate_size(outer) == 12  # 8 + 4

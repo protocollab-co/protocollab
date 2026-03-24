@@ -5,12 +5,19 @@ import logging
 from pathlib import Path
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from . import utils
-from .utils import mark_node, clear_dirty, mark_dirty, mark_includes, replace_included, update_file_attr
+from .utils import (
+    mark_node,
+    clear_dirty,
+    mark_dirty,
+    mark_includes,
+    replace_included,
+    update_file_attr,
+)
 
 logger = logging.getLogger(__name__)
 
 # Constants
-INCLUDE_TAG = '!include'
+INCLUDE_TAG = "!include"
 
 
 def create_yaml_instance(session, register_include_representer=False, max_depth=None, base_depth=0):
@@ -25,7 +32,10 @@ def create_yaml_instance(session, register_include_representer=False, max_depth=
         max_depth,
     )
     from .safe_constructor import create_safe_yaml_instance
-    yaml = create_safe_yaml_instance(max_depth=max_depth if max_depth is not None else 50, base_depth=base_depth)
+
+    yaml = create_safe_yaml_instance(
+        max_depth=max_depth if max_depth is not None else 50, base_depth=base_depth
+    )
     yaml._session = session  # attach session for constructor/representer access
     if register_include_representer:
 
@@ -41,7 +51,7 @@ def _make_include_representer(session):
     """Returns an include representer bound to *session*."""
 
     def include_representer(dumper, data):
-        if hasattr(data, '_yaml_include_path') and hasattr(data, '_yaml_file'):
+        if hasattr(data, "_yaml_include_path") and hasattr(data, "_yaml_file"):
             if session._current_saving_file and data._yaml_file != session._current_saving_file:
                 include_path = data._yaml_include_path
                 logger.debug("Representing node as !include %s", include_path)
@@ -83,21 +93,23 @@ def _make_include_constructor(session):
         if session._max_file_size:
             file_size = os.path.getsize(included_path)
             if file_size > session._max_file_size:
-                raise ValueError(f"File {included_path} exceeds size limit {session._max_file_size}")
+                raise ValueError(
+                    f"File {included_path} exceeds size limit {session._max_file_size}"
+                )
         if included_path in session._loading_stack:
             logger.error("Circular include detected: %s", included_path)
             raise ValueError(f"Circular include detected: {included_path}")
         if session._max_include_depth and len(session._loading_stack) >= session._max_include_depth:
             raise ValueError(f"Exceeded maximum include depth ({session._max_include_depth})")
 
-        base_depth = getattr(loader, '_base_depth', 0) + 1
+        base_depth = getattr(loader, "_base_depth", 0) + 1
         yaml_inc = create_yaml_instance(
             session,
             register_include_representer=False,
             max_depth=session._max_struct_depth,
             base_depth=base_depth,
         )
-        if hasattr(yaml_inc, '_make_constructor'):
+        if hasattr(yaml_inc, "_make_constructor"):
             yaml_inc.Constructor = yaml_inc._make_constructor(
                 max_depth=session._max_struct_depth, base_depth=base_depth
             )
@@ -106,7 +118,7 @@ def _make_include_constructor(session):
         try:
             session._loading_stack.append(included_path)
             logger.debug("Loading included file %s", included_path)
-            with open(included_path, 'r', encoding='utf-8') as f:
+            with open(included_path, "r", encoding="utf-8") as f:
                 data = yaml_inc.load(f)
         finally:
             session._loading_stack.pop()
@@ -130,6 +142,7 @@ def _make_include_constructor(session):
 # SerializerSession — the new thread-safe, multi-load-capable API
 # ---------------------------------------------------------------------------
 
+
 class SerializerSession:
     """
     Encapsulates all state required for loading, saving, renaming and tracking
@@ -147,10 +160,10 @@ class SerializerSession:
 
     def __init__(self, config=None):
         config = config or {}
-        self.max_file_size = config.get('max_file_size', 10 * 1024 * 1024)
-        self.max_include_depth = config.get('max_include_depth', 50)
-        self.max_struct_depth = config.get('max_struct_depth', 50)
-        self.max_imports = config.get('max_imports', 100)
+        self.max_file_size = config.get("max_file_size", 10 * 1024 * 1024)
+        self.max_include_depth = config.get("max_include_depth", 50)
+        self.max_struct_depth = config.get("max_struct_depth", 50)
+        self.max_imports = config.get("max_imports", 100)
 
         # Internal state – reset on each load()
         self._file_roots = {}
@@ -183,15 +196,18 @@ class SerializerSession:
         main_path = str(Path(file_path).resolve())
 
         self._root_dir = str(Path(main_path).parent)
-        self._max_file_size = cfg.get('max_file_size', self.max_file_size)
-        self._max_include_depth = cfg.get('max_include_depth', self.max_include_depth)
-        self._max_struct_depth = cfg.get('max_struct_depth', self.max_struct_depth)
-        self._max_imports = cfg.get('max_imports', self.max_imports)
+        self._max_file_size = cfg.get("max_file_size", self.max_file_size)
+        self._max_include_depth = cfg.get("max_include_depth", self.max_include_depth)
+        self._max_struct_depth = cfg.get("max_struct_depth", self.max_struct_depth)
+        self._max_imports = cfg.get("max_imports", self.max_imports)
         logger.debug(
             "Security config: root_dir=%s, max_file_size=%s, max_struct_depth=%s, "
             "max_include_depth=%s, max_imports=%s",
-            self._root_dir, self._max_file_size, self._max_struct_depth,
-            self._max_include_depth, self._max_imports,
+            self._root_dir,
+            self._max_file_size,
+            self._max_struct_depth,
+            self._max_include_depth,
+            self._max_imports,
         )
 
         self._yaml_instance = create_yaml_instance(
@@ -209,7 +225,7 @@ class SerializerSession:
         self._file_roots.clear()
         self._loading_stack.clear()
         self._loading_stack.append(main_path)
-        with open(main_path, 'r', encoding='utf-8') as f:
+        with open(main_path, "r", encoding="utf-8") as f:
             logger.debug("Loading YAML content from %s", main_path)
             data = self._yaml_instance.load(f)
         self._loading_stack.pop()
@@ -233,13 +249,18 @@ class SerializerSession:
         for filename, root in self._file_roots.items():
             curr_hash = root._yaml_hash
             orig_hash = self._loaded_hashes.get(filename)
-            if only_if_changed and orig_hash is not None and curr_hash == orig_hash and not root._yaml_dirty:
+            if (
+                only_if_changed
+                and orig_hash is not None
+                and curr_hash == orig_hash
+                and not root._yaml_dirty
+            ):
                 logger.debug("File %s unchanged, skipping", filename)
                 continue
             logger.info("Saving file %s", filename)
             self._current_saving_file = filename
             try:
-                with open(filename, 'w', encoding='utf-8') as f:
+                with open(filename, "w", encoding="utf-8") as f:
                     self._yaml_instance.dump(root, f)
                     f.flush()
                     os.fsync(f.fileno())
@@ -276,7 +297,7 @@ class SerializerSession:
             if fpath == new_abs:
                 continue
             replace_included(froot, old_abs, new_abs, logger)
-            if hasattr(froot, '_yaml_dirty'):
+            if hasattr(froot, "_yaml_dirty"):
                 mark_dirty(froot)
                 logger.debug("Marked root of file %s as dirty after reference update", fpath)
         if old_abs == self._root_filename:
@@ -293,9 +314,7 @@ class SerializerSession:
             found = mark_includes(root, abs_path, mark_dirty, logger)
             if found:
                 mark_dirty(root)
-                logger.debug(
-                    "Marked root of file %s as dirty due to included references", fpath
-                )
+                logger.debug("Marked root of file %s as dirty due to included references", fpath)
 
     def clear(self):
         """Reset all session state without changing configuration defaults."""
@@ -318,6 +337,6 @@ class SerializerSession:
 
 
 __all__ = [
-    'SerializerSession',
-    'create_yaml_instance',
+    "SerializerSession",
+    "create_yaml_instance",
 ]

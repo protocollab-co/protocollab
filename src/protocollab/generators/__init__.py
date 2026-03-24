@@ -23,6 +23,7 @@ _GENERATORS: Dict[str, type] = {
 # Register Pro generators when available (local-only, not in public repo)
 try:
     from protocollab.generators.cpp_generator import CppGenerator  # noqa: F401
+
     _GENERATORS["cpp"] = CppGenerator
     __all__.append("CppGenerator")
 except ImportError:

@@ -23,7 +23,6 @@ from protocollab.expression import (
     validate_expr,
 )
 
-
 # ===========================================================================
 # Lexer
 # ===========================================================================
@@ -506,9 +505,7 @@ class TestEvaluate:
 
     def test_ternary_condition_expr(self) -> None:
         ctx = {"total_length": 20, "has_ext": True, "fixed_size": 12}
-        result = evaluate(
-            parse_expr("total_length - 8 if has_ext else fixed_size"), ctx
-        )
+        result = evaluate(parse_expr("total_length - 8 if has_ext else fixed_size"), ctx)
         assert result == 12
 
     # -----------------------------------------------------------------------

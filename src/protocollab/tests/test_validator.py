@@ -8,10 +8,10 @@ from protocollab.validator import validate_protocol, ValidationResult, Validatio
 from protocollab.validator.schema_validator import SchemaValidator
 from protocollab.exceptions import FileLoadError, YAMLParseError
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def valid_yaml(tmp_path):
@@ -65,14 +65,13 @@ def invalid_yaml(tmp_path):
 
 @pytest.fixture()
 def strict_schema_path():
-    return str(
-        Path(__file__).parent.parent / "validator" / "schemas" / "protocol.schema.json"
-    )
+    return str(Path(__file__).parent.parent / "validator" / "schemas" / "protocol.schema.json")
 
 
 # ---------------------------------------------------------------------------
 # validate_protocol — valid files
 # ---------------------------------------------------------------------------
+
 
 class TestValidateProtocolValid:
     def test_valid_returns_true(self, valid_yaml):
@@ -103,6 +102,7 @@ class TestValidateProtocolValid:
 # ---------------------------------------------------------------------------
 # validate_protocol — invalid files
 # ---------------------------------------------------------------------------
+
 
 class TestValidateProtocolInvalid:
     def test_no_meta_is_invalid(self, no_meta_yaml):
@@ -140,6 +140,7 @@ class TestValidateProtocolInvalid:
 # validate_protocol — file errors
 # ---------------------------------------------------------------------------
 
+
 class TestValidateProtocolFileErrors:
     def test_missing_file_raises_file_load_error(self, missing_file):
         with pytest.raises(FileLoadError):
@@ -153,6 +154,7 @@ class TestValidateProtocolFileErrors:
 # ---------------------------------------------------------------------------
 # validate_protocol — custom schema
 # ---------------------------------------------------------------------------
+
 
 class TestValidateProtocolCustomSchema:
     def test_strict_schema_rejects_extra_top_level(self, tmp_path, strict_schema_path):
@@ -175,6 +177,7 @@ class TestValidateProtocolCustomSchema:
 # ---------------------------------------------------------------------------
 # SchemaValidator directly
 # ---------------------------------------------------------------------------
+
 
 class TestSchemaValidator:
     def test_valid_data_returns_empty(self):
@@ -248,6 +251,7 @@ class TestSchemaValidator:
 # ValidationResult model
 # ---------------------------------------------------------------------------
 
+
 class TestValidationResult:
     def test_bool_true_when_valid(self):
         r = ValidationResult(is_valid=True, errors=[], file_path="x.yaml")
@@ -267,9 +271,14 @@ class TestValidationResult:
 # ValidationError model
 # ---------------------------------------------------------------------------
 
+
 class TestValidationError:
     def test_fields(self):
-        e = ValidationError(path="meta.id", message="does not match", schema_path="properties/meta/properties/id/pattern")
+        e = ValidationError(
+            path="meta.id",
+            message="does not match",
+            schema_path="properties/meta/properties/id/pattern",
+        )
         assert e.path == "meta.id"
         assert e.message == "does not match"
         assert "id" in e.schema_path

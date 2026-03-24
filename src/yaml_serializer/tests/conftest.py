@@ -18,8 +18,10 @@ def temp_dir():
 @pytest.fixture
 def create_yaml_file():
     """Return a factory function that writes YAML files for tests."""
+
     def _create_file(path, content):
         """Write *content* to *path* with UTF-8 encoding."""
-        with open(path, 'w', encoding='utf-8') as f:
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
+
     return _create_file

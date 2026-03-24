@@ -49,8 +49,8 @@ PRIMITIVE_TYPES: dict[str, PrimitiveType] = {
     "f4": PrimitiveType("f4", size_bytes=4, struct_format="f", lua_field_type="float"),
     "f8": PrimitiveType("f8", size_bytes=8, struct_format="d", lua_field_type="double"),
     # Strings
-    "str":   PrimitiveType("str",   size_bytes=None, struct_format=None, lua_field_type="string"),
-    "strz":  PrimitiveType("strz",  size_bytes=None, struct_format=None, lua_field_type="stringz"),
+    "str": PrimitiveType("str", size_bytes=None, struct_format=None, lua_field_type="string"),
+    "strz": PrimitiveType("strz", size_bytes=None, struct_format=None, lua_field_type="stringz"),
     # Raw bytes
     "bytes": PrimitiveType("bytes", size_bytes=None, struct_format=None, lua_field_type="bytes"),
 }
@@ -59,7 +59,7 @@ PRIMITIVE_TYPES: dict[str, PrimitiveType] = {
 # Unsigned integer aliases
 # ---------------------------------------------------------------------------
 _UNSIGNED_ALIASES: dict[str, str] = {
-    "uint8":  "u1",
+    "uint8": "u1",
     "uint16": "u2",
     "uint32": "u4",
     "uint64": "u8",
@@ -67,7 +67,7 @@ _UNSIGNED_ALIASES: dict[str, str] = {
 
 # Signed integer aliases
 _SIGNED_ALIASES: dict[str, str] = {
-    "int8":  "s1",
+    "int8": "s1",
     "int16": "s2",
     "int32": "s4",
     "int64": "s8",
@@ -75,8 +75,8 @@ _SIGNED_ALIASES: dict[str, str] = {
 
 # byte / word / dword shortcuts (common in Kaitai-like specs)
 _WORD_ALIASES: dict[str, str] = {
-    "byte":  "u1",
-    "word":  "u2",
+    "byte": "u1",
+    "word": "u2",
     "dword": "u4",
     "qword": "u8",
 }

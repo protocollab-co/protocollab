@@ -24,8 +24,7 @@ def _check_duplicate_ids(
                 ValidationIssue(
                     path=f"{context_path}[{idx}].id",
                     message=(
-                        f"Duplicate field id {field.id!r} "
-                        f"(first at index {seen[field.id]})"
+                        f"Duplicate field id {field.id!r} " f"(first at index {seen[field.id]})"
                     ),
                     level=ValidationLevel.ERROR,
                     code="E2",

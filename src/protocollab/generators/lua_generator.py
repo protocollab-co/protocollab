@@ -9,14 +9,14 @@ from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 
 # lua_type, size_bytes, optional_base
 _LUA_TYPE_MAP: Dict[str, tuple] = {
-    "u1": ("uint8",  1, None),
+    "u1": ("uint8", 1, None),
     "u2": ("uint16", 2, "base.DEC"),
     "u4": ("uint32", 4, "base.DEC"),
     "u8": ("uint64", 8, "base.DEC"),
-    "s1": ("int8",   1, None),
-    "s2": ("int16",  2, "base.DEC"),
-    "s4": ("int32",  4, "base.DEC"),
-    "s8": ("int64",  8, "base.DEC"),
+    "s1": ("int8", 1, None),
+    "s2": ("int16", 2, "base.DEC"),
+    "s4": ("int32", 4, "base.DEC"),
+    "s8": ("int64", 8, "base.DEC"),
     "str": ("string", None, None),  # requires 'size' in field spec
 }
 

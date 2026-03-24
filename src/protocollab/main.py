@@ -19,10 +19,10 @@ from protocollab.utils import check_file_exists, print_data
 from protocollab.validator import validate_pipeline, validate_protocol
 from protocollab.generators import generate, GeneratorError
 
-
 # ---------------------------------------------------------------------------
 # CLI group
 # ---------------------------------------------------------------------------
+
 
 @click.group()
 def cli() -> None:
@@ -32,6 +32,7 @@ def cli() -> None:
 # ---------------------------------------------------------------------------
 # load command
 # ---------------------------------------------------------------------------
+
 
 @cli.command()
 @click.argument("file", type=click.Path())
@@ -117,6 +118,7 @@ def load(
 # validate command
 # ---------------------------------------------------------------------------
 
+
 @cli.command()
 @click.argument("file", type=click.Path())
 @click.option(
@@ -143,9 +145,7 @@ def validate(file: str, schema, strict: bool) -> None:
 
     schema_path = schema
     if schema_path is None and strict:
-        schema_path = str(
-            _Path(__file__).parent / "validator" / "schemas" / "protocol.schema.json"
-        )
+        schema_path = str(_Path(__file__).parent / "validator" / "schemas" / "protocol.schema.json")
 
     try:
         result = validate_pipeline(file, schema_path=schema_path)
@@ -163,9 +163,7 @@ def validate(file: str, schema, strict: bool) -> None:
         for i, w in enumerate(result.warnings, 1):
             click.echo(f"  [W{i}] {w.path}: {w.message}")
     else:
-        click.echo(
-            f"Validation failed: {file} ({len(result.errors)} error(s))", err=True
-        )
+        click.echo(f"Validation failed: {file} ({len(result.errors)} error(s))", err=True)
         if result.errors:
             click.echo("\n  ERRORS:", err=True)
             for i, err in enumerate(result.errors, 1):
@@ -183,6 +181,7 @@ def validate(file: str, schema, strict: bool) -> None:
 # ---------------------------------------------------------------------------
 # generate command group
 # ---------------------------------------------------------------------------
+
 
 @cli.group()
 def generate_cmd() -> None:
@@ -202,6 +201,7 @@ def _run_generate(file: str, target: str, output: str) -> None:
 
     try:
         from protocollab.loader import load_protocol
+
         spec = load_protocol(file)
     except FileLoadError as exc:
         click.echo(f"Error: {exc}", err=True)
@@ -212,6 +212,7 @@ def _run_generate(file: str, target: str, output: str) -> None:
 
     try:
         from pathlib import Path as _Path
+
         paths = generate(spec, target=target, output_dir=output)
     except GeneratorError as exc:
         click.echo(f"Generation error: {exc}", err=True)
@@ -257,6 +258,7 @@ def generate_cpp(file: str, output: str) -> None:
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     cli()

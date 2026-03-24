@@ -15,24 +15,24 @@ class TokenKind(Enum):
     # Identifiers / keywords
     NAME = auto()
     # Two-character operators
-    EQ = auto()       # ==
-    NEQ = auto()      # !=
-    LEQ = auto()      # <=
-    GEQ = auto()      # >=
+    EQ = auto()  # ==
+    NEQ = auto()  # !=
+    LEQ = auto()  # <=
+    GEQ = auto()  # >=
     FLOOR_DIV = auto()  # //
     # Single-character operators / punctuation
-    LT = auto()       # <
-    GT = auto()       # >
-    PLUS = auto()     # +
-    MINUS = auto()    # -
-    STAR = auto()     # *
-    SLASH = auto()    # /
+    LT = auto()  # <
+    GT = auto()  # >
+    PLUS = auto()  # +
+    MINUS = auto()  # -
+    STAR = auto()  # *
+    SLASH = auto()  # /
     PERCENT = auto()  # %
-    DOT = auto()      # .
-    LPAREN = auto()   # (
-    RPAREN = auto()   # )
-    LBRACKET = auto() # [
-    RBRACKET = auto() # ]
+    DOT = auto()  # .
+    LPAREN = auto()  # (
+    RPAREN = auto()  # )
+    LBRACKET = auto()  # [
+    RBRACKET = auto()  # ]
     # Sentinel
     EOF = auto()
 
@@ -45,7 +45,7 @@ _KEYWORDS: set[str] = {"and", "or", "not", "if", "else", "true", "false"}
 class Token:
     kind: TokenKind
     value: object  # str, int, bool, or None for punctuation tokens
-    pos: int       # byte offset in the source string
+    pos: int  # byte offset in the source string
 
 
 # ---------------------------------------------------------------------------
@@ -54,28 +54,28 @@ class Token:
 _TOKEN_SPEC: list[tuple[str, TokenKind]] = [
     # Hex / binary / octal / decimal integers
     (r"0x[0-9A-Fa-f]+", TokenKind.INTEGER),
-    (r"0b[01]+",         TokenKind.INTEGER),
-    (r"0o[0-7]+",        TokenKind.INTEGER),
-    (r"\d+",             TokenKind.INTEGER),
+    (r"0b[01]+", TokenKind.INTEGER),
+    (r"0o[0-7]+", TokenKind.INTEGER),
+    (r"\d+", TokenKind.INTEGER),
     # Quoted strings
     (r'"(?:[^"\\]|\\.)*"', TokenKind.STRING),
     (r"'(?:[^'\\]|\\.)*'", TokenKind.STRING),
     # Identifiers / keywords
     (r"[A-Za-z_][A-Za-z0-9_]*", TokenKind.NAME),
     # Two-character operators (MUST come before single-char)
-    (r"==",  TokenKind.EQ),
-    (r"!=",  TokenKind.NEQ),
-    (r"<=",  TokenKind.LEQ),
-    (r">=",  TokenKind.GEQ),
-    (r"//",  TokenKind.FLOOR_DIV),
+    (r"==", TokenKind.EQ),
+    (r"!=", TokenKind.NEQ),
+    (r"<=", TokenKind.LEQ),
+    (r">=", TokenKind.GEQ),
+    (r"//", TokenKind.FLOOR_DIV),
     # Single-character
-    (r"<",  TokenKind.LT),
-    (r">",  TokenKind.GT),
+    (r"<", TokenKind.LT),
+    (r">", TokenKind.GT),
     (r"\+", TokenKind.PLUS),
-    (r"-",  TokenKind.MINUS),
+    (r"-", TokenKind.MINUS),
     (r"\*", TokenKind.STAR),
-    (r"/",  TokenKind.SLASH),
-    (r"%",  TokenKind.PERCENT),
+    (r"/", TokenKind.SLASH),
+    (r"%", TokenKind.PERCENT),
     (r"\.", TokenKind.DOT),
     (r"\(", TokenKind.LPAREN),
     (r"\)", TokenKind.RPAREN),
@@ -85,9 +85,7 @@ _TOKEN_SPEC: list[tuple[str, TokenKind]] = [
     (r"\s+", None),  # type: ignore[misc]
 ]
 
-_MASTER_RE = re.compile(
-    "|".join(f"(?P<g{i}>{pat})" for i, (pat, _) in enumerate(_TOKEN_SPEC))
-)
+_MASTER_RE = re.compile("|".join(f"(?P<g{i}>{pat})" for i, (pat, _) in enumerate(_TOKEN_SPEC)))
 _KIND_BY_GROUP: dict[str, TokenKind | None] = {
     f"g{i}": kind for i, (_, kind) in enumerate(_TOKEN_SPEC)
 }

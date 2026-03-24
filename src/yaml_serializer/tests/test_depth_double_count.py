@@ -10,10 +10,10 @@ from io import StringIO
 
 from yaml_serializer.safe_constructor import create_safe_yaml_instance
 
-
 # ----------------------------------------------------------------------
 # Helper functions for generating YAML strings with a given nesting depth
 # ----------------------------------------------------------------------
+
 
 def nested_mapping(depth: int, value=1):
     """Creates a nested dict of the given depth (number of mapping levels)."""
@@ -42,6 +42,7 @@ def to_yaml(data) -> str:
 # ----------------------------------------------------------------------
 # Tests for mappings
 # ----------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("depth", range(1, 51))
 def test_mapping_depth_within_limit(depth):
@@ -76,6 +77,7 @@ def test_mapping_depth_exceeds_limit(depth):
 # Tests for sequences
 # ----------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("depth", range(1, 51))
 def test_sequence_depth_within_limit(depth):
     """
@@ -104,6 +106,7 @@ def test_sequence_depth_exceeds_limit(depth):
 # ----------------------------------------------------------------------
 # Combined structures (mapping + sequence)
 # ----------------------------------------------------------------------
+
 
 def mixed_structure(depth: int):
     """Alternates mapping and sequence to create a structure of the given depth."""
@@ -141,6 +144,7 @@ def test_mixed_depth_exceeds_limit(depth):
 # ----------------------------------------------------------------------
 # Test specifically targeting double-counting detection
 # ----------------------------------------------------------------------
+
 
 def test_double_counting_manifestation():
     """

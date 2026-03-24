@@ -11,10 +11,10 @@ from click.testing import CliRunner
 from protocollab.generators import generate, PythonGenerator, LuaGenerator, GeneratorError
 from protocollab.main import cli
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def ping_spec():
@@ -22,9 +22,9 @@ def ping_spec():
     return {
         "meta": {"id": "ping_protocol", "endian": "le", "title": "Ping Protocol"},
         "seq": [
-            {"id": "type_id",         "type": "u1"},
+            {"id": "type_id", "type": "u1"},
             {"id": "sequence_number", "type": "u4"},
-            {"id": "payload_size",    "type": "u2"},
+            {"id": "payload_size", "type": "u2"},
         ],
     }
 
@@ -66,6 +66,7 @@ def runner():
 # PythonGenerator — file output
 # ---------------------------------------------------------------------------
 
+
 class TestPythonGeneratorOutput:
     def test_creates_py_file(self, ping_spec, tmp_path):
         gen = PythonGenerator()
@@ -94,6 +95,7 @@ class TestPythonGeneratorOutput:
 # ---------------------------------------------------------------------------
 # PythonGenerator — generated code content
 # ---------------------------------------------------------------------------
+
 
 class TestPythonGeneratorContent:
     def test_valid_python_syntax(self, ping_spec, tmp_path):
@@ -152,6 +154,7 @@ class TestPythonGeneratorContent:
 # PythonGenerator — functional: generated parser actually works
 # ---------------------------------------------------------------------------
 
+
 class TestPythonGeneratorFunctional:
     def _import_module(self, path: Path):
         spec = importlib.util.spec_from_file_location(path.stem, path)
@@ -208,6 +211,7 @@ class TestPythonGeneratorFunctional:
 # LuaGenerator — file output
 # ---------------------------------------------------------------------------
 
+
 class TestLuaGeneratorOutput:
     def test_creates_lua_file(self, ping_spec, tmp_path):
         gen = LuaGenerator()
@@ -231,6 +235,7 @@ class TestLuaGeneratorOutput:
 # ---------------------------------------------------------------------------
 # LuaGenerator — generated code content
 # ---------------------------------------------------------------------------
+
 
 class TestLuaGeneratorContent:
     def test_contains_proto_definition(self, ping_spec, tmp_path):
@@ -279,6 +284,7 @@ class TestLuaGeneratorContent:
 # Error handling
 # ---------------------------------------------------------------------------
 
+
 class TestGeneratorErrors:
     def test_unknown_type_python(self, tmp_path):
         spec = {"meta": {"id": "p", "endian": "le"}, "seq": [{"id": "x", "type": "bytes"}]}
@@ -320,6 +326,7 @@ class TestGeneratorErrors:
 # generate() public API
 # ---------------------------------------------------------------------------
 
+
 class TestGenerateAPI:
     def test_generate_python_returns_path(self, ping_spec, tmp_path):
         paths = generate(ping_spec, target="python", output_dir=tmp_path)
@@ -340,6 +347,7 @@ class TestGenerateAPI:
 # CLI: protocollab generate
 # ---------------------------------------------------------------------------
 
+
 class TestCLIGenerate:
     def test_generate_python_exits_zero(self, runner, ping_yaml, tmp_path):
         result = runner.invoke(cli, ["generate", "python", str(ping_yaml), "-o", str(tmp_path)])
@@ -354,7 +362,9 @@ class TestCLIGenerate:
         assert result.exit_code == 0
 
     def test_generate_missing_file_exits_one(self, runner, tmp_path):
-        result = runner.invoke(cli, ["generate", "python", "/no/such/file.yaml", "-o", str(tmp_path)])
+        result = runner.invoke(
+            cli, ["generate", "python", "/no/such/file.yaml", "-o", str(tmp_path)]
+        )
         assert result.exit_code == 1
 
     def test_generate_invalid_yaml_exits_two(self, runner, invalid_yaml, tmp_path):

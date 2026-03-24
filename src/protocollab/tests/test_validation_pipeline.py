@@ -205,9 +205,7 @@ class TestSemanticValidator:
     def test_unknown_type_in_types_section(self) -> None:
         data = {
             "meta": {"id": "p", "endian": "le"},
-            "types": {
-                "hdr": {"seq": [{"id": "x", "type": "ghost_type"}]}
-            },
+            "types": {"hdr": {"seq": [{"id": "x", "type": "ghost_type"}]}},
         }
         spec = parse_spec(data)
         v = SemanticValidator()

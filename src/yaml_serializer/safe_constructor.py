@@ -12,7 +12,6 @@ from ruamel.yaml.error import YAMLError
 logger = logging.getLogger(__name__)
 
 
-
 class RestrictedSafeConstructor(RoundTripConstructor):
     def __init__(self, max_depth=50, base_depth=0, *args, **kwargs):
         if max_depth is None:
@@ -38,23 +37,23 @@ class RestrictedSafeConstructor(RoundTripConstructor):
         Check that node tag is in the allowed set; depth is managed by construct_mapping.
         """
         allowed_tags = {
-            'tag:yaml.org,2002:null',
-            'tag:yaml.org,2002:bool',
-            'tag:yaml.org,2002:int',
-            'tag:yaml.org,2002:float',
-            'tag:yaml.org,2002:str',
-            'tag:yaml.org,2002:binary',
-            'tag:yaml.org,2002:timestamp',
-            'tag:yaml.org,2002:omap',
-            'tag:yaml.org,2002:pairs',
-            'tag:yaml.org,2002:set',
-            'tag:yaml.org,2002:seq',
-            'tag:yaml.org,2002:map',
-            '!include',
+            "tag:yaml.org,2002:null",
+            "tag:yaml.org,2002:bool",
+            "tag:yaml.org,2002:int",
+            "tag:yaml.org,2002:float",
+            "tag:yaml.org,2002:str",
+            "tag:yaml.org,2002:binary",
+            "tag:yaml.org,2002:timestamp",
+            "tag:yaml.org,2002:omap",
+            "tag:yaml.org,2002:pairs",
+            "tag:yaml.org,2002:set",
+            "tag:yaml.org,2002:seq",
+            "tag:yaml.org,2002:map",
+            "!include",
         }
 
         if node.tag not in allowed_tags:
-            if any(dangerous in str(node.tag) for dangerous in ['python/', '!!python']):
+            if any(dangerous in str(node.tag) for dangerous in ["python/", "!!python"]):
                 raise YAMLError(
                     f"Dangerous Python tag '{node.tag}' detected and blocked. "
                     f"This library does not allow arbitrary Python code execution via YAML."
@@ -69,7 +68,7 @@ class RestrictedSafeConstructor(RoundTripConstructor):
 
     def _remove_dangerous_constructors(self):
         """Remove constructors for potentially dangerous YAML tags."""
-        dangerous_prefixes = ['tag:yaml.org,2002:python/', '!!python/']
+        dangerous_prefixes = ["tag:yaml.org,2002:python/", "!!python/"]
         to_remove = []
         for tag in self.yaml_constructors:
             if tag is None or not isinstance(tag, str):
@@ -121,7 +120,7 @@ def create_safe_yaml_instance(max_depth: int = 50, base_depth: int = 0):
         raise ValueError("max_depth cannot be None; set a positive integer")
     if not isinstance(max_depth, int) or max_depth <= 0:
         raise ValueError("max_depth must be a positive integer")
-        
+
     from ruamel.yaml import YAML
 
     yaml = YAML()
@@ -132,6 +131,7 @@ def create_safe_yaml_instance(max_depth: int = 50, base_depth: int = 0):
         class CustomConstructor(RestrictedSafeConstructor):
             def __init__(self, *args, **kwargs):
                 super().__init__(max_depth=max_depth, base_depth=base_depth, *args, **kwargs)
+
         return CustomConstructor
 
     yaml.Constructor = make_constructor(max_depth=max_depth, base_depth=base_depth)

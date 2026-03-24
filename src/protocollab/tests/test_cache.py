@@ -76,8 +76,8 @@ class TestMemoryCacheLRU:
         cache.set("a", 1)
         cache.set("b", 2)
         cache.set("c", 3)
-        cache.get("a")       # "a" is now MRU; "b" becomes LRU
-        cache.set("d", 4)   # "b" should be evicted
+        cache.get("a")  # "a" is now MRU; "b" becomes LRU
+        cache.set("d", 4)  # "b" should be evicted
         assert cache.get("b") is None
         assert cache.get("a") == 1
         assert cache.get("c") == 3
@@ -88,8 +88,8 @@ class TestMemoryCacheLRU:
         cache.set("a", 1)
         cache.set("b", 2)
         cache.set("c", 3)
-        cache.set("a", 99)   # update "a" → it becomes MRU
-        cache.set("d", 4)   # "b" should be evicted (LRU)
+        cache.set("a", 99)  # update "a" → it becomes MRU
+        cache.set("d", 4)  # "b" should be evicted (LRU)
         assert cache.get("b") is None
         assert cache.get("a") == 99
 

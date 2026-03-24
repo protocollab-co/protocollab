@@ -1,7 +1,7 @@
 # ADR 001: Replace Global State with Explicit Sessions and Enhance Loader Hybrid Design
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 The `yaml_serializer` module currently uses a global `_CTX` context to hold all loaded files, configuration, and parsing state. This design leads to:
@@ -27,7 +27,7 @@ We need to address these issues to make both libraries production‑ready, espec
 We will replace the global `_CTX` with an explicit `SerializerSession` class that encapsulates all state and operations.
 
 - **`SerializerSession`** will have methods `load`, `save`, `rename`, `propagate_dirty`, and `clear`. Its constructor accepts a configuration dict.
-- The module will keep the existing top‑level functions (`load_yaml_root`, `save_yaml_root`, etc.) as deprecated wrappers that delegate to a default session (`_default_session`). These functions will emit `DeprecationWarning` and instruct users to switch to explicit sessions.
+- The old top‑level functions (`load_yaml_root`, `save_yaml_root`, etc.) are **removed** as a breaking change. Since the library has not yet reached a stable release (v1.0), a clean break is preferred over maintaining deprecated wrappers.
 - All internal helpers (e.g., `include_constructor`, `include_representer`) will be refactored to accept a session reference (stored on the YAML instance) rather than relying on `_CTX`.
 - This design ensures:
   - **Isolation**: different sessions do not interfere.

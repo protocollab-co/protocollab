@@ -46,16 +46,10 @@ class SemanticValidator(BaseValidator):
     """
 
     def validate(self, spec: "ProtocolSpec") -> List[ValidationIssue]:
-        from protocollab.type_system import TypeRegistry, UnknownTypeError
+        from protocollab.type_system import TypeRegistry
 
         issues: List[ValidationIssue] = []
         registry = TypeRegistry().build(spec)
-
-        # 1. Warn if endianness is defaulted (not explicitly set in YAML)
-        raw_meta = spec.model_extra or {}
-        # Endianness defaulting is fine; just check if not explicitly present
-        # We cannot easily distinguish "default" vs "explicit" after Pydantic,
-        # so skip this warning for brevity (can be added in task 3.x).
 
         # 2. Check seq field types
         _check_duplicate_ids(spec.seq, "seq", issues)

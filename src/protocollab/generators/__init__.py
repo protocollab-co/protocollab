@@ -1,7 +1,7 @@
 """Public API for `protocollab` code generators."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 from protocollab.generators.python_generator import PythonGenerator

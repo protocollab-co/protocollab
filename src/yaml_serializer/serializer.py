@@ -28,7 +28,8 @@ def create_yaml_instance(session, register_include_representer=False, max_depth=
     max_depth — maximum allowed YAML structure depth.
     """
     logger.debug(
-        "Creating secure YAML instance with RestrictedSafeConstructor and !include representer, max_depth=%s",
+        "Creating secure YAML instance with RestrictedSafeConstructor "
+        "and !include representer, max_depth=%s",
         max_depth,
     )
     from .safe_constructor import create_safe_yaml_instance

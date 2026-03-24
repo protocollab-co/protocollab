@@ -26,6 +26,9 @@ __all__ = [
     "PipelineResult",
     "ValidationIssue",
     "ValidationLevel",
+    # re-exported exceptions
+    "FileLoadError",
+    "YAMLParseError",
 ]
 
 

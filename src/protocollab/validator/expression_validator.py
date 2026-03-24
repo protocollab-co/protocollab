@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from protocollab.expression import ExpressionSyntaxError, validate_expr
+from protocollab.expression import validate_expr
 from protocollab.validator.base_validator import BaseValidator
 from protocollab.validator.models import ValidationIssue, ValidationLevel
 

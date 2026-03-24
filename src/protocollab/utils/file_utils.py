@@ -1,6 +1,5 @@
 """File-system utilities for `protocollab`."""
 
-import os
 from pathlib import Path
 
 

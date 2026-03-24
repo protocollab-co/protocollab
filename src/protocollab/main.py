@@ -16,7 +16,7 @@ import click
 from protocollab.exceptions import FileLoadError, YAMLParseError
 from protocollab.loader import load_protocol
 from protocollab.utils import check_file_exists, print_data
-from protocollab.validator import validate_pipeline, validate_protocol
+from protocollab.validator import validate_pipeline
 from protocollab.generators import generate, GeneratorError
 
 # ---------------------------------------------------------------------------
@@ -211,8 +211,6 @@ def _run_generate(file: str, target: str, output: str) -> None:
         sys.exit(2)
 
     try:
-        from pathlib import Path as _Path
-
         paths = generate(spec, target=target, output_dir=output)
     except GeneratorError as exc:
         click.echo(f"Generation error: {exc}", err=True)

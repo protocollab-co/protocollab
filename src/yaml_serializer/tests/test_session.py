@@ -145,6 +145,13 @@ class TestSerializerSessionLoad:
         assert s._loaded_hashes == {}
         assert s._loading_stack == []
         assert s._yaml_instance is None
+        assert s._root_filename is None
+        assert s._root_dir is None
+        assert s._current_saving_file is None
+        assert s._max_file_size == s.max_file_size
+        assert s._max_include_depth == s.max_include_depth
+        assert s._max_struct_depth == s.max_struct_depth
+        assert s._max_imports == s.max_imports
 
 
 # ---------------------------------------------------------------------------
@@ -318,6 +325,27 @@ class TestSerializerSessionRename:
         saved_parent = Path(parent_new).read_text(encoding="utf-8")
         assert "../shared/child.yaml" in saved_parent
         assert child_data._yaml_parent_file == str(Path(parent_new).resolve())
+
+    def test_rename_marks_only_files_with_updated_include_references_dirty(self, temp_dir):
+        child_a = os.path.join(temp_dir, "a.yaml")
+        child_b = os.path.join(temp_dir, "b.yaml")
+        main = os.path.join(temp_dir, "main.yaml")
+
+        write(child_a, "x: 1\n")
+        write(child_b, "y: 2\n")
+        write(main, "a: !include a.yaml\nb: !include b.yaml\n")
+
+        s = SerializerSession()
+        root = s.load(main)
+        child_b_root = root["b"]
+        assert not root._yaml_dirty
+        assert not child_b_root._yaml_dirty
+
+        renamed_a = os.path.join(temp_dir, "a_renamed.yaml")
+        s.rename(child_a, renamed_a)
+
+        assert root._yaml_dirty
+        assert not child_b_root._yaml_dirty
 
 
 # ---------------------------------------------------------------------------

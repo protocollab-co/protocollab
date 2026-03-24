@@ -241,10 +241,7 @@ class SerializerSession:
                 logger.debug("Loading YAML content from %s", main_path)
                 data = self._yaml_instance.load(f)
         except Exception:
-            self._loading_stack.clear()
-            self._file_roots.clear()
-            self._loaded_hashes.clear()
-            self._yaml_instance = None
+            self.clear()
             raise
         self._loading_stack.pop()
         mark_node(data, main_path)
@@ -315,8 +312,8 @@ class SerializerSession:
         for fpath, froot in self._file_roots.items():
             if fpath == new_abs:
                 continue
-            replace_included(froot, old_abs, new_abs, logger)
-            if hasattr(froot, "_yaml_dirty"):
+            changed = replace_included(froot, old_abs, new_abs, logger)
+            if changed and hasattr(froot, "_yaml_dirty"):
                 mark_dirty(froot)
                 logger.debug("Marked root of file %s as dirty after reference update", fpath)
         if old_abs == self._root_filename:

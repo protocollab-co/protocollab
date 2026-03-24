@@ -102,8 +102,9 @@ class TestReplaceIncludedLogger:
 
         logger = logging.getLogger("test_replace")
         with caplog.at_level(logging.DEBUG, logger="test_replace"):
-            replace_included(node, "old.yaml", "new.yaml", logger)
+            changed = replace_included(node, "old.yaml", "new.yaml", logger)
 
+        assert changed is True
         assert node._yaml_file == "new.yaml"
 
     def test_replace_included_absolute_path_fallback(self, temp_dir):
@@ -127,8 +128,9 @@ class TestReplaceIncludedLogger:
         node._yaml_include_path = "old.yaml"
         node._yaml_parent_file = parent_file
 
-        replace_included(node, old_file, new_file)
+        changed = replace_included(node, old_file, new_file)
         # In the ValueError branch, the absolute path containing new.yaml must be set
+        assert changed is True
         assert "new.yaml" in node._yaml_include_path
 
     def test_replace_included_absolute_path_logs(self, temp_dir, caplog):
@@ -149,8 +151,9 @@ class TestReplaceIncludedLogger:
 
         logger = logging.getLogger("test_replace_abs")
         with caplog.at_level(logging.DEBUG, logger="test_replace_abs"):
-            replace_included(node, old_file, new_file, logger)
+            changed = replace_included(node, old_file, new_file, logger)
 
+        assert changed is True
         assert "new.yaml" in node._yaml_include_path
 
 

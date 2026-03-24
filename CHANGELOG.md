@@ -5,7 +5,44 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-03-23
+## [Unreleased] - 2026-03-25
+
+### Changed
+
+- **`yaml_serializer/serializer.py`**: Replaced the module-level `SerializerContext`
+  singleton and free functions (`load_yaml_root`, `save_yaml_root`, `rename_yaml_file`,
+  `propagate_dirty`) with an explicit `SerializerSession` class. Each session owns its
+  own YAML instance, loading stack, dirty tracking, and file-root registry — eliminating
+  shared mutable state and making concurrent use of multiple sessions safe
+  ([`d8394b9`]).
+
+- **`yaml_serializer/__init__.py`**: Public API now exports `SerializerSession` instead
+  of the removed free functions ([`ff0aaf1`]).
+
+- **`yaml_serializer/utils.py`**, **`yaml_serializer/safe_constructor.py`**,
+  **`yaml_serializer/merge.py`**: All remaining Russian docstrings and comments
+  translated to English ([`141eef5`]).
+
+### Added
+
+- **`protocollab/loader/__init__.py`**: Added `get_global_loader()` to expose the
+  module-level `ProtocolLoader` for inspection and cache management, and
+  `configure_global(max_cache_size)` to reconfigure the shared cache at runtime.
+  Module docstring expanded with hybrid-design guide, usage examples, and thread-safety
+  warning ([`ffeae03`]).
+
+- **`protocollab/loader/cache/memory_cache.py`**: `MemoryCache` now supports a
+  `max_size` bound with LRU eviction and per-instance cache statistics (`hits`,
+  `misses`, `evictions`) ([`ffeae03`]).
+
+- **`yaml_serializer/tests/test_session.py`**: New test module covering
+  `SerializerSession` lifecycle, `clear()`/`reset()`, config override,
+  `propagate_dirty()` with multiple parents, rename across directories, and
+  thread-safety scenarios ([`6035012`]).
+
+- **`docs/adr/001_Replace_Loader_Global_State.md`**: ADR 001 — documents the decision
+  to replace global state with explicit sessions in `yaml_serializer` and the
+  hybrid-design pattern for `protocollab.loader` ([`52b0e22`]).
 
 ### Security
 

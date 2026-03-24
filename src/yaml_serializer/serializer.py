@@ -293,6 +293,11 @@ class SerializerSession:
         logger.info("Renaming YAML file from %s to %s", old_abs, new_abs)
         if old_abs not in self._file_roots:
             raise ValueError(f"File {old_abs} not loaded")
+        affected_root_paths = {
+            fpath
+            for fpath, froot in self._file_roots.items()
+            if fpath != old_abs and mark_includes(froot, old_abs, lambda _node: None)
+        }
         Path(old_abs).rename(new_abs)
         logger.debug("Physical rename done")
         old_hash_file = utils.hash_file_path(old_abs)
@@ -313,7 +318,7 @@ class SerializerSession:
             if fpath == new_abs:
                 continue
             changed = replace_included(froot, old_abs, new_abs, logger)
-            if changed and hasattr(froot, "_yaml_dirty"):
+            if (fpath in affected_root_paths or changed) and hasattr(froot, "_yaml_dirty"):
                 mark_dirty(froot)
                 logger.debug("Marked root of file %s as dirty after reference update", fpath)
         if old_abs == self._root_filename:

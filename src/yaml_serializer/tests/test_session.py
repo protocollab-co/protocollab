@@ -347,6 +347,31 @@ class TestSerializerSessionRename:
         assert root._yaml_dirty
         assert not child_b_root._yaml_dirty
 
+    def test_rename_shared_include_marks_all_parent_files_dirty(self, temp_dir):
+        child = os.path.join(temp_dir, "child.yaml")
+        renamed_dir = os.path.join(temp_dir, "renamed")
+        renamed_child = os.path.join(renamed_dir, "child.yaml")
+        parent1 = os.path.join(temp_dir, "parent1.yaml")
+        parent2 = os.path.join(temp_dir, "parent2.yaml")
+        root = os.path.join(temp_dir, "root.yaml")
+
+        os.makedirs(renamed_dir, exist_ok=True)
+        write(child, "x: 1\n")
+        write(parent1, "child: !include child.yaml\n")
+        write(parent2, "child: !include child.yaml\n")
+        write(root, "p1: !include parent1.yaml\np2: !include parent2.yaml\n")
+
+        s = SerializerSession()
+        s.load(root)
+
+        s.rename(child, renamed_child)
+        s.save(only_if_changed=True)
+
+        parent1_text = Path(parent1).read_text(encoding="utf-8")
+        parent2_text = Path(parent2).read_text(encoding="utf-8")
+        assert "renamed/child.yaml" in parent1_text
+        assert "renamed/child.yaml" in parent2_text
+
 
 # ---------------------------------------------------------------------------
 # propagate_dirty()

@@ -15,7 +15,7 @@
 - 🔄 **Отслеживание изменений** — автоматическое помечание dirty и обнаружение изменений на основе хэшей для эффективного сохранения
 - 🧩 **Простая модификация** — вспомогательные функции для изменения YAML-структур с поддержкой родительских связей и dirty-флагов
 - 🔀 **Умное переименование** — автоматическое обновление путей `!include` при переименовании файлов
-- ✅ **Высокое покрытие тестами** (95%) — проверено в бою и готово к продакшену
+- ✅ **Высокое покрытие тестами** (100%) — проверено в бою и готово к продакшену
 
 ---
 
@@ -36,7 +36,7 @@ pip install git+https://github.com/yourname/protocollab.git
 После установки импортируйте так:
 
 ```python
-from protocollab.yaml_serializer import load_protocol, save_protocol
+from yaml_serializer import SerializerSession
 ```
 
 > **Примечание:** требуется Python 3.8 или новее
@@ -46,17 +46,20 @@ from protocollab.yaml_serializer import load_protocol, save_protocol
 ## 🚀 Быстрый старт
 
 ```python
-from protocollab.yaml_serializer import load_protocol, save_protocol
-from protocollab.yaml_serializer.modify import add_to_dict
+from yaml_serializer import SerializerSession
+from yaml_serializer.modify import add_to_dict
+
+# Создание сессии (инкапсулирует всё состояние — потокобезопасная и удобная в тестах)
+session = SerializerSession()
 
 # Загрузка YAML-файла (все !include автоматически разрешаются)
-data = load_protocol("path/to/file.yaml")
+data = session.load("path/to/file.yaml")
 
 # Модификация структуры (родительские связи и dirty-флаги обновляются автоматически)
 add_to_dict(data, "new_key", "new_value")
 
 # Сохранение только изменённых файлов с сохранением комментариев и форматирования
-save_protocol()
+session.save()
 ```
 
 ---
@@ -228,21 +231,21 @@ save_protocol()
 
 Модуль имеет обширный набор тестов, покрывающий все критические пути.
 
-- **Всего тестов**: 94  
-- **Покрытие кода**: 95%  
-- **Покрыто строк**: 1324 / 1389
-- **Структура**: 10 тематических тестовых модулей + общие fixtures и стаб валидации
+- **Всего тестов**: 307  
+- **Покрытие кода**: 100%  
+- **Покрыто строк**: 100%
+- **Структура**: 11 тематических тестовых модулей + `conftest.py`
 
 Запуск тестов локально:
 
 ```bash
-pytest tests/ --cov=protocollab.yaml_serializer
+pytest src/yaml_serializer/tests/ --cov=yaml_serializer
 ```
 
 Для более детального вывода:
 
 ```bash
-pytest tests/ -v --cov=protocollab.yaml_serializer --cov-report=term-missing
+pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ```
 
 ---
@@ -266,7 +269,7 @@ pip install -r requirements.txt
 pip install -e .
 
 # Запустить тесты
-pytest yaml_serializer/tests/
+pytest src/yaml_serializer/tests/
 ```
 
 ---

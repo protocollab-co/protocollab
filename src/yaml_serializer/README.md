@@ -234,7 +234,7 @@ These measures make `yaml_serializer` suitable for processing untrusted YAML fil
 
 The module has an extensive test suite covering all critical paths.
 
-- **Total tests**: 307  
+- **Total tests**: 326  
 - **Code coverage**: 100% (yaml_serializer)  
 - **Structure**: 13 thematic test modules + `conftest.py` (shared fixtures)
 

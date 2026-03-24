@@ -2,10 +2,8 @@
 Shared fixtures and configuration for yaml_serializer tests.
 """
 
-import os
 import pytest
 import tempfile
-from pathlib import Path
 
 
 @pytest.fixture

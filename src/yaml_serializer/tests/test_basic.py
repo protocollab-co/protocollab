@@ -1,7 +1,6 @@
 ﻿import os
 from ruamel.yaml.comments import CommentedSeq
 from yaml_serializer import utils
-import pytest
 from pathlib import Path
 from yaml_serializer import (
     SerializerSession,

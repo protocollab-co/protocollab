@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from protocollab.expression import (
-    ASTNode,
     Attribute,
     BinOp,
     ExpressionEvalError,
@@ -14,7 +13,6 @@ from protocollab.expression import (
     Name,
     Subscript,
     Ternary,
-    Token,
     TokenKind,
     UnaryOp,
     evaluate,

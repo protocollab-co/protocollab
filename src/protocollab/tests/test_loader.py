@@ -1,7 +1,7 @@
 """Tests for protocollab.loader — load_protocol() and ProtocolLoader."""
 
 import pytest
-from unittest.mock import patch, call
+from unittest.mock import patch
 
 from protocollab.exceptions import FileLoadError, YAMLParseError
 from protocollab.loader import (

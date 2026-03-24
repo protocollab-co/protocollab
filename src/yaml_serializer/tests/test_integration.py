@@ -7,7 +7,6 @@ import pytest
 from pathlib import Path
 from yaml_serializer import (
     SerializerSession,
-    new_commented_map,
     add_to_dict,
     add_to_list,
 )

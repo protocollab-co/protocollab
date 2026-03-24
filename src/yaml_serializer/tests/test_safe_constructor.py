@@ -1,5 +1,10 @@
-from ruamel.yaml.nodes import ScalarNode, MappingNode
-from yaml_serializer.safe_constructor import RestrictedSafeConstructor
+import io
+import logging
+
+import pytest
+from ruamel.yaml.error import YAMLError
+from ruamel.yaml.nodes import ScalarNode
+from yaml_serializer.safe_constructor import RestrictedSafeConstructor, create_safe_yaml_instance
 
 
 def test_remove_dangerous_constructors():
@@ -25,10 +30,6 @@ def test_construct_object_blocks_unknown_tag():
 
 
 def test_construct_mapping_and_sequence_depth():
-    import io
-    from yaml_serializer.safe_constructor import create_safe_yaml_instance
-    import logging
-
     logger = logging.getLogger("test_safe_constructor")
     # Verify depth for mapping via YAML string parsing
     yaml = create_safe_yaml_instance(max_depth=1)
@@ -50,10 +51,6 @@ def test_construct_mapping_and_sequence_depth():
 
 
 # Tests for RestrictedSafeConstructor and create_safe_yaml_instance
-import io
-import pytest
-from ruamel.yaml.error import YAMLError
-from yaml_serializer.safe_constructor import create_safe_yaml_instance
 
 
 def test_load_simple_yaml():

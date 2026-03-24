@@ -12,7 +12,7 @@ import pytest
 from pathlib import Path
 
 from yaml_serializer.serializer import SerializerSession
-from yaml_serializer.modify import add_to_dict, mark_dirty
+from yaml_serializer.modify import add_to_dict
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
@@ -251,7 +251,6 @@ class TestSerializerSessionRename:
         s = SerializerSession()
         s.load(main)
         s.rename(child_old, child_new)
-        abs_main = str(Path(main).resolve())
         abs_new_child = str(Path(child_new).resolve())
         assert abs_new_child in s._file_roots
         # !include path attribute updated on the included node
@@ -310,7 +309,8 @@ class TestSerializerSessionClear:
 
     def test_clear_releases_data_references(self, temp_dir):
         """clear() removes all strong references held by the session."""
-        import weakref, gc
+        import weakref
+        import gc
 
         path = os.path.join(temp_dir, "main.yaml")
         write(path, "key: value\n")

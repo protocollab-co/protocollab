@@ -3,7 +3,6 @@
 import ast
 import struct
 import importlib.util
-import sys
 import pytest
 from pathlib import Path
 from click.testing import CliRunner

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
 
 import pytest
 
@@ -18,7 +17,7 @@ from protocollab.validator import (
 )
 from protocollab.validator.base_validator import BaseValidator
 from protocollab.validator.expression_validator import ExpressionValidator
-from protocollab.validator.models import ValidationError, ValidationResult
+from protocollab.validator.models import ValidationResult
 from protocollab.validator.semantic_validator import SemanticValidator
 
 EXAMPLES = Path(__file__).parents[3] / "examples"

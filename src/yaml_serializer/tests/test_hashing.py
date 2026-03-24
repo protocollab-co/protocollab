@@ -2,7 +2,6 @@
 Tests for canonical representation and hashing utilities.
 """
 
-import pytest
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from yaml_serializer.utils import canonical_repr, compute_hash
 

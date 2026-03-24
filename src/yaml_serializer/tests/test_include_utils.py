@@ -2,7 +2,6 @@
 Tests for mark_includes and replace_included from include.py
 """
 
-import pytest
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from yaml_serializer.utils import mark_includes, replace_included
 

@@ -4,9 +4,7 @@ Tests for core load/save functionality.
 
 import os
 import pytest
-from pathlib import Path
 from yaml_serializer import (
-    new_commented_map,
     add_to_dict,
 )
 from yaml_serializer.serializer import SerializerSession

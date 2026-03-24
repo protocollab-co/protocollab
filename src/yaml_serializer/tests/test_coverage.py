@@ -7,10 +7,8 @@ import io
 import logging
 import pytest
 import ruamel.yaml
-from pathlib import Path
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
-from yaml_serializer import utils
 from yaml_serializer.utils import (
     mark_dirty,
     mark_includes,
@@ -18,7 +16,7 @@ from yaml_serializer.utils import (
     update_file_attr,
 )
 from yaml_serializer.modify import add_to_dict, add_to_list
-from yaml_serializer.safe_constructor import create_safe_yaml_instance, RestrictedSafeConstructor
+from yaml_serializer.safe_constructor import create_safe_yaml_instance
 from yaml_serializer.serializer import (
     _make_include_constructor,
     INCLUDE_TAG,

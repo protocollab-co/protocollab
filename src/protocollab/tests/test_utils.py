@@ -2,7 +2,6 @@
 
 import json
 import pytest
-from pathlib import Path
 
 from protocollab.utils.file_utils import resolve_path, check_file_exists
 from protocollab.utils.yaml_utils import to_json, to_yaml, print_data

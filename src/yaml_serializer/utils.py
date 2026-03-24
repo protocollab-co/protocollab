@@ -176,9 +176,11 @@ def mark_includes(node, target_file, mark_dirty_func, logger=None):
 def replace_included(node, old_file, new_file, logger=None):
     from pathlib import Path
 
+    changed = False
     if isinstance(node, (CommentedMap, CommentedSeq)):
         if hasattr(node, "_yaml_file") and node._yaml_file == old_file:
             node._yaml_file = new_file
+            changed = True
             if logger:
                 logger.debug("Updated _yaml_file from %s to %s", old_file, new_file)
         if hasattr(node, "_yaml_include_path") and hasattr(node, "_yaml_parent_file"):
@@ -187,18 +189,27 @@ def replace_included(node, old_file, new_file, logger=None):
                 new_path = Path(new_file)
                 try:
                     rel_path = new_path.relative_to(parent_dir)
-                    node._yaml_include_path = str(rel_path).replace("\\", "/")
+                    new_include_path = str(rel_path).replace("\\", "/")
+                    if node._yaml_include_path != new_include_path:
+                        node._yaml_include_path = new_include_path
+                        changed = True
                     if logger:
                         logger.debug("Updated _yaml_include_path to %s", node._yaml_include_path)
                 except ValueError:
-                    node._yaml_include_path = str(new_path).replace("\\", "/")
+                    new_include_path = str(new_path).replace("\\", "/")
+                    if node._yaml_include_path != new_include_path:
+                        node._yaml_include_path = new_include_path
+                        changed = True
                     if logger:
                         logger.debug(
                             "Updated _yaml_include_path to absolute: %s", node._yaml_include_path
                         )
         if isinstance(node, CommentedMap):
             for v in node.values():
-                replace_included(v, old_file, new_file, logger)
+                if replace_included(v, old_file, new_file, logger):
+                    changed = True
         elif isinstance(node, CommentedSeq):
             for item in node:
-                replace_included(item, old_file, new_file, logger)
+                if replace_included(item, old_file, new_file, logger):
+                    changed = True
+    return changed

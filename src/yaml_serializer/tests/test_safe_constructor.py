@@ -1,5 +1,4 @@
 import io
-import logging
 
 import pytest
 from ruamel.yaml.error import YAMLError
@@ -30,24 +29,14 @@ def test_construct_object_blocks_unknown_tag():
 
 
 def test_construct_mapping_and_sequence_depth():
-    logger = logging.getLogger("test_safe_constructor")
-    # Verify depth for mapping via YAML string parsing
     yaml = create_safe_yaml_instance(max_depth=1)
     deep_mapping = "a:\n  b:\n    c: 1"
-    try:
+    with pytest.raises(ValueError, match="Exceeded maximum nesting depth of 1"):
         yaml.load(io.StringIO(deep_mapping))
-    except Exception as e:
-        logger.warning(f"[TEST] deep_mapping exception: {type(e)} {e}")
-    else:
-        logger.warning("[TEST] deep_mapping: no exception raised")
-    # Verify depth for sequence via YAML string parsing
+
     deep_seq = "-\n  -\n    - 1"
-    try:
+    with pytest.raises(ValueError, match="Exceeded maximum nesting depth of 1"):
         yaml.load(io.StringIO(deep_seq))
-    except Exception as e:
-        logger.warning(f"[TEST] deep_seq exception: {type(e)} {e}")
-    else:
-        logger.warning("[TEST] deep_seq: no exception raised")
 
 
 # Tests for RestrictedSafeConstructor and create_safe_yaml_instance

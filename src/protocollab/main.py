@@ -10,6 +10,7 @@ Usage examples::
 """
 
 import sys
+from typing import Any
 
 import click
 
@@ -191,7 +192,7 @@ def generate_cmd() -> None:
 cli.add_command(generate_cmd, name="generate")
 
 
-def _load_generate_spec(file: str):
+def _load_generate_spec(file: str) -> dict[str, Any]:
     """Load and return a protocol specification for generation commands."""
     try:
         check_file_exists(file)
@@ -200,8 +201,6 @@ def _load_generate_spec(file: str):
         sys.exit(1)
 
     try:
-        from protocollab.loader import load_protocol
-
         return load_protocol(file)
     except FileLoadError as exc:
         click.echo(f"Error: {exc}", err=True)

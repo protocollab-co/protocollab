@@ -60,7 +60,12 @@ class MockServer:
             try:
                 request = {{ protocol_class_name }}.parse(data)
                 response = self.handler(request)
-                self.send_queue.put(response.serialize())
+                try:
+                    self.send_queue.put(response.serialize(), timeout=0.5)
+                except queue.Full:
+                    LOGGER.warning(
+                        "MockServer send_queue is full; dropping response after 0.5s wait"
+                    )
             except Exception as exc:
                 self.last_error = exc
                 LOGGER.exception("MockServer failed to process a message")

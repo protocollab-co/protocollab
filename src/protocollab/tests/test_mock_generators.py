@@ -304,3 +304,45 @@ def test_mock_server_handles_exceptions(ping_spec, tmp_path, monkeypatch):
         assert isinstance(last_error, ValueError)
     finally:
         server.stop(timeout=2.0)
+
+
+def test_mock_server_drops_response_when_send_queue_is_full(ping_spec, tmp_path, monkeypatch):
+    """Test that a full send queue does not block the worker thread forever."""
+    PythonGenerator().generate(ping_spec, tmp_path)
+
+    generate_mock_files(ping_spec, tmp_path, MockServerGenerator)
+
+    ping_protocol = _import_generated_module(
+        tmp_path, "ping_protocol_parser", monkeypatch
+    ).PingProtocol
+    mock_server = _import_generated_module(
+        tmp_path, "ping_protocol_mock_server", monkeypatch
+    ).MockServer
+
+    client_to_server = queue.Queue()
+    server_to_client = queue.Queue(maxsize=1)
+    server_to_client.put(b"already-full")
+
+    handled = threading.Event()
+
+    def handler(msg):
+        handled.set()
+        return ping_protocol(
+            type_id=msg.type_id,
+            sequence_number=msg.sequence_number,
+            payload_size=msg.payload_size,
+        )
+
+    server = mock_server(client_to_server, server_to_client, handler=handler)
+    server.start()
+
+    try:
+        client_to_server.put(
+            ping_protocol(type_id=0, sequence_number=7, payload_size=8).serialize()
+        )
+
+        assert handled.wait(timeout=2.0)
+        assert server.is_alive()
+        assert server_to_client.qsize() == 1
+    finally:
+        server.stop(timeout=2.0)

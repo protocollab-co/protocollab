@@ -217,7 +217,7 @@ def _generate_targets(spec, targets: tuple[str, ...], output: str) -> None:
         paths = []
         for target in targets:
             paths.extend(generate(spec, target=target, output_dir=output))
-    except GeneratorError as exc:
+    except (GeneratorError, ValueError) as exc:
         click.echo(f"Generation error: {exc}", err=True)
         sys.exit(4)
 

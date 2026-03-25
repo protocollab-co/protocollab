@@ -184,7 +184,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         return
 
     if command == "run":
-        if args.generate:
+        if getattr(args, "generate", False):
             generate_demo_files()
         run_demo()
         return

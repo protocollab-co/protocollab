@@ -160,7 +160,7 @@ Three single-entry-point demos are included for the same `examples/simple/ping_p
 
 **Working transport demos:** `demo/l2` covers live Scapy-based Layer 2 traffic, and `demo/l3` covers localhost TCP traffic plus Wireshark decoding.
 
-**Security-first YAML loader**: The `yaml_serializer` module is hardened against common attacks: protection against Billion Laughs (XML entity expansion), path traversal in `!include`, recursion depth limits, and file size restrictions. This ensures safe handling of untrusted specifications.
+**Security-first YAML loader**: The `yaml_serializer` module is hardened against common attacks: protection against YAML bombs (Billion Laughs-style alias/anchor expansion), path traversal in `!include`, recursion depth limits, and file size restrictions. This ensures safe handling of untrusted specifications.
 
 ### Phase 2 (in progress)
 - Type system: primitive and user-defined types (`protocollab.core`)

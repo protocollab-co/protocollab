@@ -116,7 +116,7 @@ python demo/mock/demo.py check
 Команда `check` последовательно выполняет три шага:
 
 1. Генерирует свежий Python-парсер, `MockClient` и `MockServer` в `demo/mock/generated`
-2. Запускает queue-based demo
+2. Запускает queue-based демо
 3. Запускает набор тестов для демо
 
 ### Примечания

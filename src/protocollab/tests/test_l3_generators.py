@@ -1,4 +1,5 @@
 import importlib
+import inspect
 import socket
 import sys
 import time
@@ -71,6 +72,7 @@ def test_l3_server_generation(ping_spec, tmp_path, monkeypatch):
 
     module = _import_generated_module(tmp_path, "ping_protocol_l3_server", monkeypatch)
     assert hasattr(module, "L3SocketServer")
+    assert ".listen()" in inspect.getsource(module.L3SocketServer.start)
 
 
 def test_l3_server_stop_before_start(ping_spec, tmp_path, monkeypatch):
@@ -85,6 +87,19 @@ def test_l3_server_stop_before_start(ping_spec, tmp_path, monkeypatch):
     server.stop(timeout=0.1)
 
     assert not server.is_alive()
+
+
+def test_l3_server_run_requires_initialized_socket(ping_spec, tmp_path, monkeypatch):
+    PythonGenerator().generate(ping_spec, tmp_path)
+    generate_l3_files(ping_spec, tmp_path, L3ServerGenerator)
+
+    l3_server = _import_generated_module(
+        tmp_path, "ping_protocol_l3_server", monkeypatch
+    ).L3SocketServer
+    server = l3_server("127.0.0.1", 0)
+
+    with pytest.raises(RuntimeError, match=r"called before start\(\)"):
+        server._run()
 
 
 def test_l3_client_server_round_trip(ping_spec, tmp_path, monkeypatch):

@@ -38,7 +38,7 @@ class L3SocketServer:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server_socket.bind((self.host, self.port))
-        self._server_socket.listen(1)
+        self._server_socket.listen()
         self._server_socket.settimeout(0.5)
         self.host, self.port = self._server_socket.getsockname()
         self._thread.start()
@@ -71,7 +71,10 @@ class L3SocketServer:
         return b"".join(chunks)
 
     def _run(self) -> None:
-        assert self._server_socket is not None
+        if self._server_socket is None:
+            raise RuntimeError(
+                "L3SocketServer._run() called before start() initialized the server socket"
+            )
         while not self._stop_event.is_set():
             try:
                 conn, _ = self._server_socket.accept()

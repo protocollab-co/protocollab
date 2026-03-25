@@ -38,7 +38,7 @@ def _clean_generated_dir() -> None:
             shutil.rmtree(path)
 
 
-def generate_demo_files(python_executable: str | None = None) -> None:
+def generate_demo_files() -> None:
     """Generate parser, L3 socket runtime, and Wireshark artefacts."""
     _clean_generated_dir()
     spec = load_protocol(str(SPEC_PATH))

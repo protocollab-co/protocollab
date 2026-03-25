@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List
 
 import pytest
 
@@ -18,7 +17,7 @@ from protocollab.validator import (
 )
 from protocollab.validator.base_validator import BaseValidator
 from protocollab.validator.expression_validator import ExpressionValidator
-from protocollab.validator.models import ValidationError, ValidationResult
+from protocollab.validator.models import ValidationResult
 from protocollab.validator.semantic_validator import SemanticValidator
 
 EXAMPLES = Path(__file__).parents[3] / "examples"
@@ -205,9 +204,7 @@ class TestSemanticValidator:
     def test_unknown_type_in_types_section(self) -> None:
         data = {
             "meta": {"id": "p", "endian": "le"},
-            "types": {
-                "hdr": {"seq": [{"id": "x", "type": "ghost_type"}]}
-            },
+            "types": {"hdr": {"seq": [{"id": "x", "type": "ghost_type"}]}},
         }
         spec = parse_spec(data)
         v = SemanticValidator()

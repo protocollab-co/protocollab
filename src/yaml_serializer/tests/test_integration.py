@@ -1,241 +1,239 @@
 """
-Интеграционные тесты - сложные сценарии использования.
+Integration tests — complex multi-file workflows.
 """
 
 import os
-import time
 import pytest
 from pathlib import Path
 from yaml_serializer import (
-    load_yaml_root,
-    save_yaml_root,
-    new_commented_map,
+    SerializerSession,
     add_to_dict,
     add_to_list,
-    rename_yaml_file,
-    propagate_dirty,
 )
-import yaml_serializer.serializer as core
 
 
 class TestComplexProtocols:
-    """Тесты для сложных протоколов с множественными включениями."""
-    
+    """Tests for protocols with multiple nested includes."""
+
     def test_complex_nested_includes(self, temp_dir, create_yaml_file):
-        """Сложные вложенные включения (3 уровня)."""
-        level3_yaml = os.path.join(temp_dir, 'level3.yaml')
-        level2_yaml = os.path.join(temp_dir, 'level2.yaml')
-        level1_yaml = os.path.join(temp_dir, 'level1.yaml')
-        
-        create_yaml_file(level3_yaml, 'value: 3\n')
-        create_yaml_file(level2_yaml, 'level3: !include level3.yaml\nvalue: 2\n')
-        create_yaml_file(level1_yaml, 'level2: !include level2.yaml\nvalue: 1\n')
-        
-        data = load_yaml_root(level1_yaml)
-        assert data['value'] == 1
-        assert data['level2']['value'] == 2
-        assert data['level2']['level3']['value'] == 3
+        """Three levels of nested includes resolve to the correct values."""
+        level3_yaml = os.path.join(temp_dir, "level3.yaml")
+        level2_yaml = os.path.join(temp_dir, "level2.yaml")
+        level1_yaml = os.path.join(temp_dir, "level1.yaml")
+
+        create_yaml_file(level3_yaml, "value: 3\n")
+        create_yaml_file(level2_yaml, "level3: !include level3.yaml\nvalue: 2\n")
+        create_yaml_file(level1_yaml, "level2: !include level2.yaml\nvalue: 1\n")
+
+        s = SerializerSession()
+        data = s.load(level1_yaml)
+        assert data["value"] == 1
+        assert data["level2"]["value"] == 2
+        assert data["level2"]["level3"]["value"] == 3
 
 
 class TestModificationWorkflows:
-    """Тесты рабочих процессов модификации."""
-    
+    """Tests for modify-then-save workflows."""
+
     def test_modify_nested_included_file(self, temp_dir, create_yaml_file):
-        """Модификация вложенного включённого файла."""
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        inc_yaml = os.path.join(temp_dir, 'inc.yaml')
-        
-        create_yaml_file(inc_yaml, 'items:\n  - first\n')
-        create_yaml_file(main_yaml, 'data: !include inc.yaml\n')
-        
-        data = load_yaml_root(main_yaml)
-        
-        # Добавляем элемент в список включённого файла
-        add_to_list(data['data']['items'], 'second')
-        
-        save_yaml_root()
-        
-        # Перезагружаем и проверяем
-        data2 = load_yaml_root(main_yaml)
-        assert len(data2['data']['items']) == 2
-        assert data2['data']['items'][1] == 'second'
-    
+        """Modifying a nested included file and saving round-trips correctly."""
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        inc_yaml = os.path.join(temp_dir, "inc.yaml")
+
+        create_yaml_file(inc_yaml, "items:\n  - first\n")
+        create_yaml_file(main_yaml, "data: !include inc.yaml\n")
+
+        s = SerializerSession()
+        data = s.load(main_yaml)
+
+        # Add an element to the list in the included file
+        add_to_list(data["data"]["items"], "second")
+
+        s.save()
+
+        # Reload and verify
+        data2 = s.load(main_yaml)
+        assert len(data2["data"]["items"]) == 2
+        assert data2["data"]["items"][1] == "second"
+
     def test_save_only_changed_files_multiple_includes(self, temp_dir, create_yaml_file):
-        """При изменении одного файла другие не пересохраняются."""
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        inc1_yaml = os.path.join(temp_dir, 'inc1.yaml')
-        inc2_yaml = os.path.join(temp_dir, 'inc2.yaml')
-        
-        create_yaml_file(inc1_yaml, 'value: 1\n')
-        create_yaml_file(inc2_yaml, 'value: 2\n')
-        create_yaml_file(main_yaml, 'inc1: !include inc1.yaml\ninc2: !include inc2.yaml\n')
-        
-        data = load_yaml_root(main_yaml)
-        save_yaml_root()
-        
-        mtime_inc2_before = os.path.getmtime(inc2_yaml)
-        
-        time.sleep(0.2)
-        
-        # Изменяем только inc1
-        data['inc1']['value'] = 999
-        save_yaml_root()
-        
-        mtime_inc2_after = os.path.getmtime(inc2_yaml)
-        
-        # inc2 не должен измениться
-        assert mtime_inc2_after == mtime_inc2_before
+        """When only one included file is modified, other included files are not rewritten."""
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        inc1_yaml = os.path.join(temp_dir, "inc1.yaml")
+        inc2_yaml = os.path.join(temp_dir, "inc2.yaml")
+
+        create_yaml_file(inc1_yaml, "value: 1\n")
+        create_yaml_file(inc2_yaml, "value: 2\n")
+        create_yaml_file(main_yaml, "inc1: !include inc1.yaml\ninc2: !include inc2.yaml\n")
+
+        s = SerializerSession()
+        data = s.load(main_yaml)
+        s.save()
+
+        with open(inc2_yaml, "r", encoding="utf-8") as f:
+            inc2_content_before = f.read()
+
+        # Modify only inc1
+        data["inc1"]["value"] = 999
+        s.save()
+
+        with open(inc2_yaml, "r", encoding="utf-8") as f:
+            inc2_content_after = f.read()
+
+        # inc2 must not change
+        assert inc2_content_after == inc2_content_before
 
 
 class TestFileRenaming:
-    """Тесты переименования файлов."""
-    
+    """Tests for file renaming in multi-file sessions."""
+
     def test_rename_main_file(self, temp_dir, create_yaml_file):
-        """Переименование главного файла."""
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        new_main = os.path.join(temp_dir, 'renamed_main.yaml')
-        create_yaml_file(main_yaml, 'key: value\n')
-        
-        data = load_yaml_root(main_yaml)
+        """Renaming the main file updates internal state correctly."""
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        new_main = os.path.join(temp_dir, "renamed_main.yaml")
+        create_yaml_file(main_yaml, "key: value\n")
+
+        s = SerializerSession()
+        data = s.load(main_yaml)
         assert data._yaml_file == str(Path(main_yaml).resolve())
-        
-        rename_yaml_file(main_yaml, new_main)
-        
+
+        s.rename(main_yaml, new_main)
+
         assert data._yaml_file == str(Path(new_main).resolve())
-        assert core._CTX._root_filename == str(Path(new_main).resolve())
+        assert s._root_filename == str(Path(new_main).resolve())
         assert os.path.exists(new_main)
         assert not os.path.exists(main_yaml)
-    
+
     def test_rename_included_file(self, temp_dir, create_yaml_file):
-        """Переименование включённого файла обновляет !include теги."""
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        inc_yaml = os.path.join(temp_dir, 'inc.yaml')
-        new_inc = os.path.join(temp_dir, 'renamed_inc.yaml')
-        
-        create_yaml_file(inc_yaml, 'data: 42\n')
-        create_yaml_file(main_yaml, 'include: !include inc.yaml\n')
-        
-        _ = load_yaml_root(main_yaml)
-        rename_yaml_file(inc_yaml, new_inc)
-        
-        save_yaml_root()
-        
-        with open(main_yaml, 'r') as f:
+        """Renaming an included file updates the !include tags in the parent."""
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        inc_yaml = os.path.join(temp_dir, "inc.yaml")
+        new_inc = os.path.join(temp_dir, "renamed_inc.yaml")
+
+        create_yaml_file(inc_yaml, "data: 42\n")
+        create_yaml_file(main_yaml, "include: !include inc.yaml\n")
+
+        s = SerializerSession()
+        _ = s.load(main_yaml)
+        s.rename(inc_yaml, new_inc)
+
+        s.save()
+
+        with open(main_yaml, "r") as f:
             content = f.read()
-        
-        assert '!include renamed_inc.yaml' in content
-    
+
+        assert "!include renamed_inc.yaml" in content
+
     def test_rename_with_existing_hash(self, temp_dir, create_yaml_file):
-        """Переименование файла с существующим .hash файлом."""
+        """Renaming a file that has an existing .hash file also renames the hash file."""
         from yaml_serializer import utils
-        
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        new_main = os.path.join(temp_dir, 'new_main.yaml')
-        create_yaml_file(main_yaml, 'data: 1\n')
-        
-        _ = load_yaml_root(main_yaml)
-        save_yaml_root()
-        
-        assert os.path.exists(main_yaml + '.hash')
+
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        new_main = os.path.join(temp_dir, "new_main.yaml")
+        create_yaml_file(main_yaml, "data: 1\n")
+
+        s = SerializerSession()
+        _ = s.load(main_yaml)
+        s.save()
+
+        assert os.path.exists(main_yaml + ".hash")
         old_hash = utils.load_hash_from_file(main_yaml)
-        
-        rename_yaml_file(main_yaml, new_main)
-        
-        assert not os.path.exists(main_yaml + '.hash')
-        assert os.path.exists(new_main + '.hash')
+
+        s.rename(main_yaml, new_main)
+
+        assert not os.path.exists(main_yaml + ".hash")
+        assert os.path.exists(new_main + ".hash")
         new_hash = utils.load_hash_from_file(new_main)
         assert new_hash == old_hash
 
 
 class TestPropagateDirty:
-    """Тесты для распространения dirty флага."""
-    
+    """Tests for dirty-flag propagation across files."""
+
     def test_propagate_dirty_marks_parent(self, temp_dir, create_yaml_file):
-        """propagate_dirty помечает родительские файлы."""
-        main_yaml = os.path.join(temp_dir, 'main.yaml')
-        inc_yaml = os.path.join(temp_dir, 'inc.yaml')
-        
-        create_yaml_file(inc_yaml, 'value: 42\n')
-        create_yaml_file(main_yaml, 'inc: !include inc.yaml\n')
-        
-        data = load_yaml_root(main_yaml)
-        save_yaml_root()
-        
-        # Модифицируем включённый файл
-        inc_node = data['inc']
-        add_to_dict(inc_node, 'new_field', 'test')
-        
-        # Главный файл пока не грязный
+        """propagate_dirty marks parent files referencing the changed file."""
+        main_yaml = os.path.join(temp_dir, "main.yaml")
+        inc_yaml = os.path.join(temp_dir, "inc.yaml")
+
+        create_yaml_file(inc_yaml, "value: 42\n")
+        create_yaml_file(main_yaml, "inc: !include inc.yaml\n")
+
+        s = SerializerSession()
+        data = s.load(main_yaml)
+        s.save()
+
+        # Modify the included file
+        inc_node = data["inc"]
+        add_to_dict(inc_node, "new_field", "test")
+
+        # The main file is not dirty yet
         assert data._yaml_dirty is False
-        
-        # Вызываем propagate_dirty
-        propagate_dirty(inc_yaml)
-        
-        # Теперь главный файл должен стать грязным
+
+        # Call propagate_dirty
+        s.propagate_dirty(inc_yaml)
+
+        # Now the main file must become dirty
         assert data._yaml_dirty is True
-        
-        save_yaml_root()
-        
-        # Перезагружаем и проверяем
-        data_reloaded = load_yaml_root(main_yaml)
-        assert data_reloaded['inc']['new_field'] == 'test'
+
+        s.save()
+
+        # Reload and verify
+        data_reloaded = s.load(main_yaml)
+        assert data_reloaded["inc"]["new_field"] == "test"
 
 
 class TestFullWorkflow:
-    """Полный рабочий процесс от начала до конца."""
-    
+    """End-to-end workflow tests."""
+
     def test_create_modify_rename_save_workflow(self, temp_dir, create_yaml_file):
-        """Полный цикл: создание -> модификация -> переименование -> сохранение."""
-        # 1. Создаем файлы
-        main_yaml = os.path.join(temp_dir, 'protocol.yaml')
-        types_yaml = os.path.join(temp_dir, 'types.yaml')
-        
-        create_yaml_file(types_yaml, 'Message:\n  id: u32\n')
-        create_yaml_file(main_yaml, 
-                        'meta:\n'
-                        '  id: my_protocol\n'
-                        'types: !include types.yaml\n')
-        
-        # 2. Загружаем
-        data = load_yaml_root(main_yaml)
-        assert data['types']['Message']['id'] == 'u32'
-        
-        # 3. Модифицируем
-        add_to_dict(data['types']['Message'], 'data', 'str')
-        
-        # 4. Переименовываем types.yaml
-        new_types_yaml = os.path.join(temp_dir, 'message_types.yaml')
-        rename_yaml_file(types_yaml, new_types_yaml)
-        
-        # 5. Сохраняем всё
-        save_yaml_root()
-        
-        # 6. Проверяем результат
-        data2 = load_yaml_root(main_yaml)
-        assert data2['types']['Message']['data'] == 'str'
-        
-        # Проверяем, что путь в !include обновился
-        with open(main_yaml, 'r') as f:
+        """Full cycle: create -> modify -> rename -> save -> reload -> verify."""
+        # 1. Create files
+        main_yaml = os.path.join(temp_dir, "protocol.yaml")
+        types_yaml = os.path.join(temp_dir, "types.yaml")
+
+        create_yaml_file(types_yaml, "Message:\n  id: u32\n")
+        create_yaml_file(main_yaml, "meta:\n" "  id: my_protocol\n" "types: !include types.yaml\n")
+
+        # 2. Load
+        s = SerializerSession()
+        data = s.load(main_yaml)
+        assert data["types"]["Message"]["id"] == "u32"
+
+        # 3. Modify
+        add_to_dict(data["types"]["Message"], "data", "str")
+
+        # 4. Rename types.yaml
+        new_types_yaml = os.path.join(temp_dir, "message_types.yaml")
+        s.rename(types_yaml, new_types_yaml)
+
+        # 5. Save everything
+        s.save()
+
+        # 6. Verify the result
+        data2 = s.load(main_yaml)
+        assert data2["types"]["Message"]["data"] == "str"
+
+        # Verify that the !include path has been updated
+        with open(main_yaml, "r") as f:
             content = f.read()
-        assert '!include message_types.yaml' in content
+        assert "!include message_types.yaml" in content
 
 
 class TestErrorRecovery:
-    """Тесты восстановления после ошибок."""
-    
+    """Tests for error recovery scenarios."""
+
     def test_load_after_failed_load(self, temp_dir, create_yaml_file):
-        """Успешная загрузка после неудачной попытки."""
-        bad_yaml = os.path.join(temp_dir, 'bad.yaml')
-        good_yaml = os.path.join(temp_dir, 'good.yaml')
-        
-        # Создаем файл с циклической ссылкой
-        create_yaml_file(bad_yaml, 'data: !include bad.yaml\n')
-        create_yaml_file(good_yaml, 'data: valid\n')
-        
-        # Первая загрузка должна упасть
+        """A successful load after a failed attempt must work correctly."""
+        bad_yaml = os.path.join(temp_dir, "bad.yaml")
+        good_yaml = os.path.join(temp_dir, "good.yaml")
+
+        # Create a file with a circular reference
+        create_yaml_file(bad_yaml, "data: !include bad.yaml\n")
+        create_yaml_file(good_yaml, "data: valid\n")
+
+        # First load must fail
         with pytest.raises(ValueError):
-            load_yaml_root(bad_yaml)
-        
-        # Вторая загрузка должна работать
-        data = load_yaml_root(good_yaml)
-        assert data['data'] == 'valid'
+            SerializerSession().load(bad_yaml)
+
+        data = SerializerSession().load(good_yaml)
+        assert data["data"] == "valid"

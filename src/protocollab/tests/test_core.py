@@ -26,7 +26,6 @@ from protocollab.core import (
     parse_spec,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -180,9 +179,7 @@ class TestParseSpecErrors:
 
 class TestFieldDefAlias:
     def test_if_expr_alias(self) -> None:
-        field = FieldDef.model_validate(
-            {"id": "checksum", "type": "u4", "if": "has_flag != 0"}
-        )
+        field = FieldDef.model_validate({"id": "checksum", "type": "u4", "if": "has_flag != 0"})
         assert field.if_expr == "has_flag != 0"
 
     def test_if_expr_python_name(self) -> None:
@@ -271,8 +268,10 @@ class TestTypeDef:
 
     def test_typedef_with_fields(self) -> None:
         td = TypeDef(
-            seq=[FieldDef.model_validate({"id": "x", "type": "u1"}),
-                 FieldDef.model_validate({"id": "y", "type": "u2"})],
+            seq=[
+                FieldDef.model_validate({"id": "x", "type": "u1"}),
+                FieldDef.model_validate({"id": "y", "type": "u2"}),
+            ],
             doc="Two bytes",
         )
         assert len(td.seq) == 2
@@ -346,55 +345,45 @@ class TestImportResolverErrors:
         with pytest.raises(FileLoadError):
             resolver.resolve(tmp_path / "nonexistent.yaml")
 
-    def test_cyclic_import_raises(
-        self, resolver: ImportResolver, tmp_path: Path
-    ) -> None:
+    def test_cyclic_import_raises(self, resolver: ImportResolver, tmp_path: Path) -> None:
         # a.yaml imports b.yaml, b.yaml imports a.yaml
         a = tmp_path / "a.yaml"
         b = tmp_path / "b.yaml"
 
         a.write_text(
-            textwrap.dedent(
-                """\
+            textwrap.dedent("""\
                 meta:
                   id: a_proto
                   endian: le
                 imports:
                   - b.yaml
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         b.write_text(
-            textwrap.dedent(
-                """\
+            textwrap.dedent("""\
                 meta:
                   id: b_proto
                   endian: le
                 imports:
                   - a.yaml
-                """
-            ),
+                """),
             encoding="utf-8",
         )
 
         with pytest.raises(CyclicImportError):
             resolver.resolve(a)
 
-    def test_cyclic_self_import_raises(
-        self, resolver: ImportResolver, tmp_path: Path
-    ) -> None:
+    def test_cyclic_self_import_raises(self, resolver: ImportResolver, tmp_path: Path) -> None:
         self_ref = tmp_path / "self.yaml"
         self_ref.write_text(
-            textwrap.dedent(
-                """\
+            textwrap.dedent("""\
                 meta:
                   id: self_ref
                   endian: le
                 imports:
                   - self.yaml
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         with pytest.raises(CyclicImportError):
@@ -405,15 +394,13 @@ class TestImportResolverErrors:
     ) -> None:
         self_ref = tmp_path / "loop.yaml"
         self_ref.write_text(
-            textwrap.dedent(
-                """\
+            textwrap.dedent("""\
                 meta:
                   id: loop
                   endian: le
                 imports:
                   - loop.yaml
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         with pytest.raises(CyclicImportError, match="loop"):
@@ -426,15 +413,13 @@ class TestImportResolverErrors:
 
         self_ref = tmp_path / "x.yaml"
         self_ref.write_text(
-            textwrap.dedent(
-                """\
+            textwrap.dedent("""\
                 meta:
                   id: x
                   endian: le
                 imports:
                   - x.yaml
-                """
-            ),
+                """),
             encoding="utf-8",
         )
         with pytest.raises((CyclicImportError, YAMLParseError)):

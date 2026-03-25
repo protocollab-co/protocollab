@@ -6,7 +6,7 @@
 
 Напишите один `.yaml`-файл → получите Python-парсеры, Wireshark-диссекторы, тестовые наборы и документацию — всё из единого источника правды.
 
-[![Tests](https://img.shields.io/badge/tests-418%20passed-brightgreen)](#текущее-состояние)
+[![Tests](https://img.shields.io/badge/tests-752%20passed-brightgreen)](#текущее-состояние)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#текущее-состояние)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#установка)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
@@ -121,21 +121,21 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 ## Текущее состояние
 
-**Фаза 1 завершена.** Все 418 тестов проходят.
+**Фаза 1 завершена.** Все 752 теста проходят.
 
 | Компонент | Статус | Примечания |
 |---|---|---|
 | `yaml_serializer` | ✅ 100% покрытие | Защищённый YAML-загрузчик: `!include`, лимиты глубины/размера, защита от path traversal и Billion Laughs |
-| `protocollab.loader` | ✅ | `load_protocol()`, `ProtocolLoader`, `MemoryCache` |
+| `protocollab.loader` | ✅ | `load_protocol()`, `get_global_loader()`, `configure_global()`, `ProtocolLoader`, LRU `MemoryCache` |
 | `protocollab.validator` | ✅ | JSON Schema Draft 7, схемы `base` и `strict` |
 | `protocollab.generators` | ✅ | `PythonGenerator` (dataclass), `LuaGenerator` (Wireshark-диссектор), Jinja2 |
 | CLI `protocollab load` | ✅ | `--output-format json\|yaml`, `--no-cache`, флаги безопасности |
 | CLI `protocollab validate` | ✅ | `--strict`, `--schema`, коды выхода 0/1/2/3 |
 | CLI `protocollab generate` | ✅ | `generate python\|wireshark FILE -o DIR`, коды выхода 0/1/2/4 |
 | Примеры | ✅ | `examples/simple/` — ping-протокол, Ethernet-фрейм |
-| Тесты — `yaml_serializer` | ✅ 279 тестов | 100% покрытие |
-| Тесты — `protocollab` | ✅ 139 тестов | loader, cache, utils, CLI, validator, generators |
-| **Всего тестов** | ✅ **418** | Все проходят |
+| Тесты — `yaml_serializer` | ✅ | 100% покрытие |
+| Тесты — `protocollab` | ✅ | loader, cache, utils, CLI, validator, generators |
+| **Набор тестов** | ✅ | Все проходят |
 
 **Защищённый YAML-загрузчик**: модуль `yaml_serializer` защищён от распространённых атак: защита от YAML bomb (экспоненциальное расширение алиасов/якорей YAML), path traversal в `!include`, ограничения глубины рекурсии и размера файлов. Это обеспечивает безопасную обработку недоверенных спецификаций.
 
@@ -159,7 +159,7 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 ```
 src/
 ├── yaml_serializer/          # Защищённый YAML-загрузчик (подмодуль)
-│   ├── serializer.py         # load_yaml_root() — публичная точка входа
+│   ├── serializer.py         # SerializerSession — основной API
 │   ├── safe_constructor.py   # Ограничения безопасности
 │   ├── utils.py              # canonical_repr, is_path_within_root, ...
 │   ├── merge.py              # Слияние деревьев !include
@@ -168,7 +168,7 @@ src/
 └── protocollab/              # Основной пакет
     ├── main.py               # CLI (Click): load | validate | generate
     ├── exceptions.py         # FileLoadError (выход 1), YAMLParseError (выход 2)
-    ├── loader/               # load_protocol() + MemoryCache
+    ├── loader/               # load_protocol(), get_global_loader(), configure_global(), LRU MemoryCache
     ├── validator/            # validate_protocol() + JSON Schema
     │   └── schemas/
     │       ├── base.schema.json      # разрешающая, совместимая с KSY

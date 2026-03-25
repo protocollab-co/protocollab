@@ -37,20 +37,20 @@ class ExpressionEvalError(Exception):
 # Operator dispatch table
 # ---------------------------------------------------------------------------
 _BINOP_TABLE: dict[str, Callable[[Any, Any], Any]] = {
-    "+":   operator.add,
-    "-":   operator.sub,
-    "*":   operator.mul,
-    "/":   operator.truediv,
-    "//":  operator.floordiv,
-    "%":   operator.mod,
-    "==":  operator.eq,
-    "!=":  operator.ne,
-    "<":   operator.lt,
-    ">":   operator.gt,
-    "<=":  operator.le,
-    ">=":  operator.ge,
+    "+": operator.add,
+    "-": operator.sub,
+    "*": operator.mul,
+    "/": operator.truediv,
+    "//": operator.floordiv,
+    "%": operator.mod,
+    "==": operator.eq,
+    "!=": operator.ne,
+    "<": operator.lt,
+    ">": operator.gt,
+    "<=": operator.le,
+    ">=": operator.ge,
     "and": lambda a, b: a and b,
-    "or":  lambda a, b: a or b,
+    "or": lambda a, b: a or b,
 }
 
 
@@ -83,25 +83,19 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
 
         case Name(name=n):
             if n not in context:
-                raise ExpressionEvalError(
-                    f"Undefined field {n!r}. Available: {sorted(context)}"
-                )
+                raise ExpressionEvalError(f"Undefined field {n!r}. Available: {sorted(context)}")
             return context[n]
 
         case Attribute(obj=obj_node, attr=attr):
             obj_val = evaluate(obj_node, context)
             if isinstance(obj_val, dict):
                 if attr not in obj_val:
-                    raise ExpressionEvalError(
-                        f"Attribute {attr!r} not found in {obj_val!r}"
-                    )
+                    raise ExpressionEvalError(f"Attribute {attr!r} not found in {obj_val!r}")
                 return obj_val[attr]
             try:
                 return getattr(obj_val, attr)
             except AttributeError:
-                raise ExpressionEvalError(
-                    f"Object {obj_val!r} has no attribute {attr!r}"
-                )
+                raise ExpressionEvalError(f"Object {obj_val!r} has no attribute {attr!r}")
 
         case Subscript(obj=obj_node, index=idx_node):
             obj_val = evaluate(obj_node, context)

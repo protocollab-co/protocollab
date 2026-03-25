@@ -1,7 +1,7 @@
 # tests/test_depth_double_count.py
 """
-Тесты для проверки корректности ограничения глубины вложенности в RestrictedSafeConstructor.
-Выявляют проблему двойного учёта глубины, из-за которой фактический лимит оказывается в два раза меньше заданного.
+Tests for verifying correct nesting depth enforcement in RestrictedSafeConstructor.
+Detect the double-counting problem that causes the effective limit to be half the configured value.
 """
 
 import pytest
@@ -10,13 +10,13 @@ from io import StringIO
 
 from yaml_serializer.safe_constructor import create_safe_yaml_instance
 
+# ----------------------------------------------------------------------
+# Helper functions for generating YAML strings with a given nesting depth
+# ----------------------------------------------------------------------
 
-# ----------------------------------------------------------------------
-# Вспомогательные функции для генерации YAML-строк с заданной глубиной
-# ----------------------------------------------------------------------
 
 def nested_mapping(depth: int, value=1):
-    """Создаёт вложенный словарь глубины depth (количество уровней маппингов)."""
+    """Creates a nested dict of the given depth (number of mapping levels)."""
     result = value
     for i in range(depth):
         result = {f"level{i}": result}
@@ -24,7 +24,7 @@ def nested_mapping(depth: int, value=1):
 
 
 def nested_sequence(depth: int, value=1):
-    """Создаёт вложенный список глубины depth (количество уровней последовательностей)."""
+    """Creates a nested list of the given depth (number of sequence levels)."""
     result = value
     for i in range(depth):
         result = [result]
@@ -32,7 +32,7 @@ def nested_sequence(depth: int, value=1):
 
 
 def to_yaml(data) -> str:
-    """Преобразует объект в YAML-строку (без использования нашей библиотеки)."""
+    """Converts an object to a YAML string (without using our library)."""
     yaml = ruamel.yaml.YAML()
     stream = StringIO()
     yaml.dump(data, stream)
@@ -40,14 +40,15 @@ def to_yaml(data) -> str:
 
 
 # ----------------------------------------------------------------------
-# Тесты для маппингов
+# Tests for mappings
 # ----------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("depth", range(1, 51))
 def test_mapping_depth_within_limit(depth):
     """
-    Для глубин от 1 до max_depth (50) исключение возникать не должно.
-    Если тест падает на каком-то значении depth <= 50, это указывает на проблему двойного учёта.
+    For depths from 1 to max_depth (50) no exception should be raised.
+    If the test fails at some depth <= 50, this indicates a double-counting problem.
     """
     loader = create_safe_yaml_instance(max_depth=50)
     data = nested_mapping(depth)
@@ -62,7 +63,7 @@ def test_mapping_depth_within_limit(depth):
 @pytest.mark.parametrize("depth", [51, 55, 60])
 def test_mapping_depth_exceeds_limit(depth):
     """
-    При глубине > max_depth должно возникать ValueError.
+    At depth > max_depth a ValueError must be raised.
     """
     loader = create_safe_yaml_instance(max_depth=50)
     data = nested_mapping(depth)
@@ -73,13 +74,14 @@ def test_mapping_depth_exceeds_limit(depth):
 
 
 # ----------------------------------------------------------------------
-# Тесты для последовательностей
+# Tests for sequences
 # ----------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("depth", range(1, 51))
 def test_sequence_depth_within_limit(depth):
     """
-    Аналогично для последовательностей.
+    Same as the mapping tests, but for sequences.
     """
     loader = create_safe_yaml_instance(max_depth=50)
     data = nested_sequence(depth)
@@ -102,11 +104,12 @@ def test_sequence_depth_exceeds_limit(depth):
 
 
 # ----------------------------------------------------------------------
-# Комбинированные структуры (маппинг + последовательность)
+# Combined structures (mapping + sequence)
 # ----------------------------------------------------------------------
 
+
 def mixed_structure(depth: int):
-    """Чередует маппинг и последовательность для создания глубины depth."""
+    """Alternates mapping and sequence to create a structure of the given depth."""
     result = 1
     for i in range(depth):
         if i % 2 == 0:
@@ -139,16 +142,17 @@ def test_mixed_depth_exceeds_limit(depth):
 
 
 # ----------------------------------------------------------------------
-# Тест, специально нацеленный на выявление двойного учёта
+# Test specifically targeting double-counting detection
 # ----------------------------------------------------------------------
+
 
 def test_double_counting_manifestation():
     """
-    Проверяет отсутствие двойного учёта глубины.
-    При max_depth=50 глубина 26 должна быть допустима (без двойного учёта 26 != 52).
-    Если этот тест падает (исключение для 26 возникает), значит двойной учёт присутствует.
+    Verifies that depth is not counted twice.
+    With max_depth=50 a depth of 26 must be allowed (no double counting: 26 != 52).
+    If this test fails (exception raised for depth 26), double counting is present.
     """
-    # Используем отдельный инстанс для каждого load, чтобы _depth сбрасывался
+    # Use a separate instance for each load so that _depth is reset
     loader_25 = create_safe_yaml_instance(max_depth=50)
     data_25 = nested_mapping(25)
     yaml_25 = to_yaml(data_25)
@@ -157,7 +161,7 @@ def test_double_counting_manifestation():
     except ValueError:
         pytest.fail("Depth 25 raised exception, but should be allowed.")
 
-    # Глубина 26 – должна быть допустима (двойного учёта нет: 26 <= 50)
+    # Depth 26 – must be allowed (no double counting: 26 <= 50)
     loader_26 = create_safe_yaml_instance(max_depth=50)
     data_26 = nested_mapping(26)
     yaml_26 = to_yaml(data_26)

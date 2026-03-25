@@ -2,15 +2,14 @@
 
 import json
 import pytest
-from pathlib import Path
 
 from protocollab.utils.file_utils import resolve_path, check_file_exists
 from protocollab.utils.yaml_utils import to_json, to_yaml, print_data
 
-
 # ---------------------------------------------------------------------------
 # file_utils
 # ---------------------------------------------------------------------------
+
 
 class TestResolvePath:
     def test_absolute_path_unchanged(self, tmp_path):
@@ -85,6 +84,7 @@ class TestToYaml:
 
     def test_roundtrip(self):
         from ruamel.yaml import YAML
+
         result = to_yaml(DATA)
         y = YAML()
         parsed = y.load(result)

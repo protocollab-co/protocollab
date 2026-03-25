@@ -1,7 +1,7 @@
 """Public API for `protocollab` code generators."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 from protocollab.generators.python_generator import PythonGenerator
@@ -23,6 +23,7 @@ _GENERATORS: Dict[str, type] = {
 # Register Pro generators when available (local-only, not in public repo)
 try:
     from protocollab.generators.cpp_generator import CppGenerator  # noqa: F401
+
     _GENERATORS["cpp"] = CppGenerator
     __all__.append("CppGenerator")
 except ImportError:

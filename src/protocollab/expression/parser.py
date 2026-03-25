@@ -39,35 +39,48 @@ from protocollab.expression.lexer import (
     tokenize,
 )
 
-
 # ---------------------------------------------------------------------------
 # Operator token → string mapping
 # ---------------------------------------------------------------------------
 _COMPARISON_OPS: dict[TokenKind, str] = {
-    TokenKind.EQ:    "==",
-    TokenKind.NEQ:   "!=",
-    TokenKind.LT:    "<",
-    TokenKind.GT:    ">",
-    TokenKind.LEQ:   "<=",
-    TokenKind.GEQ:   ">=",
+    TokenKind.EQ: "==",
+    TokenKind.NEQ: "!=",
+    TokenKind.LT: "<",
+    TokenKind.GT: ">",
+    TokenKind.LEQ: "<=",
+    TokenKind.GEQ: ">=",
 }
 _ADDITIVE_OPS: dict[TokenKind, str] = {
-    TokenKind.PLUS:  "+",
+    TokenKind.PLUS: "+",
     TokenKind.MINUS: "-",
 }
 _MULT_OPS: dict[TokenKind, str] = {
-    TokenKind.STAR:       "*",
-    TokenKind.SLASH:      "/",
-    TokenKind.FLOOR_DIV:  "//",
-    TokenKind.PERCENT:    "%",
+    TokenKind.STAR: "*",
+    TokenKind.SLASH: "/",
+    TokenKind.FLOOR_DIV: "//",
+    TokenKind.PERCENT: "%",
 }
 
 # Names that must NOT appear as free identifiers (security / safety)
 _FORBIDDEN_NAMES: frozenset[str] = frozenset(
     {
-        "__class__", "__dict__", "__globals__", "__builtins__",
-        "import", "exec", "eval", "compile", "open", "getattr", "setattr",
-        "delattr", "globals", "locals", "vars", "dir", "type",
+        "__class__",
+        "__dict__",
+        "__globals__",
+        "__builtins__",
+        "import",
+        "exec",
+        "eval",
+        "compile",
+        "open",
+        "getattr",
+        "setattr",
+        "delattr",
+        "globals",
+        "locals",
+        "vars",
+        "dir",
+        "type",
     }
 )
 
@@ -134,7 +147,7 @@ class Parser:
         # value_if_true 'if' condition 'else' value_if_false
         node = self._or_expr()
         if self._match_name("if"):
-            self._advance()                           # consume 'if'
+            self._advance()  # consume 'if'
             condition = self._or_expr()
             if not self._match_name("else"):
                 raise ExpressionSyntaxError(
@@ -142,7 +155,7 @@ class Parser:
                     expr=self._source,
                     pos=self._peek().pos,
                 )
-            self._advance()                           # consume 'else'
+            self._advance()  # consume 'else'
             value_if_false = self._or_expr()
             return Ternary(
                 value_if_true=node,

@@ -1,5 +1,5 @@
 """
-Тесты для покрытия непокрытых строк в utils.py, serializer.py и safe_constructor.py.
+Tests targeting uncovered lines in utils.py, serializer.py and safe_constructor.py.
 """
 
 import os
@@ -7,73 +7,85 @@ import io
 import logging
 import pytest
 import ruamel.yaml
-from pathlib import Path
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 
-from yaml_serializer import utils
 from yaml_serializer.utils import (
     mark_dirty,
     mark_includes,
     replace_included,
     update_file_attr,
+    update_parent_file_attr,
 )
 from yaml_serializer.modify import add_to_dict, add_to_list
-from yaml_serializer.safe_constructor import create_safe_yaml_instance, RestrictedSafeConstructor
+from yaml_serializer.safe_constructor import create_safe_yaml_instance
 from yaml_serializer.serializer import (
-    _CTX,
-    rename_yaml_file,
-    include_representer,
-    include_constructor,
+    _make_include_constructor,
     INCLUDE_TAG,
-    load_yaml_root,
+    SerializerSession,
 )
-
 
 # ---------------------------------------------------------------------------
 # utils.py – mark_dirty(None)  [line 80]
 # ---------------------------------------------------------------------------
 
+
 class TestMarkDirtyNone:
     def test_mark_dirty_none_is_noop(self):
-        """mark_dirty(None) должен тихо завершаться без исключений."""
-        mark_dirty(None)  # не должно бросить исключение
+        """mark_dirty(None) must complete silently without raising."""
+        mark_dirty(None)  # must not raise an exception
 
 
 # ---------------------------------------------------------------------------
-# utils.py – update_file_attr с CommentedSeq-детьми  [lines 63-65]
+# utils.py – update_file_attr with CommentedSeq children  [lines 63-65]
 # ---------------------------------------------------------------------------
+
 
 class TestUpdateFileAttrSeq:
     def test_update_file_attr_seq_children(self):
-        """update_file_attr рекурсивно обновляет _yaml_file у элементов CommentedSeq."""
+        """update_file_attr recursively updates _yaml_file on CommentedSeq children."""
         root = CommentedSeq()
+        root._yaml_file = "old.yaml"
         child_map = CommentedMap()
-        child_map._yaml_file = 'old.yaml'
+        child_map._yaml_file = "old.yaml"
         root.append(child_map)
 
-        update_file_attr(root, 'new.yaml')
+        update_file_attr(root, "old.yaml", "new.yaml")
 
-        assert root._yaml_file == 'new.yaml'
-        assert child_map._yaml_file == 'new.yaml'
+        assert root._yaml_file == "new.yaml"
+        assert child_map._yaml_file == "new.yaml"
+
+
+class TestUpdateParentFileAttrSeq:
+    def test_update_parent_file_attr_seq_children(self):
+        """update_parent_file_attr recursively updates _yaml_parent_file in seq children."""
+        root = CommentedSeq()
+        child_map = CommentedMap()
+        child_map._yaml_parent_file = "old-parent.yaml"
+        root.append(child_map)
+
+        update_parent_file_attr(root, "old-parent.yaml", "new-parent.yaml")
+
+        assert child_map._yaml_parent_file == "new-parent.yaml"
 
 
 # ---------------------------------------------------------------------------
-# utils.py – mark_includes с CommentedSeq в корне  [lines 137-140]
+# utils.py – mark_includes with CommentedSeq at root  [lines 137-140]
 # ---------------------------------------------------------------------------
+
 
 class TestMarkIncludesSeq:
     def test_mark_includes_in_seq_root(self):
-        """mark_includes находит узлы с нужным _yaml_file внутри CommentedSeq."""
+        """mark_includes finds nodes matching target_file inside a CommentedSeq."""
         seq = CommentedSeq()
-        a = CommentedMap({'x': 1})
-        b = CommentedMap({'y': 2})
-        a._yaml_file = 'target.yaml'
-        b._yaml_file = 'other.yaml'
+        a = CommentedMap({"x": 1})
+        b = CommentedMap({"y": 2})
+        a._yaml_file = "target.yaml"
+        b._yaml_file = "other.yaml"
         seq.append(a)
         seq.append(b)
 
         marked = []
-        found = mark_includes(seq, 'target.yaml', marked.append)
+        found = mark_includes(seq, "target.yaml", marked.append)
 
         assert found is True
         marked_ids = [id(x) for x in marked]
@@ -81,201 +93,213 @@ class TestMarkIncludesSeq:
         assert id(b) not in marked_ids
 
     def test_mark_includes_in_seq_not_found(self):
-        """mark_includes возвращает False, если в CommentedSeq нет нужного файла."""
+        """mark_includes returns False when the target file is not present in the seq."""
         seq = CommentedSeq()
         node = CommentedMap()
-        node._yaml_file = 'other.yaml'
+        node._yaml_file = "other.yaml"
         seq.append(node)
 
-        found = mark_includes(seq, 'missing.yaml', lambda x: None)
+        found = mark_includes(seq, "missing.yaml", lambda x: None)
         assert found is False
 
 
 # ---------------------------------------------------------------------------
-# utils.py – replace_included с logger и абсолютным путём [lines 149, 159-162]
+# utils.py – replace_included with logger and absolute path [lines 149, 159-162]
 # ---------------------------------------------------------------------------
+
 
 class TestReplaceIncludedLogger:
     def test_replace_included_logs_file_update(self, caplog):
-        """replace_included вызывает logger при обновлении _yaml_file."""
+        """replace_included calls logger when updating _yaml_file."""
         node = CommentedMap()
-        node._yaml_file = 'old.yaml'
+        node._yaml_file = "old.yaml"
 
-        logger = logging.getLogger('test_replace')
-        with caplog.at_level(logging.DEBUG, logger='test_replace'):
-            replace_included(node, 'old.yaml', 'new.yaml', logger)
+        logger = logging.getLogger("test_replace")
+        with caplog.at_level(logging.DEBUG, logger="test_replace"):
+            changed = replace_included(node, "old.yaml", "new.yaml", logger)
 
-        assert node._yaml_file == 'new.yaml'
+        assert changed is True
+        assert node._yaml_file == "new.yaml"
 
     def test_replace_included_absolute_path_fallback(self, temp_dir):
         """
-        replace_included использует абсолютный путь, если relative_to бросает ValueError
-        (новый файл не является потомком директории родительского файла).
+        replace_included falls back to absolute path when relative_to raises ValueError
+        (the new file is not a descendant of the parent file's directory).
         """
-        # parent_file находится в temp_dir/proj/, new_file — в temp_dir/other/
-        # Поэтому Path(new_file).relative_to(parent_dir) → ValueError
-        proj_dir = os.path.join(temp_dir, 'proj')
-        other_dir = os.path.join(temp_dir, 'other')
+        # parent_file is in temp_dir/proj/, new_file is in temp_dir/other/
+        # Therefore Path(new_file).relative_to(parent_dir) raises ValueError
+        proj_dir = os.path.join(temp_dir, "proj")
+        other_dir = os.path.join(temp_dir, "other")
         os.makedirs(proj_dir, exist_ok=True)
         os.makedirs(other_dir, exist_ok=True)
 
-        old_file = os.path.join(proj_dir, 'old.yaml')
-        new_file = os.path.join(other_dir, 'new.yaml')
-        parent_file = os.path.join(proj_dir, 'main.yaml')
+        old_file = os.path.join(proj_dir, "old.yaml")
+        new_file = os.path.join(other_dir, "new.yaml")
+        parent_file = os.path.join(proj_dir, "main.yaml")
 
         node = CommentedMap()
         node._yaml_file = old_file
-        node._yaml_include_path = 'old.yaml'
+        node._yaml_include_path = "old.yaml"
         node._yaml_parent_file = parent_file
 
-        replace_included(node, old_file, new_file)
-        # В ветке ValueError должен быть установлен абсолютный путь, содержащий new.yaml
-        assert 'new.yaml' in node._yaml_include_path
+        changed = replace_included(node, old_file, new_file)
+        # In the ValueError branch, the absolute path containing new.yaml must be set
+        assert changed is True
+        assert "new.yaml" in node._yaml_include_path
 
     def test_replace_included_absolute_path_logs(self, temp_dir, caplog):
-        """replace_included логирует абсолютный путь при fallback."""
-        proj_dir = os.path.join(temp_dir, 'proj')
-        other_dir = os.path.join(temp_dir, 'other')
+        """replace_included logs the absolute path on fallback."""
+        proj_dir = os.path.join(temp_dir, "proj")
+        other_dir = os.path.join(temp_dir, "other")
         os.makedirs(proj_dir, exist_ok=True)
         os.makedirs(other_dir, exist_ok=True)
 
-        old_file = os.path.join(proj_dir, 'old.yaml')
-        new_file = os.path.join(other_dir, 'new.yaml')
-        parent_file = os.path.join(proj_dir, 'main.yaml')
+        old_file = os.path.join(proj_dir, "old.yaml")
+        new_file = os.path.join(other_dir, "new.yaml")
+        parent_file = os.path.join(proj_dir, "main.yaml")
 
         node = CommentedMap()
         node._yaml_file = old_file
-        node._yaml_include_path = 'old.yaml'
+        node._yaml_include_path = "old.yaml"
         node._yaml_parent_file = parent_file
 
-        logger = logging.getLogger('test_replace_abs')
-        with caplog.at_level(logging.DEBUG, logger='test_replace_abs'):
-            replace_included(node, old_file, new_file, logger)
+        logger = logging.getLogger("test_replace_abs")
+        with caplog.at_level(logging.DEBUG, logger="test_replace_abs"):
+            changed = replace_included(node, old_file, new_file, logger)
 
-        assert 'new.yaml' in node._yaml_include_path
+        assert changed is True
+        assert "new.yaml" in node._yaml_include_path
 
 
 # ---------------------------------------------------------------------------
-# serializer.py – rename_yaml_file с незагруженным файлом  [line 203]
+# serializer.py – rename with an unloaded file  [line 203]
 # ---------------------------------------------------------------------------
+
 
 class TestRenameUnloadedFile:
     def test_rename_unloaded_file_raises(self, temp_dir):
-        """rename_yaml_file должен бросать ValueError для незагруженного файла."""
-        unloaded = os.path.join(temp_dir, 'notloaded.yaml')
+        """rename() must raise ValueError for a file that was not loaded."""
+        unloaded = os.path.join(temp_dir, "notloaded.yaml")
+        s = SerializerSession()
         with pytest.raises(ValueError, match="not loaded"):
-            rename_yaml_file(unloaded, os.path.join(temp_dir, 'other.yaml'))
+            s.rename(unloaded, os.path.join(temp_dir, "other.yaml"))
 
 
 # ---------------------------------------------------------------------------
-# serializer.py – include_constructor вне контекста загрузки  [line 94]
+# serializer.py – include_constructor outside loading context  [line 94]
 # ---------------------------------------------------------------------------
+
 
 class TestIncludeConstructorOutsideContext:
     def test_include_outside_loading_context_raises(self):
-        """include_constructor должен бросить ValueError, если _loading_stack пуст."""
-        _CTX._loading_stack.clear()
-        _CTX._max_imports = None  # не мешать проверке
+        """include_constructor must raise ValueError when _loading_stack is empty."""
+        session = SerializerSession()
+        session._loading_stack.clear()
+        session._max_imports = None  # do not interfere with the check
 
         yaml_inst = create_safe_yaml_instance()
-        yaml_inst.constructor.add_constructor(INCLUDE_TAG, include_constructor)
+        yaml_inst.constructor.add_constructor(INCLUDE_TAG, _make_include_constructor(session))
 
         with pytest.raises(ValueError, match="outside of file loading context"):
-            yaml_inst.load(io.StringIO('data: !include some.yaml'))
+            yaml_inst.load(io.StringIO("data: !include some.yaml"))
+
 
 # ---------------------------------------------------------------------------
 # safe_constructor.py – max_depth validation
 # ---------------------------------------------------------------------------
 
+
 class TestMaxDepthValidation:
     def test_max_depth_none_raises_value_error(self):
-        """Передача max_depth=None должна вызывать ValueError."""
+        """Passing max_depth=None must raise ValueError."""
         with pytest.raises(ValueError, match="max_depth cannot be None"):
             create_safe_yaml_instance(max_depth=None)
 
     def test_max_depth_zero_raises_value_error(self):
-        """Передача max_depth=0 должна вызывать ValueError."""
+        """Passing max_depth=0 must raise ValueError."""
         with pytest.raises(ValueError, match="max_depth must be a positive integer"):
             create_safe_yaml_instance(max_depth=0)
 
     def test_max_depth_negative_raises_value_error(self):
-        """Передача отрицательного max_depth должна вызывать ValueError."""
+        """Passing a negative max_depth must raise ValueError."""
         with pytest.raises(ValueError, match="max_depth must be a positive integer"):
             create_safe_yaml_instance(max_depth=-1)
 
     def test_max_depth_positive_works(self):
-        """Положительное целое max_depth работает корректно."""
-        # Просто проверяем, что объект создаётся без ошибок
+        """A positive integer max_depth must be accepted without error."""
+        # Just verify that the object is created without errors
         yaml = create_safe_yaml_instance(max_depth=10)
         assert yaml is not None
 
     def test_no_depth_limit_allows_any_depth(self):
-        """create_safe_yaml_instance с большим max_depth позволяет загружать глубокие структуры."""
-        data = {'value': 1}
+        """create_safe_yaml_instance with a large max_depth allows deep structures."""
+        data = {"value": 1}
         for i in range(60):
-            data = {f'l{i}': data}
+            data = {f"l{i}": data}
         y = ruamel.yaml.YAML()
         buf = io.StringIO()
         y.dump(data, buf)
         yaml_str = buf.getvalue()
 
-        loader = create_safe_yaml_instance(max_depth=10000)  # достаточно большое число
-        loader.load(yaml_str)  # не должно бросать исключений
+        loader = create_safe_yaml_instance(
+            max_depth=10000
+        )  # large enough to avoid triggering the limit
+        loader.load(yaml_str)  # must not raise any exceptions
+
 
 # ---------------------------------------------------------------------------
-# Проверка Round-trip: сохраняются комментарии и форматирование
+# Round-trip check: comments and formatting are preserved
 # ---------------------------------------------------------------------------
+
 
 class TestRoundTrip:
     def test_comments_preserved_on_load(self, temp_dir, create_yaml_file):
-        """Комментарии сохраняются при загрузке и сохранении (round-trip)."""
-        yaml_content = (
-            "# Top-level comment\n"
-            "key: value  # inline comment\n"
-        )
-        path = os.path.join(temp_dir, 'rt.yaml')
+        """Comments are preserved through a load/dump round-trip."""
+        yaml_content = "# Top-level comment\n" "key: value  # inline comment\n"
+        path = os.path.join(temp_dir, "rt.yaml")
         create_yaml_file(path, yaml_content)
-        data = load_yaml_root(path)
+        s = SerializerSession()
+        data = s.load(path)
 
-        # Дамп через ruamel.yaml (через YAML instance)
         out = io.StringIO()
-        assert _CTX._yaml_instance is not None
-        _CTX._yaml_instance.dump(data, out)
+        assert s._yaml_instance is not None
+        s._yaml_instance.dump(data, out)
         dumped = out.getvalue()
 
-        assert '# Top-level comment' in dumped
-        assert 'inline comment' in dumped
+        assert "# Top-level comment" in dumped
+        assert "inline comment" in dumped
 
 
 # ---------------------------------------------------------------------------
-# modify.py – наследование _yaml_file при add_to_dict / add_to_list [lines 37, 47]
+# modify.py – _yaml_file inheritance in add_to_dict / add_to_list [lines 37, 47]
 # ---------------------------------------------------------------------------
+
 
 class TestModifyYamlFileInheritance:
     def test_add_to_dict_inherits_yaml_file(self):
-        """Значение без _yaml_file наследует его от контейнера при add_to_dict."""
+        """A child without _yaml_file inherits it from the container in add_to_dict."""
         dct = CommentedMap()
-        dct._yaml_file = 'parent.yaml'
+        dct._yaml_file = "parent.yaml"
         dct._yaml_hash = None
         dct._yaml_dirty = False
 
-        child = CommentedMap({'x': 1})
-        # child не имеет _yaml_file и _yaml_parent
+        child = CommentedMap({"x": 1})
+        # child has no _yaml_file and no _yaml_parent
 
-        add_to_dict(dct, 'child', child)
+        add_to_dict(dct, "child", child)
 
-        assert child._yaml_file == 'parent.yaml'
+        assert child._yaml_file == "parent.yaml"
 
     def test_add_to_list_inherits_yaml_file(self):
-        """Элемент без _yaml_file наследует его от списка при add_to_list."""
+        """An item without _yaml_file inherits it from the list in add_to_list."""
         lst = CommentedSeq()
-        lst._yaml_file = 'parent.yaml'
+        lst._yaml_file = "parent.yaml"
         lst._yaml_hash = None
         lst._yaml_dirty = False
 
-        item = CommentedMap({'y': 2})
-        # item не имеет _yaml_file и _yaml_parent
+        item = CommentedMap({"y": 2})
+        # item has no _yaml_file and no _yaml_parent
 
         add_to_list(lst, item)
 
-        assert item._yaml_file == 'parent.yaml'
+        assert item._yaml_file == "parent.yaml"

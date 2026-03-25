@@ -18,8 +18,8 @@ class ValidationLevel(Enum):
 class ValidationError:
     """A single schema validation error (backward-compatible model)."""
 
-    path: str        # dot-notation path, e.g. "meta.id" or "seq[0].type"
-    message: str     # human-readable description
+    path: str  # dot-notation path, e.g. "meta.id" or "seq[0].type"
+    message: str  # human-readable description
     schema_path: str = ""  # path inside the JSON Schema where the rule is defined
 
 

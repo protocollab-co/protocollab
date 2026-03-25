@@ -1,25 +1,25 @@
 """
-Общие фикстуры и настройки для тестов yaml_serializer.
+Shared fixtures and configuration for yaml_serializer tests.
 """
 
-import os
 import pytest
 import tempfile
-from pathlib import Path
 
 
 @pytest.fixture
 def temp_dir():
-    """Создает временную директорию для тестов."""
+    """Provide a temporary directory for each test."""
     with tempfile.TemporaryDirectory() as tmpdir:
         yield tmpdir
 
 
 @pytest.fixture
 def create_yaml_file():
-    """Фикстура для создания YAML файлов в тестах."""
+    """Return a factory function that writes YAML files for tests."""
+
     def _create_file(path, content):
-        """Создает YAML файл с заданным содержимым."""
-        with open(path, 'w', encoding='utf-8') as f:
+        """Write *content* to *path* with UTF-8 encoding."""
+        with open(path, "w", encoding="utf-8") as f:
             f.write(content)
+
     return _create_file

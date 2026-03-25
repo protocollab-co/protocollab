@@ -10,7 +10,7 @@ from protocollab.exceptions import FileLoadError, YAMLParseError
 from protocollab.loader.cache.base_cache import BaseCache
 from protocollab.loader.cache.memory_cache import MemoryCache
 from protocollab.types import ProtocolData
-from yaml_serializer.serializer import load_yaml_root
+from yaml_serializer.serializer import SerializerSession
 from yaml_serializer.utils import canonical_repr
 
 logger = logging.getLogger(__name__)
@@ -23,10 +23,18 @@ class ProtocolLoader:
     ----------
     cache:
         Cache backend to use.  Defaults to a fresh :class:`MemoryCache`.
+        Pass ``None`` to use a new unbounded in-memory cache, or supply a
+        :class:`MemoryCache` with ``max_size`` set for bounded LRU behaviour.
     config:
-        Security / limit overrides forwarded to ``yaml_serializer.load_yaml_root``.
+        Security / limit overrides forwarded to ``yaml_serializer``.
         Supported keys: ``max_file_size``, ``max_struct_depth``,
         ``max_include_depth``, ``max_imports``.
+
+    Notes
+    -----
+    Each ``ProtocolLoader`` instance is fully independent.  For
+    multi-threaded applications, create one instance per thread rather
+    than sharing the default global loader.
     """
 
     def __init__(
@@ -81,7 +89,7 @@ class ProtocolLoader:
     def _load_raw(self, abs_path: str):
         """Call yaml_serializer and translate exceptions."""
         try:
-            return load_yaml_root(abs_path, config=self._config)
+            return SerializerSession(config=self._config).load(abs_path)
         except FileNotFoundError as exc:
             raise FileLoadError(f"File not found: {exc.filename}") from exc
         except PermissionError as exc:

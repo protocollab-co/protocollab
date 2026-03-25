@@ -1,7 +1,7 @@
 """Python parser generator for `protocollab` protocol specifications."""
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from jinja2 import Environment, FileSystemLoader
 

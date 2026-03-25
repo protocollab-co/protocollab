@@ -1,6 +1,6 @@
 """Common type aliases used across the `protocollab` package."""
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Union
 
 # Fully-resolved protocol data tree (plain Python dicts/lists, no YAML metadata).
 ProtocolData = Dict[str, Any]

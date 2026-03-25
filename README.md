@@ -6,7 +6,7 @@
 
 Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, test suites, and documentation — all from the same source of truth.
 
-[![Tests](https://img.shields.io/badge/tests-418%20passed-brightgreen)](#current-state)
+[![Tests](https://img.shields.io/badge/tests-752%20passed-brightgreen)](#current-state)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#current-state)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#installation)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
@@ -121,21 +121,21 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 ## Current State
 
-**Phase 1 is complete.** All 418 tests pass.
+**Phase 1 is complete.** All 752 tests pass.
 
 | Component | Status | Notes |
 |---|---|---|
 | `yaml_serializer` | ✅ 100% coverage | Secure YAML loader: `!include`, depth/size limits, path traversal, Billion Laughs |
-| `protocollab.loader` | ✅ | `load_protocol()`, `ProtocolLoader`, `MemoryCache` |
+| `protocollab.loader` | ✅ | `load_protocol()`, `get_global_loader()`, `configure_global()`, `ProtocolLoader`, LRU `MemoryCache` |
 | `protocollab.validator` | ✅ | JSON Schema Draft 7, `base` and `strict` schemas |
 | `protocollab.generators` | ✅ | `PythonGenerator` (dataclass), `LuaGenerator` (Wireshark dissector), Jinja2 |
 | CLI `protocollab load` | ✅ | `--output-format json\|yaml`, `--no-cache`, security flags |
 | CLI `protocollab validate` | ✅ | `--strict`, `--schema`, exit codes 0/1/2/3 |
 | CLI `protocollab generate` | ✅ | `generate python\|wireshark FILE -o DIR`, exit codes 0/1/2/4 |
 | Examples | ✅ | `examples/simple/` — ping protocol, Ethernet frame |
-| Tests — `yaml_serializer` | ✅ 279 tests | 100% coverage |
-| Tests — `protocollab` | ✅ 139 tests | loader, cache, utils, CLI, validator, generators |
-| **Total tests** | ✅ **418** | All passing |
+| Tests — `yaml_serializer` | ✅ | 100% coverage |
+| Tests — `protocollab` | ✅ | loader, cache, utils, CLI, validator, generators |
+| **Test suite** | ✅ | All passing |
 
 **Security-first YAML loader**: The `yaml_serializer` module is hardened against common attacks: protection against Billion Laughs (XML entity expansion), path traversal in `!include`, recursion depth limits, and file size restrictions. This ensures safe handling of untrusted specifications.
 
@@ -159,7 +159,7 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 ```
 src/
 ├── yaml_serializer/          # Secure YAML loader submodule
-│   ├── serializer.py         # load_yaml_root() — public entry point
+│   ├── serializer.py         # SerializerSession — primary API
 │   ├── safe_constructor.py   # Security constraints
 │   ├── utils.py              # canonical_repr, is_path_within_root, ...
 │   ├── merge.py              # !include tree merging
@@ -168,7 +168,7 @@ src/
 └── protocollab/              # Main package
     ├── main.py               # CLI (Click): load | validate | generate
     ├── exceptions.py         # FileLoadError (exit 1), YAMLParseError (exit 2)
-    ├── loader/               # load_protocol() + MemoryCache
+    ├── loader/               # load_protocol(), get_global_loader(), configure_global(), LRU MemoryCache
     ├── validator/            # validate_protocol() + JSON Schema
     │   └── schemas/
     │       ├── base.schema.json      # permissive, KSY-compatible

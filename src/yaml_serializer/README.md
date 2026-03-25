@@ -15,7 +15,7 @@
 - 🔄 **Change tracking** – automatic dirty marking and hash‑based change detection for efficient saving.  
 - 🧩 **Easy modification** – helper functions to modify YAML structures while maintaining parent links and dirty flags.  
 - 🔀 **Smart file renaming** – automatically updates `!include` paths when files are renamed.  
-- ✅ **High test coverage** (>95%) – battle‑tested and ready for production use.
+- ✅ **High test coverage** (100%) – battle‑tested and ready for production use.
 
 ---
 
@@ -36,7 +36,7 @@ pip install git+https://github.com/yourname/protocollab.git
 After installation, import it as:
 
 ```python
-from yaml_serializer import load_yaml_root, save_yaml_root
+from yaml_serializer import SerializerSession
 ```
 
 > **Note:** `yaml_serializer` requires Python 3.8 or later.
@@ -46,17 +46,20 @@ from yaml_serializer import load_yaml_root, save_yaml_root
 ## 🚀 Quick Start
 
 ```python
-from yaml_serializer import load_yaml_root, save_yaml_root
+from yaml_serializer import SerializerSession
 from yaml_serializer.modify import add_to_dict
 
+# Create a session (encapsulates all state — thread-safe and test-friendly)
+session = SerializerSession()
+
 # Load a YAML file (all !include references are resolved automatically)
-data = load_yaml_root("path/to/file.yaml")
+data = session.load("path/to/file.yaml")
 
 # Modify the structure (parent links and dirty flags are updated automatically)
 add_to_dict(data, "new_key", "new_value")
 
 # Save only changed files, preserving all comments and formatting
-save_yaml_root()
+session.save()
 ```
 
 ---
@@ -78,17 +81,21 @@ team:
 ```
 
 ```python
-data = load_yaml_root("main.yaml")
+from yaml_serializer import SerializerSession
+
+session = SerializerSession()
+data = session.load("main.yaml")
 print(data["team"]["lead"]["name"])  # prints "Alice"
 ```
 
 ### Modifying nested structures
 
 ```python
-from yaml_serializer import load_yaml_root, save_yaml_root
+from yaml_serializer import SerializerSession
 from yaml_serializer.modify import add_to_dict
 
-data = load_yaml_root('protocol.yaml')
+session = SerializerSession()
+data = session.load('protocol.yaml')
 
 # Add a new field to a nested type
 add_to_dict(data['types']['Message'], 'timestamp', 'u64')
@@ -97,12 +104,14 @@ add_to_dict(data['types']['Message'], 'timestamp', 'u64')
 add_to_dict(data['types'], 'NewType', {'field': 'value'})
 
 # Save only changed files
-save_yaml_root(only_if_changed=True)
+session.save(only_if_changed=True)
 ```
 
 ### Secure loading with custom limits
 
 ```python
+from yaml_serializer import SerializerSession
+
 config = {
     'max_file_size': 5 * 1024 * 1024,   # 5 MB
     'max_struct_depth': 20,               # max YAML nesting depth (default 50)
@@ -110,54 +119,82 @@ config = {
     'max_imports': 50                      # max number of included files (default 100)
 }
 
-data = load_yaml_root('protocol.yaml', config=config)
+# Config can be given at construction time (applies to every load call) …
+session = SerializerSession(config)
+data = session.load('protocol.yaml')
+
+# … or overridden per-load:
+data = session.load('protocol.yaml', config={'max_imports': 10})
 ```
 
 ### Renaming files with automatic `!include` updates
 
 ```python
-from yaml_serializer import load_yaml_root, rename_yaml_file, save_yaml_root
+from yaml_serializer import SerializerSession
 
-data = load_yaml_root('main.yaml')
+session = SerializerSession()
+session.load('main.yaml')
 
 # Rename an included file – all !include references are automatically updated
-rename_yaml_file('old_name.yaml', 'new_name.yaml')
+session.rename('old_name.yaml', 'new_name.yaml')
 
-save_yaml_root()
+session.save()
+```
+
+### Multiple independent sessions
+
+```python
+from yaml_serializer import SerializerSession
+
+# Two sessions can load the same (or different) files without interfering:
+session_a = SerializerSession()
+session_b = SerializerSession()
+
+data_a = session_a.load('spec_v1.yaml')
+data_b = session_b.load('spec_v2.yaml')
+
+# Modifications to data_a are invisible to session_b and vice-versa.
 ```
 
 ---
 
 ## 📖 API Reference
 
-### Core functions
+### `SerializerSession` (primary API)
 
-#### `load_yaml_root(path: str, config: Optional[dict] = None) -> CommentedMap`
-Loads a YAML file, resolving all `!include` directives.
+```python
+from yaml_serializer import SerializerSession
+```
 
-- **path**: Path to the main YAML file.
-- **config**: Optional dictionary with security settings:
-  - `max_file_size` – maximum file size in bytes (default 10 MB).
-  - `max_struct_depth` – maximum YAML nesting depth for structures (default 50).
-  - `max_include_depth` – maximum nesting depth for `!include` chains (default 50).
-  - `max_imports` – maximum number of included files (default 100).
-- **Returns**: The loaded root node as a `CommentedMap`.
+Each instance is completely independent — thread-safe, reusable, and isolated from
+other sessions.
 
-#### `save_yaml_root(only_if_changed: bool = True)`
-Saves loaded YAML files back to disk.
+#### `SerializerSession(config: Optional[dict] = None)`
+Create a session with optional default configuration.
 
-- **only_if_changed**: If `True` (default), only files that were modified are written.
+| Key | Default | Description |
+|-----|---------|-------------|
+| `max_file_size` | 10 MB | Maximum file size in bytes |
+| `max_struct_depth` | 50 | Maximum YAML nesting depth |
+| `max_include_depth` | 50 | Maximum `!include` chain depth |
+| `max_imports` | 100 | Maximum total included files |
 
-#### `rename_yaml_file(old_path: str, new_path: str)`
-Renames a loaded file and updates all `!include` references pointing to it.
+#### `session.load(path: str, config: Optional[dict] = None) -> CommentedMap`
+Load *path* and all `!include` references. *config* overrides per-call defaults.
 
-- **old_path**: Current absolute path.
-- **new_path**: New absolute path.
+#### `session.save(only_if_changed: bool = True)`
+Write modified files back to disk.
 
-#### `propagate_dirty(file_path: str)`
-Marks as dirty any nodes that reference the given file. Used internally after modifications that affect includes.
+#### `session.rename(old_path: str, new_path: str)`
+Rename a file and update all `!include` references to it.
 
-### Modification helpers
+#### `session.propagate_dirty(file_path: str)`
+Mark as dirty all files that `!include` *file_path*.
+
+#### `session.clear()`
+Reset all loaded state. Configuration defaults are preserved.
+
+---
 
 All modification functions automatically update parent links and dirty flags.
 
@@ -197,9 +234,9 @@ These measures make `yaml_serializer` suitable for processing untrusted YAML fil
 
 The module has an extensive test suite covering all critical paths.
 
-- **Total tests**: 266  
-- **Code coverage**: 95%  
-- **Structure**: 12 thematic test modules + `conftest.py` (shared fixtures)
+- **Test suite**: extensive coverage of critical paths  
+- **Code coverage**: 100% (yaml_serializer)  
+- **Structure**: thematic test modules + `conftest.py` (shared fixtures)
 
 To run tests locally:
 

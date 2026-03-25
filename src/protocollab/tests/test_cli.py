@@ -6,10 +6,10 @@ from click.testing import CliRunner
 
 from protocollab.main import cli
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture()
 def runner():
@@ -43,6 +43,7 @@ def no_meta_yaml(tmp_path):
 # ---------------------------------------------------------------------------
 # protocollab load — success
 # ---------------------------------------------------------------------------
+
 
 class TestCLILoadSuccess:
     def test_load_exits_zero(self, runner, simple_yaml):
@@ -78,6 +79,7 @@ class TestCLILoadSuccess:
 # protocollab load — errors
 # ---------------------------------------------------------------------------
 
+
 class TestCLILoadErrors:
     def test_missing_file_exits_one(self, runner):
         result = runner.invoke(cli, ["load", "/nonexistent/missing.yaml"])
@@ -95,6 +97,7 @@ class TestCLILoadErrors:
 # ---------------------------------------------------------------------------
 # protocollab validate — success
 # ---------------------------------------------------------------------------
+
 
 class TestCLIValidateSuccess:
     def test_validate_valid_file_exits_zero(self, runner, ksy_yaml):
@@ -122,6 +125,7 @@ class TestCLIValidateSuccess:
 # protocollab validate — schema failures
 # ---------------------------------------------------------------------------
 
+
 class TestCLIValidateSchemaFailures:
     def test_no_meta_exits_three(self, runner, no_meta_yaml):
         result = runner.invoke(cli, ["validate", str(no_meta_yaml)])
@@ -148,6 +152,7 @@ class TestCLIValidateSchemaFailures:
 # protocollab validate — file errors
 # ---------------------------------------------------------------------------
 
+
 class TestCLIValidateFileErrors:
     def test_missing_file_exits_one(self, runner):
         result = runner.invoke(cli, ["validate", "/nonexistent/missing.yaml"])
@@ -161,6 +166,7 @@ class TestCLIValidateFileErrors:
 # ---------------------------------------------------------------------------
 # protocollab — help & top-level
 # ---------------------------------------------------------------------------
+
 
 class TestCLIHelp:
     def test_help_exits_zero(self, runner):

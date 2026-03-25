@@ -25,7 +25,7 @@ def yaml_with_include(tmp_path):
 
     proto = tmp_path / "proto_with_include.yaml"
     proto.write_text(
-        f"version: '1.0'\ntypes: !include types.yaml\n",
+        "version: '1.0'\ntypes: !include types.yaml\n",
         encoding="utf-8",
     )
     return proto

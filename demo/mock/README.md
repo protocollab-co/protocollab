@@ -2,7 +2,7 @@
 
 ## English
 
-This folder contains a small end-to-end demo for the generated parser, mock client, and mock server.
+This folder contains an independent queue-based demo for the generated parser, mock client, and mock server.
 
 Generated files are written to `demo/mock/generated` and are intentionally not stored in the repository.
 Only `demo/mock/generated/.gitkeep` is tracked.
@@ -52,7 +52,7 @@ python demo/mock/demo.py check
 
 The `check` command performs three steps in order:
 
-1. Generates fresh artefacts into `demo/mock/generated`
+1. Generates a fresh Python parser, `MockClient`, and `MockServer` into `demo/mock/generated`
 2. Runs the queue-based mock demo
 3. Runs the demo test suite
 
@@ -65,7 +65,7 @@ The `check` command performs three steps in order:
 
 ## Русский
 
-Эта папка содержит небольшой сквозной пример для сгенерированных парсера, mock-клиента и mock-сервера.
+Эта папка содержит независимое queue-based демо для сгенерированных парсера, mock-клиента и mock-сервера.
 
 Сгенерированные файлы записываются в `demo/mock/generated` и намеренно не хранятся в репозитории.
 В git отслеживается только `demo/mock/generated/.gitkeep`.
@@ -115,8 +115,8 @@ python demo/mock/demo.py check
 
 Команда `check` последовательно выполняет три шага:
 
-1. Генерирует свежие артефакты в `demo/mock/generated`
-2. Запускает queue-based demo
+1. Генерирует свежий Python-парсер, `MockClient` и `MockServer` в `demo/mock/generated`
+2. Запускает queue-based демо
 3. Запускает набор тестов для демо
 
 ### Примечания

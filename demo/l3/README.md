@@ -56,10 +56,16 @@ The `check` command performs three steps in order:
 2. Runs a localhost TCP ping/pong exchange using the generated parser
 3. Runs the demo test suite
 
+### Notes
+
+- The demo uses `examples/simple/ping_protocol.yaml`
+- The generated runtime files are `ping_protocol_l3_client.py` and `ping_protocol_l3_server.py`
+- The generated dissector file is `demo/l3/generated/ping_protocol.lua`
+- The generated directory is cleaned before regeneration
+- CI validates this workflow through the same single entry point
+
 ### Wireshark
 
-- Generated runtime files: `ping_protocol_l3_client.py` and `ping_protocol_l3_server.py`
-- The generated dissector file is `demo/l3/generated/ping_protocol.lua`
 - Capture the localhost TCP exchange in Wireshark and load the generated Lua file
 - If Wireshark does not decode the stream automatically, use `Decode As...` for the demo TCP port
 
@@ -119,9 +125,15 @@ python demo/l3/demo.py check
 2. Запускает localhost TCP ping/pong обмен с использованием сгенерированного парсера
 3. Запускает набор тестов для демо
 
-### Wireshark
+### Примечания
 
+- Демо использует `examples/simple/ping_protocol.yaml`
 - Сгенерированные runtime-файлы: `ping_protocol_l3_client.py` и `ping_protocol_l3_server.py`
 - Сгенерированный файл диссектора: `demo/l3/generated/ping_protocol.lua`
+- Перед новой генерацией каталог `generated` очищается
+- CI проверяет этот сценарий через ту же единую точку входа
+
+### Wireshark
+
 - Захватите localhost TCP обмен в Wireshark и подключите сгенерированный Lua-файл
 - Если Wireshark не распознает поток автоматически, используйте `Decode As...` для TCP-порта демо

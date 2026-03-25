@@ -4,7 +4,7 @@
 
 `protocollab` — это open-source фреймворк для объявления, валидации и генерации реализаций **сетевых и бинарных протоколов** из человекочитаемых YAML-спецификаций.
 
-Напишите один `.yaml`-файл → получите Python-парсеры, Wireshark-диссекторы, mock-, TCP- и Scapy L2-runtime для демо, тестовые наборы и документацию — всё из единого источника правды.
+Напишите один `.yaml`-файл → получите Python-парсеры, Wireshark-диссекторы, mock-, Scapy L2- и TCP L3-runtime для демо, тестовые наборы и документацию — всё из единого источника правды.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#текущее-состояние)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#текущее-состояние)
@@ -155,10 +155,12 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 В репозитории есть три demo entrypoint для одной и той же спецификации `examples/simple/ping_protocol.yaml`:
 
 - `demo/mock` генерирует парсер и queue-based runtime `MockClient` / `MockServer`, а полный сценарий проверяется командой `python demo/mock/demo.py check`
-- `demo/l2` генерирует парсер, runtime `L2ScapyClient` / `L2ScapyServer` и Wireshark Lua-диссектор, а живой L2-обмен можно запустить командой `python demo/l2/demo.py run --iface <name>`; `check` проверяет генерацию и тесты без CI-зависимости от raw-пакетов
+- `demo/l2` — это рабочее Scapy Layer 2 демо: оно генерирует парсер, `L2ScapyClient` / `L2ScapyServer` и Wireshark Lua-диссектор; локальная проверка выполняется через `python demo/l2/demo.py check`, а живой обмен запускается командой `python demo/l2/demo.py run --iface <name>`
 - `demo/l3` генерирует парсер, TCP runtime `L3SocketClient` / `L3SocketServer` и Wireshark Lua-диссектор, а полный сценарий проверяется командой `python demo/l3/demo.py check`
 
-**Защищённый YAML-загрузчик**: модуль `yaml_serializer` защищён от распространённых атак: защита от YAML bomb (экспоненциальное расширение алиасов/якорей YAML), path traversal в `!include`, ограничения глубины рекурсии и размера файлов. Это обеспечивает безопасную обработку недоверенных спецификаций.
+**Рабочие transport demo:** `demo/l2` покрывает живой Scapy-based Layer 2 обмен, а `demo/l3` покрывает localhost TCP обмен и разбор в Wireshark.
+
+**Защищённый YAML-загрузчик**: модуль `yaml_serializer` защищён от распространённых атак: защита от YAML bombs (Billion Laughs-style расширение алиасов/якорей YAML), path traversal в `!include`, ограничения глубины рекурсии и размера файлов. Это обеспечивает безопасную обработку недоверенных спецификаций.
 
 ### Фаза 2 (в разработке)
 - Система типов: примитивные и пользовательские типы (`protocollab.core`)

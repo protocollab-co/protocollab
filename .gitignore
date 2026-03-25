@@ -215,3 +215,7 @@ pyrightconfig.json
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Demo-generated mock artefacts
+demo/mock/generated/*
+!demo/mock/generated/.gitkeep

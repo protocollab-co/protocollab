@@ -341,6 +341,24 @@ class TestGenerateAPI:
         paths = generate(ping_spec, target="python", output_dir=str(tmp_path))
         assert paths[0].exists()
 
+    def test_generate_mock_client_returns_parser_and_mock_paths(self, ping_spec, tmp_path):
+        paths = generate(ping_spec, target="mock-client", output_dir=tmp_path)
+
+        assert len(paths) == 2
+        assert [path.name for path in paths] == [
+            "ping_protocol_parser.py",
+            "ping_protocol_mock_client.py",
+        ]
+
+    def test_generate_mock_server_returns_parser_and_mock_paths(self, ping_spec, tmp_path):
+        paths = generate(ping_spec, target="mock-server", output_dir=tmp_path)
+
+        assert len(paths) == 2
+        assert [path.name for path in paths] == [
+            "ping_protocol_parser.py",
+            "ping_protocol_mock_server.py",
+        ]
+
 
 # ---------------------------------------------------------------------------
 # CLI: protocollab generate
@@ -359,6 +377,26 @@ class TestCLIGenerate:
     def test_generate_wireshark_exits_zero(self, runner, ping_yaml, tmp_path):
         result = runner.invoke(cli, ["generate", "wireshark", str(ping_yaml), "-o", str(tmp_path)])
         assert result.exit_code == 0
+
+    def test_generate_mock_client_also_generates_parser(self, runner, ping_yaml, tmp_path):
+        result = runner.invoke(
+            cli, ["generate", "mock-client", str(ping_yaml), "-o", str(tmp_path)]
+        )
+
+        assert result.exit_code == 0
+        assert (tmp_path / "ping_protocol_parser.py").exists()
+        assert (tmp_path / "ping_protocol_mock_client.py").exists()
+        assert result.output.count("Generated:") == 2
+
+    def test_generate_mock_server_also_generates_parser(self, runner, ping_yaml, tmp_path):
+        result = runner.invoke(
+            cli, ["generate", "mock-server", str(ping_yaml), "-o", str(tmp_path)]
+        )
+
+        assert result.exit_code == 0
+        assert (tmp_path / "ping_protocol_parser.py").exists()
+        assert (tmp_path / "ping_protocol_mock_server.py").exists()
+        assert result.output.count("Generated:") == 2
 
     def test_generate_missing_file_exits_one(self, runner, tmp_path):
         result = runner.invoke(
@@ -382,6 +420,8 @@ class TestCLIGenerate:
         assert result.exit_code == 0
         assert "python" in result.output
         assert "wireshark" in result.output
+        assert "mock-client" in result.output
+        assert "mock-server" in result.output
 
     def test_generate_creates_output_dir(self, runner, ping_yaml, tmp_path):
         out = tmp_path / "new_dir"

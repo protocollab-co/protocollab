@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from jinja2 import Environment, FileSystemLoader
 
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
+from protocollab.generators.utils import to_class_name
 
 # fmt_char, size_bytes, python_type
 _PY_TYPE_MAP: Dict[str, tuple] = {
@@ -21,11 +22,6 @@ _PY_TYPE_MAP: Dict[str, tuple] = {
 }
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "python"
-
-
-def _to_class_name(snake: str) -> str:
-    """Convert ``snake_case`` identifier to ``CamelCase`` class name."""
-    return "".join(part.capitalize() for part in snake.split("_"))
 
 
 class PythonGenerator(BaseGenerator):
@@ -89,7 +85,7 @@ class PythonGenerator(BaseGenerator):
 
         context = {
             "source_file": str(spec.get("_source_file", "<unknown>")),
-            "class_name": _to_class_name(proto_id),
+            "class_name": to_class_name(proto_id),
             "endian_char": endian_char,
             "format_string": "".join(fmt_chars),
             "total_size": total_size,

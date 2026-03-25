@@ -24,10 +24,10 @@ jobs:
         run: pip install -r requirements-dev.txt
 
       - name: black – format check
-        run: black --check src demo/mock/demo.py demo/mock/tests
+        run: black --check src demo/mock/demo.py demo/mock/tests demo/l3/demo.py demo/l3/tests
 
       - name: flake8 – style check
-        run: flake8 src demo/mock/demo.py demo/mock/tests
+        run: flake8 src demo/mock/demo.py demo/mock/tests demo/l3/demo.py demo/l3/tests
 
   test:
     name: Test (Python ${{ matrix.python-version }})
@@ -94,3 +94,36 @@ jobs:
           git check-ignore demo/mock/generated/ping_protocol_parser.py
           git check-ignore demo/mock/generated/ping_protocol_mock_client.py
           git check-ignore demo/mock/generated/ping_protocol_mock_server.py
+
+  demo-l3:
+    name: Demo L3 (Python 3.12)
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies and package
+        run: |
+          pip install -r requirements-dev.txt
+          pip install -e .
+
+      - name: Check L3 demo workflow
+        run: python demo/l3/demo.py check
+
+      - name: Ensure generated artefacts are ignored
+        run: |
+          test -f demo/l3/generated/ping_protocol_parser.py
+          test -f demo/l3/generated/ping_protocol_l3_client.py
+          test -f demo/l3/generated/ping_protocol_l3_server.py
+          test -f demo/l3/generated/ping_protocol.lua
+          git check-ignore demo/l3/generated/ping_protocol_parser.py
+          git check-ignore demo/l3/generated/ping_protocol_l3_client.py
+          git check-ignore demo/l3/generated/ping_protocol_l3_server.py
+          git check-ignore demo/l3/generated/ping_protocol.lua

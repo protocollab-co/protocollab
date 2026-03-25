@@ -46,7 +46,8 @@ def generate(
     spec:
         Protocol specification dict (as returned by ``load_protocol``).
     target:
-        ``"python"`` or ``"wireshark"``.
+        One of ``"python"``, ``"wireshark"``, ``"mock-client"``,
+        ``"mock-server"``, or any additionally registered target.
     output_dir:
         Directory where generated files are written.
 

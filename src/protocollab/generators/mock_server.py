@@ -6,6 +6,7 @@ from typing import Any, Dict, List
 from jinja2 import Environment, FileSystemLoader
 
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
+from protocollab.generators.python_generator import _to_class_name
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "python"
 
@@ -34,13 +35,9 @@ class MockServerGenerator(BaseGenerator):
         GeneratorError
             If the spec is missing required fields.
         """
-        try:
-            proto_id = spec["meta"]["id"]
-        except KeyError as e:
-            raise GeneratorError("Spec missing 'meta.id'") from e
-
-        # Build class name from protocol id
-        class_name = proto_id.replace("_", " ").title().replace(" ", "")
+        meta = spec.get("meta") or {}
+        proto_id = meta.get("id", "protocol")
+        class_name = _to_class_name(proto_id)
 
         # Prepare output file name
         output_file = output_dir / f"{proto_id}_mock_server.py"

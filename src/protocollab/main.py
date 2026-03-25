@@ -254,18 +254,16 @@ def generate_cpp(file: str, output: str) -> None:
 
 
 @generate_cmd.command("mock-client")
-@click.argument("file", type=click.Path(exists=True, dir_okay=False))
-@click.option("--output", "-o", type=click.Path(file_okay=False), required=True)
-# @click.option('--no-cache', is_flag=True, help='Disable caching')
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
 def generate_mock_client(file: str, output: str) -> None:
     """Generate a mock client that communicates via queues."""
     _run_generate(file, target="mock-client", output=output)
 
 
 @generate_cmd.command("mock-server")
-@click.argument("file", type=click.Path(exists=True, dir_okay=False))
-@click.option("--output", "-o", type=click.Path(file_okay=False), required=True)
-# @click.option('--no-cache', is_flag=True, help='Disable caching')
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
 def generate_mock_server(file: str, output: str) -> None:
     """Generate a mock server that communicates via queues."""
     _run_generate(file, target="mock-server", output=output)

@@ -223,3 +223,7 @@ demo/mock/generated/*
 # Demo-generated L3 artefacts
 demo/l3/generated/*
 !demo/l3/generated/.gitkeep
+
+# Demo-generated L2 artefacts
+demo/l2/generated/*
+!demo/l2/generated/.gitkeep

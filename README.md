@@ -133,9 +133,9 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 | CLI `protocollab validate` | ✅ | `--strict`, `--schema`, exit codes 0/1/2/3 |
 | CLI `protocollab generate` | ✅ | `generate python\|wireshark FILE -o DIR`, exit codes 0/1/2/4 |
 | Examples | ✅ | `examples/simple/` — ping protocol, Ethernet frame |
-| Tests — `yaml_serializer` | ✅ 307 tests | 100% coverage |
-| Tests — `protocollab` | ✅ 445 tests | loader, cache, utils, CLI, validator, generators |
-| **Total tests** | ✅ **752** | All passing |
+| Tests — `yaml_serializer` | ✅ | 100% coverage |
+| Tests — `protocollab` | ✅ | loader, cache, utils, CLI, validator, generators |
+| **Test suite** | ✅ | All passing |
 
 **Security-first YAML loader**: The `yaml_serializer` module is hardened against common attacks: protection against Billion Laughs (XML entity expansion), path traversal in `!include`, recursion depth limits, and file size restrictions. This ensures safe handling of untrusted specifications.
 

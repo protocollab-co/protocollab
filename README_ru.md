@@ -133,9 +133,9 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 | CLI `protocollab validate` | ✅ | `--strict`, `--schema`, коды выхода 0/1/2/3 |
 | CLI `protocollab generate` | ✅ | `generate python\|wireshark FILE -o DIR`, коды выхода 0/1/2/4 |
 | Примеры | ✅ | `examples/simple/` — ping-протокол, Ethernet-фрейм |
-| Тесты — `yaml_serializer` | ✅ 307 тестов | 100% покрытие |
-| Тесты — `protocollab` | ✅ 445 тестов | loader, cache, utils, CLI, validator, generators |
-| **Всего тестов** | ✅ **752** | Все проходят |
+| Тесты — `yaml_serializer` | ✅ | 100% покрытие |
+| Тесты — `protocollab` | ✅ | loader, cache, utils, CLI, validator, generators |
+| **Набор тестов** | ✅ | Все проходят |
 
 **Защищённый YAML-загрузчик**: модуль `yaml_serializer` защищён от распространённых атак: защита от YAML bomb (экспоненциальное расширение алиасов/якорей YAML), path traversal в `!include`, ограничения глубины рекурсии и размера файлов. Это обеспечивает безопасную обработку недоверенных спецификаций.
 

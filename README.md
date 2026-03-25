@@ -4,7 +4,7 @@
 
 `protocollab` is an open-source framework for declaring, validating, and generating implementations of **network and binary protocols** from human-readable YAML specifications.
 
-Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, test suites, and documentation — all from the same source of truth.
+Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, mock and TCP demo runtimes, test suites, and documentation — all from the same source of truth.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#current-state)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#current-state)
@@ -105,6 +105,14 @@ protocollab generate python examples/simple/ping_protocol.yaml --output build/
 
 # Wireshark Lua dissector
 protocollab generate wireshark examples/simple/ping_protocol.yaml --output build/
+
+# Queue-based mock runtime
+protocollab generate mock-client examples/simple/ping_protocol.yaml --output build/
+protocollab generate mock-server examples/simple/ping_protocol.yaml --output build/
+
+# TCP L3 socket runtime
+protocollab generate l3-client examples/simple/ping_protocol.yaml --output build/
+protocollab generate l3-server examples/simple/ping_protocol.yaml --output build/
 ```
 
 ```python
@@ -128,14 +136,22 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 | `yaml_serializer` | ✅ 100% coverage | Secure YAML loader: `!include`, depth/size limits, path traversal, Billion Laughs |
 | `protocollab.loader` | ✅ | `load_protocol()`, `get_global_loader()`, `configure_global()`, `ProtocolLoader`, LRU `MemoryCache` |
 | `protocollab.validator` | ✅ | JSON Schema Draft 7, `base` and `strict` schemas |
-| `protocollab.generators` | ✅ | `PythonGenerator` (dataclass), `LuaGenerator` (Wireshark dissector), Jinja2 |
+| `protocollab.generators` | ✅ | Python parser, Wireshark dissector, mock client/server, L3 socket client/server, Jinja2 |
 | CLI `protocollab load` | ✅ | `--output-format json\|yaml`, `--no-cache`, security flags |
 | CLI `protocollab validate` | ✅ | `--strict`, `--schema`, exit codes 0/1/2/3 |
-| CLI `protocollab generate` | ✅ | `generate python\|wireshark FILE -o DIR`, exit codes 0/1/2/4 |
+| CLI `protocollab generate` | ✅ | `generate python\|wireshark\|mock-client\|mock-server\|l3-client\|l3-server FILE -o DIR`, exit codes 0/1/2/4 |
 | Examples | ✅ | `examples/simple/` — ping protocol, Ethernet frame |
+| Demo workflows | ✅ | `demo/mock` queue-based demo, `demo/l3` TCP + Wireshark demo |
 | Tests — `yaml_serializer` | ✅ | 100% coverage |
 | Tests — `protocollab` | ✅ | loader, cache, utils, CLI, validator, generators |
 | **Test suite** | ✅ | All passing |
+
+## Demo Workflows
+
+Two single-entry-point demos are included for the same `examples/simple/ping_protocol.yaml` spec:
+
+- `demo/mock` generates a parser plus queue-based `MockClient` / `MockServer` runtime and validates the full workflow with `python demo/mock/demo.py check`
+- `demo/l3` generates a parser plus `L3SocketClient` / `L3SocketServer` TCP runtime and a Wireshark Lua dissector, then validates the full workflow with `python demo/l3/demo.py check`
 
 **Security-first YAML loader**: The `yaml_serializer` module is hardened against common attacks: protection against Billion Laughs (XML entity expansion), path traversal in `!include`, recursion depth limits, and file size restrictions. This ensures safe handling of untrusted specifications.
 
@@ -173,11 +189,19 @@ src/
     │   └── schemas/
     │       ├── base.schema.json      # permissive, KSY-compatible
     │       └── protocol.schema.json  # strict (additionalProperties: false)
-    ├── generators/           # generate() + PythonGenerator + LuaGenerator
+    ├── generators/           # generate() + parser/dissector/mock/L3 generators
     │   └── templates/
     │       ├── python/parser.py.j2
+    │       ├── python/mock_client.py.j2
+    │       ├── python/mock_server.py.j2
+    │       ├── python/l3_client.py.j2
+    │       ├── python/l3_server.py.j2
     │       └── lua/dissector.lua.j2
     └── utils/                # resolve_path, to_json, to_yaml, print_data
+
+  demo/
+  ├── mock/                     # queue-based generated runtime demo
+  └── l3/                       # TCP + Wireshark generated runtime demo
 
 examples/
 ├── simple/                   # ping_protocol.yaml, ethernet_frame.yaml
@@ -229,6 +253,7 @@ pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 | | Community (this repo) | Pro | Enterprise |
 |---|---|---|---|
 | Python + Lua generation | ✅ | ✅ | ✅ |
+| Mock + L3 demo runtimes | ✅ | ✅ | ✅ |
 | Base + strict schema validation | ✅ | ✅ | ✅ |
 | Flat FSM (≤10 states) | Planned | ✅ | ✅ |
 | C++ / Rust / Java generation | — | ✅ | ✅ |

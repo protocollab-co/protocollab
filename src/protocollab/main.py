@@ -279,6 +279,22 @@ def generate_mock_server(file: str, output: str) -> None:
     _run_generate(file, target="mock-server", output=output)
 
 
+@generate_cmd.command("l3-client")
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
+def generate_l3_client(file: str, output: str) -> None:
+    """Generate a TCP L3 socket client and its Python parser."""
+    _run_generate(file, target="l3-client", output=output)
+
+
+@generate_cmd.command("l3-server")
+@click.argument("file", type=click.Path())
+@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
+def generate_l3_server(file: str, output: str) -> None:
+    """Generate a TCP L3 socket server and its Python parser."""
+    _run_generate(file, target="l3-server", output=output)
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------

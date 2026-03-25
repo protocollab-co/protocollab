@@ -2,7 +2,7 @@
 
 ## English
 
-This folder contains a small end-to-end demo for the generated mock client and mock server.
+This folder contains a small end-to-end demo for the generated parser, mock client, and mock server.
 
 Generated files are written to `demo/mock/generated` and are intentionally not stored in the repository.
 Only `demo/mock/generated/.gitkeep` is tracked.
@@ -59,12 +59,13 @@ The `check` command performs three steps in order:
 ### Notes
 
 - The demo uses `examples/simple/ping_protocol.yaml`
+- The generated runtime files are `ping_protocol_mock_client.py` and `ping_protocol_mock_server.py`
 - The generated directory is cleaned before regeneration
 - CI validates this workflow through the same single entry point
 
 ## Русский
 
-Эта папка содержит небольшой сквозной пример для сгенерированных mock-клиента и mock-сервера.
+Эта папка содержит небольшой сквозной пример для сгенерированных парсера, mock-клиента и mock-сервера.
 
 Сгенерированные файлы записываются в `demo/mock/generated` и намеренно не хранятся в репозитории.
 В git отслеживается только `demo/mock/generated/.gitkeep`.
@@ -121,5 +122,6 @@ python demo/mock/demo.py check
 ### Примечания
 
 - Демо использует `examples/simple/ping_protocol.yaml`
+- Сгенерированные runtime-файлы: `ping_protocol_mock_client.py` и `ping_protocol_mock_server.py`
 - Перед новой генерацией каталог `generated` очищается
 - CI проверяет этот сценарий через ту же единую точку входа

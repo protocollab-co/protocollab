@@ -219,3 +219,7 @@ __marimo__/
 # Demo-generated mock artefacts
 demo/mock/generated/*
 !demo/mock/generated/.gitkeep
+
+# Demo-generated L3 artefacts
+demo/l3/generated/*
+!demo/l3/generated/.gitkeep

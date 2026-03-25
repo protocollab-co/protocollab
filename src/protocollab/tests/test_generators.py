@@ -359,6 +359,24 @@ class TestGenerateAPI:
             "ping_protocol_mock_server.py",
         ]
 
+    def test_generate_l3_client_returns_parser_and_runtime_paths(self, ping_spec, tmp_path):
+        paths = generate(ping_spec, target="l3-client", output_dir=tmp_path)
+
+        assert len(paths) == 2
+        assert [path.name for path in paths] == [
+            "ping_protocol_parser.py",
+            "ping_protocol_l3_client.py",
+        ]
+
+    def test_generate_l3_server_returns_parser_and_runtime_paths(self, ping_spec, tmp_path):
+        paths = generate(ping_spec, target="l3-server", output_dir=tmp_path)
+
+        assert len(paths) == 2
+        assert [path.name for path in paths] == [
+            "ping_protocol_parser.py",
+            "ping_protocol_l3_server.py",
+        ]
+
 
 # ---------------------------------------------------------------------------
 # CLI: protocollab generate
@@ -398,6 +416,22 @@ class TestCLIGenerate:
         assert (tmp_path / "ping_protocol_mock_server.py").exists()
         assert result.output.count("Generated:") == 2
 
+    def test_generate_l3_client_also_generates_parser(self, runner, ping_yaml, tmp_path):
+        result = runner.invoke(cli, ["generate", "l3-client", str(ping_yaml), "-o", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert (tmp_path / "ping_protocol_parser.py").exists()
+        assert (tmp_path / "ping_protocol_l3_client.py").exists()
+        assert result.output.count("Generated:") == 2
+
+    def test_generate_l3_server_also_generates_parser(self, runner, ping_yaml, tmp_path):
+        result = runner.invoke(cli, ["generate", "l3-server", str(ping_yaml), "-o", str(tmp_path)])
+
+        assert result.exit_code == 0
+        assert (tmp_path / "ping_protocol_parser.py").exists()
+        assert (tmp_path / "ping_protocol_l3_server.py").exists()
+        assert result.output.count("Generated:") == 2
+
     def test_generate_missing_file_exits_one(self, runner, tmp_path):
         result = runner.invoke(
             cli, ["generate", "python", "/no/such/file.yaml", "-o", str(tmp_path)]
@@ -420,6 +454,8 @@ class TestCLIGenerate:
         assert result.exit_code == 0
         assert "python" in result.output
         assert "wireshark" in result.output
+        assert "l3-client" in result.output
+        assert "l3-server" in result.output
         assert "mock-client" in result.output
         assert "mock-server" in result.output
 

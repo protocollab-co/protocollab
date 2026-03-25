@@ -4,6 +4,7 @@ import queue
 import sys
 from pathlib import Path
 from typing import Generator
+from unittest.mock import patch
 
 import pytest
 
@@ -67,6 +68,11 @@ def setup_module(module):
         _generate_demo_files()
 
 
+def test_generated_files_exist():
+    for path in EXPECTED_GENERATED_FILES:
+        assert path.exists()
+
+
 def test_imports():
     """Проверяем, что все сгенерированные модули импортируются."""
     from ping_protocol_parser import PingProtocol
@@ -88,6 +94,81 @@ def test_ping_protocol_serialize_deserialize():
     assert parsed.type_id == original.type_id
     assert parsed.sequence_number == original.sequence_number
     assert parsed.payload_size == original.payload_size
+
+
+def test_demo_round_trip():
+    demo_cli = _load_demo_cli_module()
+    response = demo_cli.run_demo()
+
+    assert response is not None
+    assert response.type_id == 1
+    assert response.sequence_number == 42
+    assert response.payload_size == 8
+
+
+def test_demo_stop_uses_bounded_timeout_and_warns_if_server_is_still_alive(monkeypatch):
+    demo_cli = _load_demo_cli_module()
+
+    class FakePingProtocol:
+        def __init__(self, type_id, sequence_number, payload_size):
+            self.type_id = type_id
+            self.sequence_number = sequence_number
+            self.payload_size = payload_size
+
+        def __repr__(self):
+            return (
+                "PingProtocol("
+                f"type_id={self.type_id}, "
+                f"sequence_number={self.sequence_number}, "
+                f"payload_size={self.payload_size}"
+                ")"
+            )
+
+    class FakeClient:
+        def __init__(self, send_queue, recv_queue):
+            self.send_queue = send_queue
+            self.recv_queue = recv_queue
+
+        def send_and_receive(self, msg, timeout):
+            assert timeout == demo_cli.STOP_TIMEOUT
+            return FakePingProtocol(1, msg.sequence_number, msg.payload_size)
+
+    class FakeServer:
+        def __init__(self, recv_queue, send_queue, handler):
+            self.recv_queue = recv_queue
+            self.send_queue = send_queue
+            self.handler = handler
+            self.stop_timeout = None
+
+        def start(self):
+            return None
+
+        def stop(self, timeout=None):
+            self.stop_timeout = timeout
+
+        def is_alive(self):
+            return True
+
+    fake_server = FakeServer(None, None, None)
+
+    def fake_server_factory(recv_queue, send_queue, handler):
+        fake_server.recv_queue = recv_queue
+        fake_server.send_queue = send_queue
+        fake_server.handler = handler
+        return fake_server
+
+    monkeypatch.setattr(
+        demo_cli,
+        "_load_generated_types",
+        lambda: (FakePingProtocol, FakeClient, fake_server_factory),
+    )
+
+    with patch("builtins.print") as print_mock:
+        response = demo_cli.run_demo()
+
+    assert response is not None
+    assert fake_server.stop_timeout == demo_cli.STOP_TIMEOUT
+    print_mock.assert_any_call("Warning: server thread is still alive after stop timeout.")
 
 
 def test_mock_client_server_interaction():
@@ -161,3 +242,32 @@ def test_mock_server_default_handler():
         assert response.payload_size == 8
     finally:
         server.stop(timeout=2.0)
+
+
+def test_generate_demo_files_generates_parser_once():
+    demo_cli = _load_demo_cli_module()
+
+    with patch.object(
+        demo_cli, "load_protocol", wraps=demo_cli.load_protocol
+    ) as load_protocol_mock:
+        with patch.object(demo_cli, "generate", wraps=demo_cli.generate) as generate_mock:
+            with patch.object(
+                demo_cli.MockClientGenerator,
+                "generate",
+                autospec=True,
+                wraps=demo_cli.MockClientGenerator.generate,
+            ) as client_generate_mock:
+                with patch.object(
+                    demo_cli.MockServerGenerator,
+                    "generate",
+                    autospec=True,
+                    wraps=demo_cli.MockServerGenerator.generate,
+                ) as server_generate_mock:
+                    demo_cli.generate_demo_files()
+
+    assert load_protocol_mock.call_count == 1
+    assert [call.kwargs["target"] for call in generate_mock.call_args_list] == [
+        "python",
+    ]
+    assert client_generate_mock.call_count == 1
+    assert server_generate_mock.call_count == 1

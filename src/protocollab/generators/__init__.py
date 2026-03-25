@@ -63,8 +63,9 @@ def generate(
         One of ``"python"``, ``"wireshark"``, ``"l2-client"``, ``"l2-server"``,
         ``"l3-client"``, ``"l3-server"``, ``"mock-client"``, ``"mock-server"``,
         or any additionally registered target.
-        The ``"l2-client"``, ``"l2-server"``, ``"l3-client"``, ``"l3-server"``, ``"mock-client"`` and
-        ``"mock-server"`` targets first generate
+        The ``"l2-client"``, ``"l2-server"``, ``"l3-client"``,
+        ``"l3-server"``, ``"mock-client"`` and ``"mock-server"``
+        targets first generate
         the ``"python"`` parser module into the same output directory and
         then generate the runtime module that imports it. If the parser file
         already exists in *output_dir*, it is overwritten with regenerated

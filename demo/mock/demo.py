@@ -29,24 +29,11 @@ def _clean_generated_dir() -> None:
 
 
 def generate_demo_files(python_executable: str | None = None) -> None:
-    """Generate the parser, mock client, and mock server into ``generated``."""
+    """Generate mock artefacts into ``generated``."""
     python = python_executable or sys.executable
     _clean_generated_dir()
 
     steps = [
-        (
-            "parser",
-            [
-                python,
-                "-m",
-                "protocollab",
-                "generate",
-                "python",
-                str(SPEC_PATH),
-                "-o",
-                str(GENERATED_DIR),
-            ],
-        ),
         (
             "mock client",
             [

@@ -2,6 +2,7 @@ import importlib
 import queue
 import sys
 import threading
+import time
 from pathlib import Path
 from typing import Generator
 
@@ -259,6 +260,14 @@ def test_mock_server_handles_exceptions(ping_spec, tmp_path, monkeypatch):
         handled.set()
         raise ValueError("Test exception")
 
+    def wait_for_last_error(timeout: float) -> Exception | None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if server.last_error is not None:
+                return server.last_error
+            time.sleep(0.01)
+        return server.last_error
+
     client_to_server = queue.Queue()
     server_to_client = queue.Queue()
     server = mock_server(client_to_server, server_to_client, handler=error_handler)
@@ -271,7 +280,8 @@ def test_mock_server_handles_exceptions(ping_spec, tmp_path, monkeypatch):
         client.send(ping)
 
         assert handled.wait(timeout=2.0)
+        last_error = wait_for_last_error(timeout=2.0)
         assert server.is_alive()
-        assert isinstance(server.last_error, ValueError)
+        assert isinstance(last_error, ValueError)
     finally:
         server.stop(timeout=2.0)

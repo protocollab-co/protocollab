@@ -38,7 +38,7 @@ class MockServer:
             self.recv_queue.put_nowait(_STOP_SENTINEL)
         except queue.Full:
             LOGGER.warning(
-                "MockServer recv_queue is full; worker will stop after the queue timeout"
+                "MockServer recv_queue is full; worker will stop after the current get() timeout and any in-progress message processing"
             )
         self._thread.join(timeout=timeout)
 

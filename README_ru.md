@@ -6,7 +6,7 @@
 
 Напишите один `.yaml`-файл → получите Python-парсеры, Wireshark-диссекторы, тестовые наборы и документацию — всё из единого источника правды.
 
-[![Tests](https://img.shields.io/badge/tests-752%20passed-brightgreen)](#текущее-состояние)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#текущее-состояние)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#текущее-состояние)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#установка)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
@@ -121,7 +121,7 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 ## Текущее состояние
 
-**Фаза 1 завершена.** Все 752 теста проходят.
+**Фаза 1 завершена.** Набор тестов проходит.
 
 | Компонент | Статус | Примечания |
 |---|---|---|

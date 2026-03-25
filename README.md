@@ -6,7 +6,7 @@
 
 Write a single `.yaml` spec → get Python parsers, Wireshark dissectors, test suites, and documentation — all from the same source of truth.
 
-[![Tests](https://img.shields.io/badge/tests-752%20passed-brightgreen)](#current-state)
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](#current-state)
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20yaml__serializer-brightgreen)](#current-state)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#installation)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
@@ -121,7 +121,7 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 ## Current State
 
-**Phase 1 is complete.** All 752 tests pass.
+**Phase 1 is complete.** The test suite is passing.
 
 | Component | Status | Notes |
 |---|---|---|

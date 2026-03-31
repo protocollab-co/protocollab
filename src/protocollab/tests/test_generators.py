@@ -354,6 +354,22 @@ class TestLuaGeneratorContent:
         src = LuaGenerator().generate(ping_spec_with_reordered_instances, tmp_path)[0].read_text()
         assert src.index("local value_lan =") < src.index("local value_scope =")
 
+    def test_ternary_compiles_without_lua_and_or_fallthrough(self, tmp_path):
+        spec = {
+            "meta": {"id": "quoted_proto", "endian": "le", "title": "Quoted Proto"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "lan": {
+                    "value": "false if src_ip == 1 else true",
+                    "wireshark": {"type": "bool", "label": "LAN"},
+                }
+            },
+        }
+
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "(function() if" in src
+        assert "and (false) or" not in src
+
     def test_uses_safe_lua_string_literals_for_unicode_and_quotes(self, tmp_path):
         spec = {
             "meta": {

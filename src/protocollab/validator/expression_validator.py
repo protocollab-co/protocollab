@@ -1,4 +1,4 @@
-"""Expression validation — checks ``if:`` and ``size:`` expression syntax."""
+"""Expression validation for field guards, repeat expressions, and instances."""
 
 from __future__ import annotations
 
@@ -70,10 +70,11 @@ def _check_instance_exprs(
 
 
 class ExpressionValidator(BaseValidator):
-    """Validate expression syntax in ``if:`` and ``repeat-expr:`` fields.
+    """Validate expression syntax in fields and ``instances.*.value`` entries.
 
     Walks all ``seq`` fields in the root spec and in every user-defined type,
-    calling :func:`~protocollab.expression.validate_expr` on each expression.
+    calling :func:`~protocollab.expression.validate_expr` on ``if:``,
+    ``repeat-expr:``, and ``instances.*.value`` expressions.
     """
 
     def validate(self, spec: "ProtocolSpec") -> List[ValidationIssue]:

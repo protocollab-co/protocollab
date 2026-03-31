@@ -114,7 +114,10 @@ def _compile_lua_expr(node: Any) -> str:
         condition = _compile_lua_expr(node.condition)
         value_if_true = _compile_lua_expr(node.value_if_true)
         value_if_false = _compile_lua_expr(node.value_if_false)
-        return f"(({condition}) and ({value_if_true}) or ({value_if_false}))"
+        return (
+            f"(function() if ({condition}) then return ({value_if_true}) "
+            f"else return ({value_if_false}) end end)()"
+        )
 
     raise GeneratorError(f"Unsupported AST node {type(node)!r} in Lua expression generation.")
 

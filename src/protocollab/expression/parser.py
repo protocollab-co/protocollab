@@ -9,7 +9,11 @@ Grammar (PEG-style, highest precedence last)
     or_expr     = and_expr ('or' and_expr)*
     and_expr    = not_expr ('and' not_expr)*
     not_expr    = 'not' not_expr | comparison
-    comparison  = additive (('==' | '!=' | '<' | '>' | '<=' | '>=') additive)?
+    comparison  = bitwise_or (('==' | '!=' | '<' | '>' | '<=' | '>=') bitwise_or)?
+    bitwise_or  = bitwise_xor ('|' bitwise_xor)*
+    bitwise_xor = bitwise_and ('^' bitwise_and)*
+    bitwise_and = shift ('&' shift)*
+    shift       = additive (('<<' | '>>') additive)*
     additive    = mult (('+' | '-') mult)*
     mult        = unary (('*' | '/' | '//' | '%') unary)*
     unary       = '-' unary | postfix
@@ -53,6 +57,19 @@ _COMPARISON_OPS: dict[TokenKind, str] = {
 _ADDITIVE_OPS: dict[TokenKind, str] = {
     TokenKind.PLUS: "+",
     TokenKind.MINUS: "-",
+}
+_SHIFT_OPS: dict[TokenKind, str] = {
+    TokenKind.LSHIFT: "<<",
+    TokenKind.RSHIFT: ">>",
+}
+_BITWISE_AND_OPS: dict[TokenKind, str] = {
+    TokenKind.AMP: "&",
+}
+_BITWISE_XOR_OPS: dict[TokenKind, str] = {
+    TokenKind.CARET: "^",
+}
+_BITWISE_OR_OPS: dict[TokenKind, str] = {
+    TokenKind.PIPE: "|",
 }
 _MULT_OPS: dict[TokenKind, str] = {
     TokenKind.STAR: "*",
@@ -188,9 +205,41 @@ class Parser:
         return self._comparison()
 
     def _comparison(self) -> ASTNode:
-        node = self._additive()
+        node = self._bitwise_or()
         if self._peek().kind in _COMPARISON_OPS:
             op_str = _COMPARISON_OPS[self._advance().kind]
+            right = self._bitwise_or()
+            node = BinOp(left=node, op=op_str, right=right)
+        return node
+
+    def _bitwise_or(self) -> ASTNode:
+        node = self._bitwise_xor()
+        while self._peek().kind in _BITWISE_OR_OPS:
+            op_str = _BITWISE_OR_OPS[self._advance().kind]
+            right = self._bitwise_xor()
+            node = BinOp(left=node, op=op_str, right=right)
+        return node
+
+    def _bitwise_xor(self) -> ASTNode:
+        node = self._bitwise_and()
+        while self._peek().kind in _BITWISE_XOR_OPS:
+            op_str = _BITWISE_XOR_OPS[self._advance().kind]
+            right = self._bitwise_and()
+            node = BinOp(left=node, op=op_str, right=right)
+        return node
+
+    def _bitwise_and(self) -> ASTNode:
+        node = self._shift()
+        while self._peek().kind in _BITWISE_AND_OPS:
+            op_str = _BITWISE_AND_OPS[self._advance().kind]
+            right = self._shift()
+            node = BinOp(left=node, op=op_str, right=right)
+        return node
+
+    def _shift(self) -> ASTNode:
+        node = self._additive()
+        while self._peek().kind in _SHIFT_OPS:
+            op_str = _SHIFT_OPS[self._advance().kind]
             right = self._additive()
             node = BinOp(left=node, op=op_str, right=right)
         return node

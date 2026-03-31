@@ -20,9 +20,14 @@ class TokenKind(Enum):
     LEQ = auto()  # <=
     GEQ = auto()  # >=
     FLOOR_DIV = auto()  # //
+    LSHIFT = auto()  # <<
+    RSHIFT = auto()  # >>
     # Single-character operators / punctuation
     LT = auto()  # <
     GT = auto()  # >
+    AMP = auto()  # &
+    PIPE = auto()  # |
+    CARET = auto()  # ^
     PLUS = auto()  # +
     MINUS = auto()  # -
     STAR = auto()  # *
@@ -68,9 +73,14 @@ _TOKEN_SPEC: list[tuple[str, TokenKind]] = [
     (r"<=", TokenKind.LEQ),
     (r">=", TokenKind.GEQ),
     (r"//", TokenKind.FLOOR_DIV),
+    (r"<<", TokenKind.LSHIFT),
+    (r">>", TokenKind.RSHIFT),
     # Single-character
     (r"<", TokenKind.LT),
     (r">", TokenKind.GT),
+    (r"&", TokenKind.AMP),
+    (r"\|", TokenKind.PIPE),
+    (r"\^", TokenKind.CARET),
     (r"\+", TokenKind.PLUS),
     (r"-", TokenKind.MINUS),
     (r"\*", TokenKind.STAR),

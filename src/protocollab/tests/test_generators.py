@@ -55,6 +55,25 @@ def ping_spec_with_instances():
 
 
 @pytest.fixture()
+def ping_spec_with_reordered_instances():
+    """Ping spec where instance declaration order does not match dependencies."""
+    return {
+        "meta": {"id": "ping_protocol", "endian": "le", "title": "Ping Protocol"},
+        "seq": [{"id": "src_ip", "type": "u4"}],
+        "instances": {
+            "scope": {
+                "value": '"lan" if lan else "inet"',
+                "wireshark": {"type": "string", "label": "Scope"},
+            },
+            "lan": {
+                "value": "(src_ip & 0xFFFF0000) == 0xC0A80000",
+                "wireshark": {"type": "bool", "filter-only": True, "label": "LAN"},
+            },
+        },
+    }
+
+
+@pytest.fixture()
 def be_spec():
     """Big-endian protocol spec."""
     return {
@@ -314,11 +333,11 @@ class TestLuaGeneratorContent:
     def test_filter_only_bool_is_added_only_when_true(self, ping_spec_with_instances, tmp_path):
         src = LuaGenerator().generate(ping_spec_with_instances, tmp_path)[0].read_text()
         assert "if value_lan then" in src
-        assert "subtree:add(f_lan, buffer(0, 0), true)" in src
+        assert "subtree:add(f_inst_lan, buffer(0, 0), true)" in src
 
     def test_string_instance_is_added_as_virtual_field(self, ping_spec_with_instances, tmp_path):
         src = LuaGenerator().generate(ping_spec_with_instances, tmp_path)[0].read_text()
-        assert "subtree:add(f_scope, buffer(0, 0), value_scope)" in src
+        assert "subtree:add(f_inst_scope, buffer(0, 0), value_scope)" in src
 
     def test_bitwise_instances_compile_to_bit32_calls(self, ping_spec_with_instances, tmp_path):
         src = LuaGenerator().generate(ping_spec_with_instances, tmp_path)[0].read_text()
@@ -328,6 +347,112 @@ class TestLuaGeneratorContent:
     def test_little_endian_numeric_fields_use_add_le(self, ping_spec_with_instances, tmp_path):
         src = LuaGenerator().generate(ping_spec_with_instances, tmp_path)[0].read_text()
         assert "subtree:add_le(f_src_ip, range)" in src
+
+    def test_instance_dependencies_are_evaluated_before_dependents(
+        self, ping_spec_with_reordered_instances, tmp_path
+    ):
+        src = LuaGenerator().generate(ping_spec_with_reordered_instances, tmp_path)[0].read_text()
+        assert src.index("local value_lan =") < src.index("local value_scope =")
+
+    def test_uses_safe_lua_string_literals_for_unicode_and_quotes(self, tmp_path):
+        spec = {
+            "meta": {
+                "id": "quoted_proto",
+                "endian": "le",
+                "title": 'Ping "Локал"',
+            },
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "scope": {
+                    "value": '"лан"',
+                    "wireshark": {"type": "string", "label": 'LAN "локал"'},
+                }
+            },
+        }
+
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text(encoding="utf-8")
+        assert 'Proto("quoted_proto", "Ping \\"Локал\\"")' in src
+        assert 'ProtoField.string("quoted_proto.scope", "LAN \\"локал\\"")' in src
+        assert "\\u041b" not in src
+
+    def test_invalid_filter_only_type_raises(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "lan": {
+                    "value": "src_ip == 1",
+                    "wireshark": {"type": "bool", "filter-only": "false"},
+                }
+            },
+        }
+
+        with pytest.raises(GeneratorError, match="filter-only must be a boolean"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_invalid_instance_expression_is_wrapped_in_generator_error(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "scope": {
+                    "value": "@bad",
+                    "wireshark": {"type": "string", "label": "Scope"},
+                }
+            },
+        }
+
+        with pytest.raises(GeneratorError, match=r"instances\.scope\.value"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_instance_id_collision_with_seq_field_raises(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "scope", "type": "u4"}],
+            "instances": {
+                "scope": {
+                    "value": '"lan"',
+                    "wireshark": {"type": "string", "label": "Scope"},
+                }
+            },
+        }
+
+        with pytest.raises(GeneratorError, match="collides with a seq field id"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_cyclic_instance_dependencies_raise(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "a": {
+                    "value": '"x" if b else "y"',
+                    "wireshark": {"type": "string", "label": "A"},
+                },
+                "b": {
+                    "value": '"x" if a else "y"',
+                    "wireshark": {"type": "string", "label": "B"},
+                },
+            },
+        }
+
+        with pytest.raises(GeneratorError, match="Cyclic dependency"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_unknown_instance_dependency_raises(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "scope": {
+                    "value": '"lan" if missing_scope else "inet"',
+                    "wireshark": {"type": "string", "label": "Scope"},
+                }
+            },
+        }
+
+        with pytest.raises(GeneratorError, match=r"Unknown name\(s\) in instances.scope.value"):
+            LuaGenerator().generate(spec, tmp_path)
 
     def test_invalid_wireshark_instance_type_raises(self, tmp_path):
         spec = {

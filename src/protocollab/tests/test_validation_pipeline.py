@@ -416,3 +416,70 @@ class TestValidateProtocolBackcompat:
         path = str(SIMPLE / "ping_protocol.yaml")
         result = validate_protocol(path)
         assert result.file_path == path
+
+
+# ===========================================================================
+# _SchemaValidatorAdapter — no raw data branch (pipeline.py line 34)
+# ===========================================================================
+
+
+class TestSchemaValidatorAdapterNoData:
+    def test_validate_returns_empty_when_no_raw_data(self) -> None:
+        """Cover pipeline.py line 34: validate() returns [] when _last_data is None."""
+        from protocollab.validator.pipeline import _SchemaValidatorAdapter
+
+        adapter = _SchemaValidatorAdapter()
+        spec = parse_spec({"meta": {"id": "p"}})
+        # _last_data is None (set_raw_data never called)
+        issues = adapter.validate(spec)
+        assert issues == []
+
+
+# ===========================================================================
+# ExpressionValidator — additional coverage (expression_validator.py lines 34-36,54,58,84)
+# ===========================================================================
+
+
+class TestExpressionValidatorCoverage:
+    def test_bad_repeat_expr_detected(self) -> None:
+        """Cover expression_validator.py lines 34-36: invalid repeat_expr appends issue."""
+        data = {
+            "meta": {"id": "p", "endian": "le"},
+            "seq": [
+                {"id": "x", "type": "u1", "repeat": "expr", "repeat_expr": "@illegal"}
+            ],
+        }
+        spec = parse_spec(data)
+        v = ExpressionValidator()
+        issues = v.validate(spec)
+        assert any("repeat-expr" in i.path for i in issues)
+        assert any(i.code == "E3" for i in issues)
+
+    def test_types_field_exprs_checked(self) -> None:
+        """Cover expression_validator.py line 84: _check_field_exprs runs for types.*.seq."""
+        data = {
+            "meta": {"id": "p", "endian": "le"},
+            "types": {
+                "hdr": {"seq": [{"id": "x", "type": "u1", "if": "@illegal"}]}
+            },
+        }
+        spec = parse_spec(data)
+        v = ExpressionValidator()
+        issues = v.validate(spec)
+        assert any("types.hdr.seq[0].if" in i.path for i in issues)
+
+    def test_non_dict_instance_is_skipped(self) -> None:
+        """Cover expression_validator.py line 54: non-dict instance_def is skipped."""
+        from protocollab.validator.expression_validator import _check_instance_exprs
+
+        issues: list = []
+        _check_instance_exprs({"my_inst": "not_a_dict"}, "instances", issues)
+        assert issues == []
+
+    def test_non_string_instance_value_is_skipped(self) -> None:
+        """Cover expression_validator.py line 58: non-str value in instance_def is skipped."""
+        from protocollab.validator.expression_validator import _check_instance_exprs
+
+        issues: list = []
+        _check_instance_exprs({"my_inst": {"value": 42}}, "instances", issues)
+        assert issues == []

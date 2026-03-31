@@ -438,3 +438,239 @@ class TestProtocollabLikeSchema:
         )
         assert len(errors) > 0
         assert any("endian" in e.path for e in errors)
+
+
+# ===========================================================================
+# FastjsonschemaBackend
+# ===========================================================================
+
+
+class TestFastjsonschemaBackend:
+    """Tests for the fastjsonschema backend (always available via jsonscreamer dep)."""
+
+    @pytest.fixture
+    def backend(self):
+        from jsonschema_validator.backends.fastjsonschema_backend import FastjsonschemaBackend
+
+        return FastjsonschemaBackend()
+
+    def test_valid_data_returns_empty(self, backend) -> None:
+        schema = {"type": "object", "properties": {"x": {"type": "string"}}}
+        assert backend.validate(schema, {"x": "hello"}) == []
+
+    def test_invalid_data_returns_error(self, backend) -> None:
+        schema = {
+            "type": "object",
+            "required": ["name"],
+            "properties": {"name": {"type": "string"}},
+        }
+        errors = backend.validate(schema, {})
+        assert len(errors) > 0
+        assert all(isinstance(e, SchemaValidationError) for e in errors)
+
+    def test_error_has_non_empty_message(self, backend) -> None:
+        schema = {"type": "object", "required": ["x"]}
+        errors = backend.validate(schema, {})
+        assert all(len(e.message) > 0 for e in errors)
+
+    def test_cache_enabled_by_default(self, backend) -> None:
+        assert backend._cache_enabled is True
+
+    def test_cache_stores_compiled_validator(self, backend) -> None:
+        schema = {"type": "object"}
+        backend.validate(schema, {})
+        assert id(schema) in backend._cache
+
+    def test_cache_disabled_does_not_store(self) -> None:
+        from jsonschema_validator.backends.fastjsonschema_backend import FastjsonschemaBackend
+
+        v = FastjsonschemaBackend(cache=False)
+        schema = {"type": "object"}
+        v.validate(schema, {})
+        assert len(v._cache) == 0
+
+    def test_cache_reuses_compiled_validator(self, backend) -> None:
+        schema = {"type": "object"}
+        backend.validate(schema, {})
+        first = backend._cache[id(schema)]
+        backend.validate(schema, {})
+        assert backend._cache[id(schema)] is first
+
+    def test_is_instance_of_abstract(self, backend) -> None:
+        from jsonschema_validator.backends.base import AbstractSchemaValidator
+
+        assert isinstance(backend, AbstractSchemaValidator)
+
+    def test_init_raises_import_error_when_not_installed(self, monkeypatch) -> None:
+        import sys
+
+        monkeypatch.setitem(sys.modules, "fastjsonschema", None)
+        from jsonschema_validator.backends.fastjsonschema_backend import FastjsonschemaBackend
+
+        with pytest.raises(ImportError, match="fastjsonschema"):
+            FastjsonschemaBackend()
+
+
+# ===========================================================================
+# _build_path helper (fastjsonschema)
+# ===========================================================================
+
+
+class TestFastjsonschemaBuildPath:
+    def _path(self, segments: list) -> str:
+        from jsonschema_validator.backends.fastjsonschema_backend import _build_path
+
+        return _build_path(segments)
+
+    def test_empty_path_returns_root(self) -> None:
+        assert self._path([]) == "(root)"
+
+    def test_data_integer_index_first(self) -> None:
+        # data[0] with no prior segment → "[0]"
+        assert self._path(["data[0]"]) == "[0]"
+
+    def test_data_integer_index_appended(self) -> None:
+        # data['key'] followed by data[2] → "key[2]"
+        assert self._path(["data['key']", "data[2]"]) == "key[2]"
+
+    def test_data_string_key(self) -> None:
+        assert self._path(["data['name']"]) == "name"
+
+    def test_data_double_quoted_key(self) -> None:
+        assert self._path(['data["meta"]']) == "meta"
+
+    def test_plain_segment(self) -> None:
+        assert self._path(["meta"]) == "meta"
+
+    def test_multiple_plain_segments(self) -> None:
+        assert self._path(["meta", "id"]) == "meta.id"
+
+
+# ===========================================================================
+# Integer-first path coverage (jsonschema and jsonscreamer _format_path)
+# ===========================================================================
+
+
+class TestIntegerFirstPathCoverage:
+    """Covers the ``else: parts.append(f'[{segment}]')`` branch in both backends
+    when the first path component is an array index."""
+
+    def test_jsonschema_backend_integer_first_segment(self) -> None:
+        # Validate an array — produces a path starting with an integer index
+        v = JsonschemaBackend()
+        schema = {"type": "array", "items": {"type": "string"}}
+        errors = v.validate(schema, [123])
+        assert any("[0]" in e.path for e in errors)
+
+    def test_jsonscreamer_backend_integer_first_segment(self) -> None:
+        v = JsonscreamerBackend()
+        schema = {"type": "array", "items": {"type": "string"}}
+        errors = v.validate(schema, [123])
+        assert any("[0]" in e.path for e in errors)
+
+    def test_jsonscreamer_format_path_integer_only(self) -> None:
+        from jsonschema_validator.backends.jsonscreamer_backend import _format_path
+
+        assert _format_path([0]) == "[0]"
+
+    def test_jsonscreamer_format_path_integer_after_key(self) -> None:
+        from jsonschema_validator.backends.jsonscreamer_backend import _format_path
+
+        assert _format_path(["seq", 0]) == "seq[0]"
+
+
+# ===========================================================================
+# JsonscreamerBackend — ImportError when not installed
+# ===========================================================================
+
+
+class TestJsonscreamerImportError:
+    def test_init_raises_import_error_when_not_installed(self, monkeypatch) -> None:
+        import sys
+
+        monkeypatch.setitem(sys.modules, "jsonscreamer", None)
+        with pytest.raises(ImportError, match="jsonscreamer"):
+            JsonscreamerBackend()
+
+
+# ===========================================================================
+# ValidatorFactory — error paths
+# ===========================================================================
+
+
+class TestValidatorFactoryErrorPaths:
+    def test_auto_select_raises_when_no_backends_available(self, monkeypatch) -> None:
+        """Cover factory.py lines 143-145: _auto_select raises when all backends fail."""
+        import jsonschema_validator.factory as _fac
+
+        monkeypatch.setattr(_fac, "_AUTO_PRIORITY", [])
+        with pytest.raises(BackendNotAvailableError, match="No suitable JSON Schema backend"):
+            ValidatorFactory.create(backend="auto")
+
+    def test_auto_select_exception_handling_and_raises(self, monkeypatch) -> None:
+        """Cover factory.py lines 143-144: except clause fires when probe raises."""
+        import sys
+        from unittest.mock import MagicMock
+        from jsonschema_validator import factory as _fac
+
+        # A probe backend whose instantiation raises ImportError
+        broken_mod = MagicMock()
+        broken_mod.BrokenProbe.side_effect = ImportError("broken probe")
+        monkeypatch.setitem(sys.modules, "_broken_probe_mod_test", broken_mod)
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY, "_broken_probe", ("_broken_probe_mod_test", "BrokenProbe")
+        )
+        # Only this broken backend in auto list → probe fails → continue → raise at end
+        monkeypatch.setattr(_fac, "_AUTO_PRIORITY", ["_broken_probe"])
+        with pytest.raises(BackendNotAvailableError):
+            ValidatorFactory.create(backend="auto")
+
+    def test_build_raises_when_module_not_importable(self, monkeypatch) -> None:
+        """Cover factory.py lines 155-156: _build catches module ImportError."""
+        from jsonschema_validator import factory as _fac
+
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY, "_fake_nomod", ("_no_such_module_xyz123", "Cls")
+        )
+        f = ValidatorFactory()
+        with pytest.raises(BackendNotAvailableError, match="_fake_nomod"):
+            f._build("_fake_nomod")
+
+    def test_build_raises_when_class_init_raises_import_error(self, monkeypatch) -> None:
+        """Cover factory.py lines 162-163: _build catches class-level ImportError."""
+        import sys
+        from unittest.mock import MagicMock
+        from jsonschema_validator import factory as _fac
+
+        fake_mod = MagicMock()
+        fake_mod.FakeBackend.side_effect = ImportError("missing dep")
+        monkeypatch.setitem(sys.modules, "_fake_init_mod_test", fake_mod)
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY, "_fake_init", ("_fake_init_mod_test", "FakeBackend")
+        )
+        f = ValidatorFactory()
+        with pytest.raises(BackendNotAvailableError, match="missing dep"):
+            f._build("_fake_init")
+
+
+# ===========================================================================
+# available_backends() — exception handling
+# ===========================================================================
+
+
+class TestAvailableBackendsExceptionHandling:
+    def test_broken_backend_is_silently_skipped(self, monkeypatch) -> None:
+        """Cover factory.py lines 177-178: exception from broken backend is silently passed."""
+        import sys
+        from unittest.mock import MagicMock
+        from jsonschema_validator import factory as _fac
+
+        broken_mod = MagicMock()
+        broken_mod.BrokenBackend.side_effect = Exception("unexpected failure")
+        monkeypatch.setitem(sys.modules, "_broken_mod_xyz_test", broken_mod)
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY, "_broken", ("_broken_mod_xyz_test", "BrokenBackend")
+        )
+        result = available_backends()
+        assert "_broken" not in result
+        assert "jsonschema" in result  # other backends still work

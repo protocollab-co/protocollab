@@ -62,6 +62,16 @@ pip install -e .
 >
 >     pip install -r requirements-dev.txt
 
+
+`instances:` can also define virtual Wireshark fields when an entry contains a
+`value:` expression and a `wireshark:` block. Use `wireshark.type: bool` with
+`filter-only: true` for shortcut fields like `myproto.lan`, and `wireshark.type: string`
+for summary fields like `myproto.scope == "lan"`.
+
+The examples directory includes both `examples/simple/ip_scoped_packet.yaml`
+for a single `scope` field and `examples/simple/ip_scoped_frame.yaml` for split
+`src_scope` / `dst_scope` filters.
+
 ### Write a spec
 
 ```yaml

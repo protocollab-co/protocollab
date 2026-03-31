@@ -118,6 +118,18 @@ class TestParseSpecBasic:
         spec = parse_spec(MINIMAL_DICT)
         assert spec.types == {}
 
+    def test_instances_default_empty(self) -> None:
+        spec = parse_spec(MINIMAL_DICT)
+        assert spec.instances == {}
+
+    def test_instances_parsed(self) -> None:
+        data = {
+            "meta": {"id": "p", "endian": "le"},
+            "instances": {"scope": {"value": '"lan"', "wireshark": {"type": "string"}}},
+        }
+        spec = parse_spec(data)
+        assert "scope" in spec.instances
+
     def test_doc_field(self) -> None:
         spec = parse_spec(FULL_DICT)
         assert spec.doc == "Top-level doc"

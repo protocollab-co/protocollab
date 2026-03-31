@@ -1,0 +1,54 @@
+meta:
+  id: ip_scoped_packet
+  endian: be
+  title: "IP Scoped Packet"
+  description: "Minimal IPv4-like header with Wireshark scope and filter fields"
+
+seq:
+  - id: version
+    type: u1
+    doc: "Protocol version"
+  - id: src_ip
+    type: u4
+    doc: "Source IPv4 address as a 32-bit integer"
+  - id: dst_ip
+    type: u4
+    doc: "Destination IPv4 address as a 32-bit integer"
+  - id: payload_size
+    type: u2
+    doc: "Payload size in bytes"
+
+instances:
+  lan:
+    value: ((src_ip & 0xFF000000) == 0x0A000000) or ((src_ip & 0xFFF00000) == 0xAC100000) or ((src_ip & 0xFFFF0000) == 0xC0A80000)
+    wireshark:
+      type: bool
+      filter-only: true
+      label: LAN
+
+  nat:
+    value: (src_ip & 0xFFC00000) == 0x64400000
+    wireshark:
+      type: bool
+      filter-only: true
+      label: NAT
+
+  bcast:
+    value: dst_ip == 0xFFFFFFFF
+    wireshark:
+      type: bool
+      filter-only: true
+      label: Broadcast
+
+  multicast:
+    value: (dst_ip & 0xF0000000) == 0xE0000000
+    wireshark:
+      type: bool
+      filter-only: true
+      label: Multicast
+
+  scope:
+    value: '"bcast" if bcast else ("multicast" if multicast else ("nat" if nat else ("lan" if lan else "inet")))'
+    wireshark:
+      type: string
+      label: Scope

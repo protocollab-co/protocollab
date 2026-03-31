@@ -62,6 +62,17 @@ pip install -e .
 >
 >     pip install -r requirements-dev.txt
 
+
+Через `instances:` можно также объявлять виртуальные Wireshark-поля, если у
+записи есть выражение `value:` и блок `wireshark:`. Используйте
+`wireshark.type: bool` вместе с `filter-only: true` для shortcut-полей вроде
+`myproto.lan`, а `wireshark.type: string` для summary-полей вроде
+`myproto.scope == "lan"`.
+
+В каталоге examples есть оба варианта: `examples/simple/ip_scoped_packet.yaml`
+для одного поля `scope` и `examples/simple/ip_scoped_frame.yaml` для раздельных
+фильтров `src_scope` / `dst_scope`.
+
 ### Написать спецификацию
 
 ```yaml

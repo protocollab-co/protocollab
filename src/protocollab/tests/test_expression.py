@@ -88,6 +88,26 @@ class TestTokenize:
         tokens = tokenize("//")
         assert tokens[0].kind == TokenKind.FLOOR_DIV
 
+    def test_lshift_operator(self) -> None:
+        tokens = tokenize("<<")
+        assert tokens[0].kind == TokenKind.LSHIFT
+
+    def test_rshift_operator(self) -> None:
+        tokens = tokenize(">>")
+        assert tokens[0].kind == TokenKind.RSHIFT
+
+    def test_bitwise_and_operator(self) -> None:
+        tokens = tokenize("&")
+        assert tokens[0].kind == TokenKind.AMP
+
+    def test_bitwise_or_operator(self) -> None:
+        tokens = tokenize("|")
+        assert tokens[0].kind == TokenKind.PIPE
+
+    def test_bitwise_xor_operator(self) -> None:
+        tokens = tokenize("^")
+        assert tokens[0].kind == TokenKind.CARET
+
     def test_whitespace_skipped(self) -> None:
         tokens = tokenize("  42  ")
         kinds = [t.kind for t in tokens]
@@ -246,6 +266,31 @@ class TestParseExpr:
         assert isinstance(node, BinOp)
         assert node.op == "%"
 
+    def test_left_shift(self) -> None:
+        node = parse_expr("a << 8")
+        assert isinstance(node, BinOp)
+        assert node.op == "<<"
+
+    def test_right_shift(self) -> None:
+        node = parse_expr("a >> 8")
+        assert isinstance(node, BinOp)
+        assert node.op == ">>"
+
+    def test_bitwise_and(self) -> None:
+        node = parse_expr("a & 255")
+        assert isinstance(node, BinOp)
+        assert node.op == "&"
+
+    def test_bitwise_xor(self) -> None:
+        node = parse_expr("a ^ b")
+        assert isinstance(node, BinOp)
+        assert node.op == "^"
+
+    def test_bitwise_or(self) -> None:
+        node = parse_expr("a | b")
+        assert isinstance(node, BinOp)
+        assert node.op == "|"
+
     def test_equality(self) -> None:
         node = parse_expr("has_checksum != 0")
         assert isinstance(node, BinOp)
@@ -319,6 +364,27 @@ class TestParseExpr:
         node = parse_expr("a + 1 == b - 2")
         assert isinstance(node, BinOp)
         assert node.op == "=="
+
+    def test_shift_lower_than_add(self) -> None:
+        node = parse_expr("a + 1 << 2")
+        assert isinstance(node, BinOp)
+        assert node.op == "<<"
+        assert isinstance(node.left, BinOp)
+        assert node.left.op == "+"
+
+    def test_bitwise_and_higher_than_bitwise_or(self) -> None:
+        node = parse_expr("a | b & c")
+        assert isinstance(node, BinOp)
+        assert node.op == "|"
+        assert isinstance(node.right, BinOp)
+        assert node.right.op == "&"
+
+    def test_bitwise_higher_than_comparison(self) -> None:
+        node = parse_expr("a & 255 == 1")
+        assert isinstance(node, BinOp)
+        assert node.op == "=="
+        assert isinstance(node.left, BinOp)
+        assert node.left.op == "&"
 
     # -----------------------------------------------------------------------
     # Errors
@@ -434,6 +500,21 @@ class TestEvaluate:
     def test_modulo(self) -> None:
         assert evaluate(parse_expr("10 % 3"), {}) == 1
 
+    def test_left_shift(self) -> None:
+        assert evaluate(parse_expr("1 << 8"), {}) == 256
+
+    def test_right_shift(self) -> None:
+        assert evaluate(parse_expr("256 >> 8"), {}) == 1
+
+    def test_bitwise_and(self) -> None:
+        assert evaluate(parse_expr("0xC0A80101 & 0xFFFF0000"), {}) == 0xC0A80000
+
+    def test_bitwise_xor(self) -> None:
+        assert evaluate(parse_expr("0b1100 ^ 0b1010"), {}) == 0b0110
+
+    def test_bitwise_or(self) -> None:
+        assert evaluate(parse_expr("0b1100 | 0b0011"), {}) == 0b1111
+
     def test_unary_minus_literal(self) -> None:
         assert evaluate(parse_expr("-5"), {}) == -5
 
@@ -526,6 +607,11 @@ class TestEvaluate:
         ctx = {"a": 1, "b": 2, "c": 3}
         assert evaluate(parse_expr("a < b and b < c"), ctx) is True
 
+    def test_mask_based_private_prefix_expr(self) -> None:
+        ctx = {"src_ip": 0xC0A80101}
+        expr = "(src_ip & 0xFFFF0000) == 0xC0A80000"
+        assert evaluate(parse_expr(expr), ctx) is True
+
 
 # ===========================================================================
 # Validator
@@ -552,6 +638,10 @@ class TestValidateExpr:
 
     def test_complex_valid_expr(self) -> None:
         errors = validate_expr("total_length - 8 if has_ext else fixed_size")
+        assert errors == []
+
+    def test_valid_bitwise_expr(self) -> None:
+        errors = validate_expr("(src_ip & 0xFFFF0000) == 0xC0A80000")
         assert errors == []
 
     def test_forbidden_name_error(self) -> None:

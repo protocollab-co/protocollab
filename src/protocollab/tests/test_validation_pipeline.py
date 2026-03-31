@@ -248,6 +248,17 @@ BAD_EXPR_DICT: dict = {
     ],
 }
 
+BAD_INSTANCE_EXPR_DICT: dict = {
+    "meta": {"id": "bad_instance_expr", "endian": "le"},
+    "seq": [{"id": "src_ip", "type": "u4"}],
+    "instances": {
+        "scope": {
+            "value": "@illegal_syntax",
+            "wireshark": {"type": "string"},
+        }
+    },
+}
+
 
 class TestExpressionValidator:
     def test_valid_spec_no_issues(self) -> None:
@@ -277,6 +288,12 @@ class TestExpressionValidator:
         spec = parse_spec(data)
         v = ExpressionValidator()
         assert v.validate(spec) == []
+
+    def test_invalid_instance_expr_detected(self) -> None:
+        spec = parse_spec(BAD_INSTANCE_EXPR_DICT)
+        v = ExpressionValidator()
+        issues = v.validate(spec)
+        assert any("instances.scope.value" == i.path for i in issues)
 
 
 # ===========================================================================

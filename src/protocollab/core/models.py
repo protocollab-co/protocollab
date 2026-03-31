@@ -58,6 +58,7 @@ class ProtocolSpec(BaseModel):
     meta: MetaSection
     seq: List[FieldDef] = Field(default_factory=list)
     types: Dict[str, TypeDef] = Field(default_factory=dict)
+    instances: Dict[str, Any] = Field(default_factory=dict)
     doc: Optional[str] = None
     imports: List[str] = Field(default_factory=list)
     #: Populated by ImportResolver — maps import path → resolved ProtocolSpec

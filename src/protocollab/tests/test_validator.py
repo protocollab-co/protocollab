@@ -246,15 +246,154 @@ class TestSchemaValidator:
         assert sv.validate({"name": "ok"}) == []
         assert len(sv.validate({"other": 1})) > 0
 
-    def test_explicit_jsonschema_backend(self):
-        sv = SchemaValidator(backend="jsonschema")
-        errors = sv.validate({"meta": {"id": "my_proto"}})
-        assert errors == []
 
-    def test_auto_backend_default(self):
-        sv = SchemaValidator()  # backend defaults to "auto"
-        errors = sv.validate({"meta": {"id": "my_proto"}})
-        assert errors == []
+# ---------------------------------------------------------------------------
+# SchemaValidator — DSL syntax fields (base schema)
+# ---------------------------------------------------------------------------
+
+
+class TestSchemaValidatorDslFields:
+    """Verify the base schema accepts valid DSL expression fields in seq items."""
+
+    def test_if_expr_string_accepted(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [
+                {"id": "flag", "type": "u1"},
+                {"id": "opt", "type": "u4", "if": "flag != 0"},
+            ],
+        }
+        assert sv.validate(data) == []
+
+    def test_repeat_expr_string_accepted(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [
+                {"id": "count", "type": "u1"},
+                {"id": "items", "type": "u1", "repeat": "expr", "repeat-expr": "count"},
+            ],
+        }
+        assert sv.validate(data) == []
+
+    def test_size_integer_accepted(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "body", "size": 8}],
+        }
+        assert sv.validate(data) == []
+
+    def test_size_string_accepted(self):
+        """Base schema allows size to be a string (DSL expression or ksy compat)."""
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "body", "size": "payload_size"}],
+        }
+        assert sv.validate(data) == []
+
+    def test_if_expr_non_string_rejected(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "f", "type": "u1", "if": 123}],
+        }
+        errors = sv.validate(data)
+        assert len(errors) > 0
+        assert any("if" in e.path for e in errors)
+
+    def test_repeat_expr_non_string_rejected(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "f", "type": "u1", "repeat": "expr", "repeat-expr": 6}],
+        }
+        errors = sv.validate(data)
+        assert len(errors) > 0
+        assert any("repeat-expr" in e.path for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# SchemaValidator — DSL syntax fields (strict schema)
+# ---------------------------------------------------------------------------
+
+
+class TestStrictSchemaDslFields:
+    """Verify the strict schema constrains DSL expression fields in seq items."""
+
+    @pytest.fixture()
+    def strict_sv(self):
+        from pathlib import Path
+
+        schema_path = str(
+            Path(__file__).parent.parent / "validator" / "schemas" / "protocol.schema.json"
+        )
+        return SchemaValidator(schema_path=schema_path)
+
+    def test_if_expr_string_accepted(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [
+                {"id": "flag", "type": "u1"},
+                {"id": "opt", "type": "u4", "if": "flag != 0"},
+            ],
+        }
+        assert strict_sv.validate(data) == []
+
+    def test_repeat_expr_string_accepted(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [
+                {"id": "count", "type": "u1"},
+                {"id": "items", "type": "u1", "repeat": "expr", "repeat-expr": "count"},
+            ],
+        }
+        assert strict_sv.validate(data) == []
+
+    def test_size_integer_accepted(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "body", "type": "str", "size": 8}],
+        }
+        assert strict_sv.validate(data) == []
+
+    def test_if_non_string_rejected(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "f", "type": "u1", "if": 1}],
+        }
+        errors = strict_sv.validate(data)
+        assert len(errors) > 0
+        assert any("if" in e.path for e in errors)
+
+    def test_repeat_expr_non_string_rejected(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "f", "type": "u1", "repeat": "expr", "repeat-expr": 6}],
+        }
+        errors = strict_sv.validate(data)
+        assert len(errors) > 0
+        assert any("repeat-expr" in e.path for e in errors)
+
+    def test_size_non_integer_rejected(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "body", "size": "not_an_int"}],
+        }
+        errors = strict_sv.validate(data)
+        assert len(errors) > 0
+        assert any("size" in e.path for e in errors)
+
+    def test_size_negative_rejected(self, strict_sv):
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "body", "size": -1}],
+        }
+        errors = strict_sv.validate(data)
+        assert len(errors) > 0
+        assert any("size" in e.path for e in errors)
 
 
 # ---------------------------------------------------------------------------

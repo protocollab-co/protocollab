@@ -35,7 +35,19 @@
     },
     "seq": {
       "type": "array",
-      "items": { "type": "object" }
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":       { "type": "string" },
+          "type":     { "type": "string" },
+          "size":     { "oneOf": [{ "type": "integer", "minimum": 0 }, { "type": "string" }] },
+          "if":       { "type": "string", "description": "DSL expression — field is included only when this evaluates to true" },
+          "repeat":   { "type": "string" },
+          "repeat-expr": { "type": "string", "description": "DSL expression — number of times to repeat this field" },
+          "doc":      { "type": "string" },
+          "contents": {}
+        }
+      }
     },
     "types":     { "type": "object" },
     "instances": { "type": "object" },

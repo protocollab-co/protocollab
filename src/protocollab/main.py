@@ -134,18 +134,7 @@ def load(
     is_flag=True,
     help="Use the strict `protocollab` schema (protocol.schema.json).",
 )
-@click.option(
-    "--validator-backend",
-    type=click.Choice(["auto", "jsonschema", "fastjsonschema"]),
-    default="auto",
-    show_default=True,
-    help=(
-        "JSON Schema validation backend.  "
-        "'auto' picks the safest available backend.  "
-        "'fastjsonschema' uses exec and must be opted into explicitly."
-    ),
-)
-def validate(file: str, schema, strict: bool, validator_backend: str) -> None:
+def validate(file: str, schema, strict: bool) -> None:
     """Validate a protocol YAML file against the `protocollab` schema."""
     from pathlib import Path as _Path
 
@@ -160,7 +149,7 @@ def validate(file: str, schema, strict: bool, validator_backend: str) -> None:
         schema_path = str(_Path(__file__).parent / "validator" / "schemas" / "protocol.schema.json")
 
     try:
-        result = validate_pipeline(file, schema_path=schema_path, backend=validator_backend)
+        result = validate_pipeline(file, schema_path=schema_path)
     except FileLoadError as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(1)

@@ -372,20 +372,6 @@ class TestValidationPipeline:
         result = pipeline.run(spec, file_path="/foo/bar.yaml")
         assert result.file_path == "/foo/bar.yaml"
 
-    def test_explicit_jsonschema_backend(self) -> None:
-        raw = VALID_DICT
-        spec = parse_spec(raw)
-        pipeline = ValidationPipeline(backend="jsonschema")
-        result = pipeline.run(spec, raw_data=raw)
-        assert result.is_valid
-
-    def test_auto_backend_accepted(self) -> None:
-        raw = VALID_DICT
-        spec = parse_spec(raw)
-        pipeline = ValidationPipeline(backend="auto")
-        result = pipeline.run(spec, raw_data=raw)
-        assert result.is_valid
-
 
 # ===========================================================================
 # validate_pipeline() function
@@ -409,16 +395,6 @@ class TestValidatePipelineFunction:
 
     def test_with_includes_valid(self) -> None:
         result = validate_pipeline(str(WITH_INCLUDES / "tcp_like.yaml"))
-        assert result.is_valid
-
-    def test_explicit_jsonschema_backend(self) -> None:
-        result = validate_pipeline(
-            str(SIMPLE / "ping_protocol.yaml"), backend="jsonschema"
-        )
-        assert result.is_valid
-
-    def test_auto_backend_default(self) -> None:
-        result = validate_pipeline(str(SIMPLE / "ping_protocol.yaml"), backend="auto")
         assert result.is_valid
 
 

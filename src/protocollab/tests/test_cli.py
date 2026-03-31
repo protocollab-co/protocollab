@@ -164,33 +164,6 @@ class TestCLIValidateFileErrors:
 
 
 # ---------------------------------------------------------------------------
-# protocollab validate — --validator-backend option
-# ---------------------------------------------------------------------------
-
-
-class TestCLIValidateBackend:
-    def test_default_backend_auto(self, runner, ksy_yaml):
-        result = runner.invoke(cli, ["validate", str(ksy_yaml)])
-        assert result.exit_code == 0
-
-    def test_explicit_jsonschema_backend(self, runner, ksy_yaml):
-        result = runner.invoke(
-            cli, ["validate", str(ksy_yaml), "--validator-backend", "jsonschema"]
-        )
-        assert result.exit_code == 0
-
-    def test_backend_in_validate_help(self, runner):
-        result = runner.invoke(cli, ["validate", "--help"])
-        assert "validator-backend" in result.output
-
-    def test_unknown_backend_exits_nonzero(self, runner, ksy_yaml):
-        result = runner.invoke(
-            cli, ["validate", str(ksy_yaml), "--validator-backend", "unknown_xyz"]
-        )
-        assert result.exit_code != 0
-
-
-# ---------------------------------------------------------------------------
 # protocollab — help & top-level
 # ---------------------------------------------------------------------------
 

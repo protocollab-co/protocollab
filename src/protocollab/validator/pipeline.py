@@ -21,8 +21,8 @@ if TYPE_CHECKING:
 class _SchemaValidatorAdapter(BaseValidator):
     """Adapts the existing :class:`SchemaValidator` (dict-based) to the ABC."""
 
-    def __init__(self, schema_path: Optional[str] = None, backend: str = "auto") -> None:
-        self._inner = SchemaValidator(schema_path=schema_path, backend=backend)
+    def __init__(self, schema_path: Optional[str] = None) -> None:
+        self._inner = SchemaValidator(schema_path=schema_path)
         self._last_data: Optional[Dict[str, Any]] = None
 
     def set_raw_data(self, data: Dict[str, Any]) -> None:
@@ -64,22 +64,17 @@ class ValidationPipeline:
     schema_path:
         Optional path to a custom JSON Schema (passed to the structural
         validator when using the default pipeline).
-    backend:
-        JSON Schema backend name (e.g. ``"auto"``, ``"jsonschema"``,
-        ``"fastjsonschema"``).  Passed to the structural validator when using
-        the default pipeline.  Defaults to ``"auto"``.
     """
 
     def __init__(
         self,
         validators: Optional[List[BaseValidator]] = None,
         schema_path: Optional[str] = None,
-        backend: str = "auto",
     ) -> None:
         if validators is not None:
             self.validators: List[BaseValidator] = validators
         else:
-            self._schema_adapter = _SchemaValidatorAdapter(schema_path, backend=backend)
+            self._schema_adapter = _SchemaValidatorAdapter(schema_path)
             self.validators = [
                 self._schema_adapter,
                 SemanticValidator(),

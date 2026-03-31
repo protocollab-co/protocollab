@@ -72,7 +72,6 @@ def validate_protocol(
 def validate_pipeline(
     file_path: str,
     schema_path: Optional[str] = None,
-    backend: str = "auto",
 ) -> PipelineResult:
     """Run the full multi-stage validation pipeline on *file_path*.
 
@@ -88,10 +87,6 @@ def validate_pipeline(
         Path to the root protocol YAML file.
     schema_path:
         Optional path to a custom JSON Schema.
-    backend:
-        JSON Schema backend name.  Passed to the underlying
-        :class:`~protocollab.validator.pipeline.ValidationPipeline`.
-        Defaults to ``"auto"`` (safest available backend).
 
     Returns
     -------
@@ -132,5 +127,5 @@ def validate_pipeline(
         ]
         return PipelineResult(errors=errors, file_path=file_path)
 
-    pipeline = ValidationPipeline(schema_path=schema_path, backend=backend)
+    pipeline = ValidationPipeline(schema_path=schema_path)
     return pipeline.run(spec, raw_data=raw_data, file_path=file_path)

@@ -41,7 +41,7 @@ Repository = "https://github.com/cherninkiy/protocollab"
 Source = "https://github.com/cherninkiy/protocollab/tree/main/src/jsonschema_validator"
 
 [tool.setuptools]
-packages = ["jsonschema_validator"]
+packages = ["jsonschema_validator", "jsonschema_validator.backends"]
 
 [tool.setuptools.package-dir]
 jsonschema_validator = "."

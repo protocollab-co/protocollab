@@ -274,4 +274,4 @@ pytest tests/ --cov=jsonschema_validator --cov-report=term-missing
 `jsonschema_validator` распространяется по лицензии Apache License 2.0.
 
 - Локальная лицензия пакета: `LICENSE`
-- Лицензия репозитория: `LICENSE`
+- Лицензия репозитория: `../../LICENSE`

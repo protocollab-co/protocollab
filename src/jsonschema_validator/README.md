@@ -274,4 +274,4 @@ Current coverage: 100% for `jsonschema_validator`.
 `jsonschema_validator` is released under the Apache License 2.0.
 
 - Local package license: `LICENSE`
-- Repository license: `LICENSE`
+- Repository license: `../../LICENSE`

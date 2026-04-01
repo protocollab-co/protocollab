@@ -2,14 +2,20 @@
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Protocol
 
-from jsonschema_validator import ValidatorFactory
+from jsonschema_validator import SchemaValidationError, ValidatorFactory
 
 from protocollab.validator.models import ValidationError
 
 _SCHEMAS_DIR = Path(__file__).parent / "schemas"
 _DEFAULT_SCHEMA_PATH = _SCHEMAS_DIR / "base.schema.json"
+
+
+class _SchemaBackend(Protocol):
+    def validate(
+        self, schema: Dict[str, Any], data: Dict[str, Any]
+    ) -> List[SchemaValidationError]: ...
 
 
 class SchemaValidator:
@@ -39,7 +45,7 @@ class SchemaValidator:
         with open(path, encoding="utf-8") as fh:
             self._schema: Dict[str, Any] = json.load(fh)
         factory = ValidatorFactory()
-        self._backend = factory.get_or_create(backend)
+        self._backend: _SchemaBackend = factory.get_or_create(backend)
 
     def validate(self, data: Dict[str, Any]) -> List[ValidationError]:
         """Return a list of :class:`ValidationError` for *data* (empty = valid).

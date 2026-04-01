@@ -1,0 +1,52 @@
+name: Feature request
+description: Propose an enhancement to protocollab or its standalone packages.
+title: "feat(scope): short feature summary"
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the suggestion.
+
+        Please focus on the user problem first, then on the proposed solution.
+  - type: input
+    id: area
+    attributes:
+      label: Affected area
+      description: Which part would this improve?
+      placeholder: protocollab CLI, yaml_serializer, jsonschema_validator, generators
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What is hard, missing, or inefficient today?
+      placeholder: A clear description of the user problem.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the change you want to see.
+      placeholder: A clear and concise description of the proposed enhancement.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: List any alternatives, workarounds, or tradeoffs.
+      placeholder: Other approaches you considered.
+    validations:
+      required: false
+  - type: textarea
+    id: examples
+    attributes:
+      label: Examples or references
+      description: Link examples, prior art, or rough API sketches if helpful.
+      render: markdown
+    validations:
+      required: false

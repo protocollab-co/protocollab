@@ -1,6 +1,6 @@
 """jsonscreamer backend for jsonschema_validator.
 
-Uses the ``jsonscreamer`` library for validation.  The ``jsonscreamer``
+Uses the ``jsonscreamer`` library for validation. The ``jsonscreamer``
 ``Validator`` provides a ``jsonschema``-compatible interface (``iter_errors``,
 ``absolute_path``, ``message``), making it a drop-in replacement that can be
 safely used with untrusted schemas.
@@ -10,13 +10,15 @@ This backend is included in the ``auto`` priority list and is preferred over
 improved performance.
 
 This module is an **optional** backend: if ``jsonscreamer`` is not installed,
-constructing :class:`JsonscreamerBackend` will raise
+constructing :class:`JsonscreamerBackend` directly will raise ``ImportError``.
+When used via :mod:`jsonschema_validator.factory`, a missing dependency is
+surfaced as
 :class:`~jsonschema_validator.factory.BackendNotAvailableError`.
 """
 
 from __future__ import annotations
 
-import logging
+from contextlib import contextmanager
 from typing import Any, Dict, List
 
 from jsonschema_validator.backends.base import AbstractSchemaValidator
@@ -43,35 +45,42 @@ def _format_schema_path(path: Any) -> str:
     return "/".join(str(segment) for segment in path)
 
 
+@contextmanager
+def _suppress_jsonscreamer_warnings(jsonscreamer_module: Any) -> Any:
+    """Temporarily mute jsonscreamer's unsupported-format warning hook."""
+    warning_func = jsonscreamer_module.basic._logging.warning
+    jsonscreamer_module.basic._logging.warning = lambda *args, **kwargs: None
+    try:
+        yield
+    finally:
+        jsonscreamer_module.basic._logging.warning = warning_func
+
+
 def _create_jsonscreamer_validator(jsonscreamer_module: Any, schema: Dict[str, Any]) -> Any:
     """Construct a ``jsonscreamer.Validator``, suppressing its format-warning noise.
 
     ``jsonscreamer`` emits ``logging.warning()`` for JSON Schema format keywords
-    it does not support (e.g. ``uri``, ``uri-reference``).  These warnings are
+    it does not support (e.g. ``uri``, ``uri-reference``). These warnings are
     harmless for protocollab schemas but interact badly with Click's test-runner
-    stream capture.  They are suppressed here by temporarily raising the root
-    logger's disabled level during construction.
+    stream capture. They are suppressed here by temporarily replacing only the
+    warning hook used by ``jsonscreamer.basic`` during construction.
     """
-    prev_disable = logging.root.manager.disable
-    logging.disable(logging.WARNING)
-    try:
+    with _suppress_jsonscreamer_warnings(jsonscreamer_module):
         return jsonscreamer_module.Validator(schema)
-    finally:
-        logging.disable(prev_disable)
 
 
 class JsonscreamerBackend(AbstractSchemaValidator):
     """JSON Schema validation backed by the ``jsonscreamer`` library.
 
     ``jsonscreamer`` provides a ``jsonschema``-compatible interface, making it
-    a safe drop-in that can be used with untrusted schemas.  Validators are
+    a safe drop-in that can be used with untrusted schemas. Validators are
     cached per schema object identity when *cache* is ``True`` (default).
 
     Parameters
     ----------
     cache:
         When ``True`` (default) ``Validator`` instances are cached by schema
-        object identity.  Set to ``False`` to always create a fresh instance.
+        object identity. Set to ``False`` to always create a fresh instance.
 
     Raises
     ------

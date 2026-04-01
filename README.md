@@ -46,7 +46,7 @@ Most serialization tools are data-first or RPC-first. `protocollab` is protocol-
 
 Community-driven protocol specifications live in [protocollab-specs](https://github.com/cherninkiy/protocollab-specs).
 
-This repository is the central, curated collection of YAML protocol definitions compatible with `protocollab`. Every spec can be validated, versioned, and used to generate parsers, Wireshark dissectors, and test suites.
+The `protocollab-specs` repository is the central, curated collection of YAML protocol definitions compatible with `protocollab`. Every spec can be validated, versioned, and used to generate parsers, Wireshark dissectors, and test suites.
 
 Use `protocollab` when you want the framework and generators. Use `protocollab-specs` when you want reusable specifications maintained as a community catalog.
 

@@ -63,6 +63,8 @@ class ValidatorFactory:
         self._cache_validators = cache
         self._instances: Dict[str, AbstractSchemaValidator] = {}
 
+    _shared_factories: dict[bool, "ValidatorFactory"] = {}
+
     # ------------------------------------------------------------------
     # Class-level convenience (stateless)
     # ------------------------------------------------------------------
@@ -100,7 +102,8 @@ class ValidatorFactory:
         BackendNotAvailableError
             When the requested backend is not installed or the name is unknown.
         """
-        return cls(cache=cache)._get_or_create(backend, **options)
+        factory = cls._shared_factories.setdefault(cache, cls(cache=cache))
+        return factory._get_or_create(backend, **options)
 
     # ------------------------------------------------------------------
     # Instance-level helpers
@@ -138,7 +141,7 @@ class ValidatorFactory:
                 cls_obj = getattr(module, class_name)
                 cls_obj()  # probe: will raise ImportError if deps missing
                 return name
-            except (ImportError, Exception):
+            except ImportError:
                 continue
         raise BackendNotAvailableError(
             "No suitable JSON Schema backend is available. "
@@ -170,6 +173,6 @@ def available_backends() -> list[str]:
             cls_obj = getattr(module, class_name)
             cls_obj()  # probe: will raise ImportError if deps missing
             result.append(name)
-        except (ImportError, Exception):
+        except ImportError:
             pass
     return result

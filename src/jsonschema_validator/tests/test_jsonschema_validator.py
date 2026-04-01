@@ -333,6 +333,11 @@ class TestValidatorFactory:
         v2 = factory._get_or_create("jsonschema")
         assert v1 is v2
 
+    def test_classmethod_reuses_shared_factory_instances(self) -> None:
+        v1 = ValidatorFactory.create(backend="jsonschema")
+        v2 = ValidatorFactory.create(backend="jsonschema")
+        assert v1 is v2
+
     def test_fastjsonschema_not_in_auto(self) -> None:
         from jsonschema_validator.factory import _AUTO_PRIORITY
 
@@ -655,8 +660,8 @@ class TestValidatorFactoryErrorPaths:
         with pytest.raises(BackendNotAvailableError, match="No suitable JSON Schema backend"):
             ValidatorFactory.create(backend="auto")
 
-    def test_auto_select_exception_handling_and_raises(self, monkeypatch) -> None:
-        """Cover factory.py lines 143-144: except clause fires when probe raises."""
+    def test_auto_select_import_error_and_raises(self, monkeypatch) -> None:
+        """Auto mode should skip unavailable backends and raise when none remain."""
         import sys
         from unittest.mock import MagicMock
         from jsonschema_validator import factory as _fac
@@ -671,6 +676,23 @@ class TestValidatorFactoryErrorPaths:
         # Only this broken backend in auto list → probe fails → continue → raise at end
         monkeypatch.setattr(_fac, "_AUTO_PRIORITY", ["_broken_probe"])
         with pytest.raises(BackendNotAvailableError):
+            ValidatorFactory.create(backend="auto")
+
+    def test_auto_select_unexpected_exception_is_not_masked(self, monkeypatch) -> None:
+        import sys
+        from unittest.mock import MagicMock
+        from jsonschema_validator import factory as _fac
+
+        broken_mod = MagicMock()
+        broken_mod.BrokenProbe.side_effect = RuntimeError("unexpected probe failure")
+        monkeypatch.setitem(sys.modules, "_broken_runtime_mod_test", broken_mod)
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY,
+            "_broken_runtime",
+            ("_broken_runtime_mod_test", "BrokenProbe"),
+        )
+        monkeypatch.setattr(_fac, "_AUTO_PRIORITY", ["_broken_runtime"])
+        with pytest.raises(RuntimeError, match="unexpected probe failure"):
             ValidatorFactory.create(backend="auto")
 
     def test_build_raises_when_module_not_importable(self, monkeypatch) -> None:
@@ -707,8 +729,17 @@ class TestValidatorFactoryErrorPaths:
 
 
 class TestAvailableBackendsExceptionHandling:
-    def test_broken_backend_is_silently_skipped(self, monkeypatch) -> None:
-        """Cover factory.py lines 177-178: exception from broken backend is silently passed."""
+    def test_backend_with_import_error_is_silently_skipped(self, monkeypatch) -> None:
+        from jsonschema_validator import factory as _fac
+
+        monkeypatch.setitem(
+            _fac._BACKEND_REGISTRY, "_broken_import", ("_no_such_module_xyz999", "BrokenBackend")
+        )
+        result = available_backends()
+        assert "_broken_import" not in result
+        assert "jsonschema" in result
+
+    def test_broken_backend_exception_is_not_masked(self, monkeypatch) -> None:
         import sys
         from unittest.mock import MagicMock
         from jsonschema_validator import factory as _fac
@@ -719,6 +750,5 @@ class TestAvailableBackendsExceptionHandling:
         monkeypatch.setitem(
             _fac._BACKEND_REGISTRY, "_broken", ("_broken_mod_xyz_test", "BrokenBackend")
         )
-        result = available_backends()
-        assert "_broken" not in result
-        assert "jsonschema" in result  # other backends still work
+        with pytest.raises(Exception, match="unexpected failure"):
+            available_backends()

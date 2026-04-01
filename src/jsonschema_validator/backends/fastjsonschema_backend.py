@@ -13,7 +13,9 @@ Uses the ``fastjsonschema`` library for high-performance validation.
    :class:`~jsonschema_validator.factory.ValidatorFactory`.
 
 This module is an **optional** backend: if ``fastjsonschema`` is not installed,
-constructing :class:`FastjsonschemaBackend` will raise
+constructing :class:`FastjsonschemaBackend` directly will raise
+:class:`ImportError`. When used via :mod:`jsonschema_validator.factory`, a
+missing dependency is surfaced as
 :class:`~jsonschema_validator.factory.BackendNotAvailableError`.
 """
 

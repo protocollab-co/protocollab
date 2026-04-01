@@ -12,9 +12,9 @@ class TestHashFileOperations:
     """Tests for .hash file read/write helpers."""
 
     def test_hash_file_path(self, temp_dir):
-        """hash_file_path returns the YAML path with a .hash extension."""
+        """_hash_file_path returns the YAML path with a .hash extension."""
         yaml_path = os.path.join(temp_dir, "test.yaml")
-        hash_path = utils.hash_file_path(yaml_path)
+        hash_path = utils._hash_file_path(yaml_path)
         assert hash_path == yaml_path + ".hash"
 
     def test_save_and_load_hash(self, temp_dir):
@@ -22,15 +22,15 @@ class TestHashFileOperations:
         yaml_path = os.path.join(temp_dir, "test.yaml")
         test_hash = "abc123def456"
 
-        utils.save_hash_to_file(yaml_path, test_hash)
-        loaded_hash = utils.load_hash_from_file(yaml_path)
+        utils._save_hash_to_file(yaml_path, test_hash)
+        loaded_hash = utils._load_hash_from_file(yaml_path)
 
         assert loaded_hash == test_hash
 
     def test_load_hash_nonexistent_file(self, temp_dir):
-        """load_hash_from_file returns None when no hash file exists."""
+        """_load_hash_from_file returns None when no hash file exists."""
         yaml_path = os.path.join(temp_dir, "nonexistent.yaml")
-        hash_value = utils.load_hash_from_file(yaml_path)
+        hash_value = utils._load_hash_from_file(yaml_path)
         assert hash_value is None
 
 

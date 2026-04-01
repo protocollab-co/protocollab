@@ -14,7 +14,7 @@ from yaml_serializer.utils import (
     mark_includes,
     replace_included,
     update_file_attr,
-    update_parent_file_attr,
+    _update_parent_file_attr,
 )
 from yaml_serializer.modify import add_to_dict, add_to_list
 from yaml_serializer.safe_constructor import create_safe_yaml_instance
@@ -63,7 +63,7 @@ class TestUpdateParentFileAttrSeq:
         child_map._yaml_parent_file = "old-parent.yaml"
         root.append(child_map)
 
-        update_parent_file_attr(root, "old-parent.yaml", "new-parent.yaml")
+        _update_parent_file_attr(root, "old-parent.yaml", "new-parent.yaml")
 
         assert child_map._yaml_parent_file == "new-parent.yaml"
 

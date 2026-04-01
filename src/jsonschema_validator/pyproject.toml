@@ -8,7 +8,8 @@ version = "1.0.0"
 description = "Pluggable JSON Schema validation facade with a unified error model"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "Apache-2.0" }
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 authors = [
     { name = "Dmitry Chernikov", email = "d.chernikov@tk-chel.ru" },
 ]
@@ -16,7 +17,6 @@ keywords = ["jsonschema", "validation", "validator", "jsonscreamer", "fastjsonsc
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

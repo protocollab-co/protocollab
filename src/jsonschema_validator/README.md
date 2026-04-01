@@ -23,7 +23,7 @@
 Install the standalone package:
 
 ```bash
-pip install jsonschema-validator
+pip install jsonschema-pluggable-validator
 ```
 
 Install the whole framework when you also need the `protocollab` CLI and generators:
@@ -35,13 +35,13 @@ pip install protocollab
 Install the preferred optional `jsonscreamer` backend for the standalone package:
 
 ```bash
-pip install "jsonschema-validator[jsonscreamer]"
+pip install "jsonschema-pluggable-validator[jsonscreamer]"
 ```
 
 Install the optional `fastjsonschema` backend:
 
 ```bash
-pip install "jsonschema-validator[fastjsonschema]"
+pip install "jsonschema-pluggable-validator[fastjsonschema]"
 ```
 
 For development from this repository, either install the full monorepo from the

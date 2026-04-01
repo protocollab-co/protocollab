@@ -1,11 +1,18 @@
-from setuptools import setup, find_packages
+"""Legacy setuptools shim.
+
+Project metadata and dependencies are managed in ``pyproject.toml`` via
+Poetry. This file is kept only for compatibility with tooling that still
+expects ``setup.py`` to exist.
+"""
+
+from setuptools import find_packages, setup
+
 
 setup(
     name="protocollab",
-    version="0.0.1",
+    version="0.1.0",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
-    install_requires=["ruamel.yaml", "pydantic", "click>=8.0", "jsonschema>=4.0", "jinja2>=3.0"],
     entry_points={
         "console_scripts": [
             "protocollab=protocollab.main:main",

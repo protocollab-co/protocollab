@@ -46,21 +46,19 @@ Most serialization tools (Protobuf, Thrift, FlatBuffers) are **data-first** or *
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# 2. Create and activate a virtual environment (optional but recommended)
-python -m venv venv
-source venv/bin/activate      # Linux / macOS
-# venv\Scripts\activate       # Windows
+# 2. Install core dependencies managed in pyproject.toml
+poetry install
 
-# 3. Install core dependencies
-pip install -r requirements.txt
-
-# 4. Install the package in development mode (editable)
-pip install -e .
+# 3. Install optional JSON Schema validation backends for the full test suite
+poetry install --extras "validator-jsonscreamer validator-fastjsonschema"
 ```
 
-> **Note:** For development, install additional dependencies:
->
->     pip install -r requirements-dev.txt
+`protocollab` uses Poetry for dependency management. Core and optional
+dependencies are declared in `pyproject.toml`, including the pluggable JSON
+Schema validation backends.
+
+> **Note:** The optional backend tests are skipped automatically unless the
+> corresponding Poetry extras are installed.
 
 
 `instances:` can also define virtual Wireshark fields when an entry contains a
@@ -248,7 +246,7 @@ CLI (main.py)
 | Schema validation | jsonschema 4.x (Draft 7) |
 | Code generation | Jinja2 3.x |
 | Data models | Pydantic v2 |
-| Build | pyproject.toml (Poetry) + setup.py |
+| Build | pyproject.toml (Poetry) |
 | Testing | pytest + pytest-cov |
 
 ---
@@ -257,14 +255,18 @@ CLI (main.py)
 
 ```bash
 # All tests with coverage
-pytest src/ -q
+poetry run pytest src/ -q
 
 # yaml_serializer only (100% coverage)
-pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
 
 # protocollab
-pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
+poetry run pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 ```
+
+Optional backend-specific tests in `src/jsonschema_validator/tests/` are skipped
+when `validator-jsonscreamer` or `validator-fastjsonschema` extras are not
+installed.
 
 ---
 
@@ -290,7 +292,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) and fo
 1. Fork the repository
 2. Create your feature branch from `dev`: `git checkout -b feature/my-feature`
 3. Write tests for any new functionality
-4. Run the full test suite: `pytest src/ -q`
+4. Run the full test suite: `poetry run pytest src/ -q`
 5. Open a Pull Request against `dev`
 
 Development branch: `dev` · Remote: [github.com/cherninkiy/protocollab/tree/dev](https://github.com/cherninkiy/protocollab/tree/dev)

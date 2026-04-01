@@ -46,21 +46,19 @@
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# 2. Создать и активировать окружение (необязательно, но рекомендуется)
-python -m venv venv
-source venv/bin/activate      # Linux / macOS
-# venv\Scripts\activate       # Windows
+# 2. Установить основные зависимости, описанные в pyproject.toml
+poetry install
 
-# 3. Установить основные зависимости
-pip install -r requirements.txt
-
-# 4. Установить пакет в режиме разработки (редактируемый режим)
-pip install -e .
+# 3. Установить optional backend-ы валидации JSON Schema для полного тест-сьюта
+poetry install --extras "validator-jsonscreamer validator-fastjsonschema"
 ```
 
-> **Примечание:** Для разработки требуется установить дополнительные зависимости:
->
->     pip install -r requirements-dev.txt
+`protocollab` использует Poetry для управления зависимостями. Основные и
+optional зависимости описаны в `pyproject.toml`, включая pluggable backend-ы
+валидации JSON Schema.
+
+> **Примечание:** Тесты optional backend-ов автоматически пропускаются, если
+> соответствующие Poetry extras не установлены.
 
 
 Через `instances:` можно также объявлять виртуальные Wireshark-поля, если у
@@ -249,7 +247,7 @@ CLI (main.py)
 | Валидация схем | jsonschema 4.x (Draft 7) |
 | Генерация кода | Jinja2 3.x |
 | Модели данных | Pydantic v2 |
-| Сборка | pyproject.toml (Poetry) + setup.py |
+| Сборка | pyproject.toml (Poetry) |
 | Тестирование | pytest + pytest-cov |
 
 ---
@@ -258,14 +256,18 @@ CLI (main.py)
 
 ```bash
 # Все тесты с покрытием
-pytest src/ -q
+poetry run pytest src/ -q
 
 # Только yaml_serializer (100% покрытие)
-pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
+poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer --cov-report=term-missing
 
 # Только protocollab
-pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
+poetry run pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 ```
+
+Тесты optional backend-ов в `src/jsonschema_validator/tests/` пропускаются,
+если extras `validator-jsonscreamer` или `validator-fastjsonschema` не
+установлены.
 
 ---
 
@@ -291,7 +293,7 @@ pytest src/protocollab/tests/ --cov=protocollab --cov-report=term-missing
 1. Сделайте fork репозитория
 2. Создайте ветку для своей фичи от `dev`: `git checkout -b feature/my-feature`
 3. Напишите тесты для новой функциональности
-4. Запустите полный тест-сьют: `pytest src/ -q`
+4. Запустите полный тест-сьют: `poetry run pytest src/ -q`
 5. Откройте Pull Request в ветку `dev`
 
 Ветка разработки: `dev` · Remote: [github.com/cherninkiy/protocollab/tree/dev](https://github.com/cherninkiy/protocollab/tree/dev)

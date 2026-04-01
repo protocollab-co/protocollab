@@ -9,11 +9,11 @@ Only `demo/l3/generated/.gitkeep` is tracked.
 
 ### Prerequisites
 
-- Use a Python virtual environment for the repository
-- Install the project in editable mode so `python -m protocollab` works:
+- Use the repository Poetry environment
+- Install dependencies from the repository root:
 
 ```bash
-pip install -e .
+poetry install
 ```
 
 ### Commands
@@ -78,11 +78,11 @@ The `check` command performs three steps in order:
 
 ### Предварительные условия
 
-- Используйте Python virtual environment в корне репозитория
-- Установите проект в editable-режиме, чтобы работал `python -m protocollab`:
+- Используйте Poetry-окружение репозитория
+- Установите зависимости из корня репозитория:
 
 ```bash
-pip install -e .
+poetry install
 ```
 
 ### Команды

@@ -239,13 +239,13 @@ save_protocol()
 Запуск тестов локально:
 
 ```bash
-pytest src/yaml_serializer/tests/ --cov=yaml_serializer
+poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer
 ```
 
 Для более детального вывода:
 
 ```bash
-pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
+poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ```
 
 ---
@@ -257,19 +257,11 @@ pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-mis
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# Создать и активировать виртуальное окружение
-python -m venv venv
-source venv/bin/activate      # Linux/macOS
-# venv\Scripts\activate       # Windows
-
 # Установить зависимости
-pip install -r requirements.txt
-
-# Установить пакет в режиме редактирования
-pip install -e .
+poetry install
 
 # Запустить тесты
-pytest src/yaml_serializer/tests/
+poetry run pytest src/yaml_serializer/tests/
 ```
 
 ---

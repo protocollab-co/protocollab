@@ -31,11 +31,15 @@ pydantic   = ">=2.0.0"
 click      = ">=8.0"
 jsonschema = ">=4.0"
 jinja2     = ">=3.0"
+jsonscreamer = { version = ">=0.1.0", optional = true }
+fastjsonschema = { version = ">=2.0.0", optional = true }
+scapy = { version = ">=2.5.0", optional = true, python = ">=3.10,<4" }
 
 [tool.poetry.extras]
 # Optional JSON Schema backends
 validator-jsonscreamer  = ["jsonscreamer"]
 validator-fastjsonschema = ["fastjsonschema"]
+demo-l2 = ["scapy"]
 
 [tool.poetry.group.dev.dependencies]
 pytest      = ">=9.0.0"

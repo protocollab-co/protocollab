@@ -241,13 +241,13 @@ The module has an extensive test suite covering all critical paths.
 To run tests locally:
 
 ```bash
-pytest yaml_serializer/tests/ --cov=yaml_serializer
+poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer
 ```
 
 For more detailed output:
 
 ```bash
-pytest yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
+poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ```
 
 ---
@@ -259,19 +259,11 @@ pytest yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
 git clone https://github.com/cherninkiy/protocollab
 cd protocollab
 
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate      # On Linux/macOS
-# venv\Scripts\activate       # On Windows
-
 # Install dependencies
-pip install -r requirements.txt
-
-# Install the package in editable mode
-pip install -e .
+poetry install
 
 # Run tests
-pytest yaml_serializer/tests/
+poetry run pytest src/yaml_serializer/tests/
 ```
 
 ---

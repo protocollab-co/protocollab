@@ -1,8 +1,0 @@
-# Demo dependencies
--r requirements.txt
-
-# Demo test runner
-pytest>=9.0.0
-
-# Optional runtime for demo/l2
-scapy>=2.5.0

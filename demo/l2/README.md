@@ -9,12 +9,11 @@ Only `demo/l2/generated/.gitkeep` is tracked.
 
 ### Prerequisites
 
-- Use a Python virtual environment for the repository
-- Install the package and demo dependencies:
+- Use the repository Poetry environment
+- Install the project and the optional L2 demo dependency from the repository root:
 
 ```bash
-pip install -e .
-pip install -r requirements-demo.txt
+poetry install --extras "demo-l2"
 ```
 
 - The live L2 demo requires a real network interface and permissions suitable for Scapy raw Ethernet traffic
@@ -89,12 +88,11 @@ If `--iface` is provided, it also runs a live Scapy Layer 2 ping/pong exchange.
 
 ### Предварительные условия
 
-- Используйте Python virtual environment в корне репозитория
-- Установите пакет и demo-зависимости:
+- Используйте Poetry-окружение репозитория
+- Установите проект и optional зависимость для L2 demo из корня репозитория:
 
 ```bash
-pip install -e .
-pip install -r requirements-demo.txt
+poetry install --extras "demo-l2"
 ```
 
 - Для живого L2-демо нужен реальный сетевой интерфейс и права, достаточные для raw Ethernet трафика через Scapy

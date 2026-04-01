@@ -550,6 +550,23 @@ class TestFastjsonschemaBackend:
         backend.validate(schema, {})
         assert backend._cache[id(schema)] is first
 
+    def test_jsonschema_fallback_validator_cache_reuse(self, backend) -> None:
+        schema = {"type": "object"}
+        first = backend._get_jsonschema_validator(schema)
+        second = backend._get_jsonschema_validator(schema)
+        assert backend._jsonschema_cache[id(schema)] is first
+        assert second is first
+
+    def test_jsonschema_fallback_validator_without_cache(self) -> None:
+        from jsonschema_validator.backends.fastjsonschema_backend import FastjsonschemaBackend
+
+        backend = FastjsonschemaBackend(cache=False)
+        schema = {"type": "object"}
+        first = backend._get_jsonschema_validator(schema)
+        second = backend._get_jsonschema_validator(schema)
+        assert first is not second
+        assert backend._jsonschema_cache == {}
+
     def test_is_instance_of_abstract(self, backend) -> None:
         from jsonschema_validator.backends.base import AbstractSchemaValidator
 
@@ -601,6 +618,13 @@ class TestIntegerFirstPathCoverage:
         from jsonschema_validator.backends.jsonscreamer_backend import _format_path
 
         assert _format_path(["seq", 0]) == "seq[0]"
+
+    def test_jsonscreamer_format_schema_path(self) -> None:
+        if not _has_dependency("jsonscreamer"):
+            pytest.skip("Install the validator-jsonscreamer extra to run these tests")
+        from jsonschema_validator.backends.jsonscreamer_backend import _format_schema_path
+
+        assert _format_schema_path(["properties", "meta", "required"]) == "properties/meta/required"
 
 
 # ===========================================================================

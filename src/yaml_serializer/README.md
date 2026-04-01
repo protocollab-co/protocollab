@@ -73,7 +73,6 @@ yaml_serializer/
 ├── safe_constructor.py   # Restricted YAML constructor and safety limits
 ├── modify.py             # Helpers for mutating YAML trees with dirty tracking
 ├── utils.py              # Path checks, hashing, include helpers, dirty propagation
-├── merge.py              # Placeholder for future merge functionality
 └── tests/                # Test suite for loading, includes, security, and sessions
 ```
 
@@ -223,10 +222,38 @@ session API and automatically update parent links and dirty flags.
 - `remove_from_list(target: CommentedSeq, index: int)`
 - `get_node_hash(node: Union[CommentedMap, CommentedSeq]) -> str` – returns the node’s hash (recalculates if dirty).
 
-The lower-level internals in `utils.py`, `safe_constructor.py`, and
-`serializer.py` are implementation details of the current codebase. When using
-the library directly, prefer `SerializerSession` plus the re-exported helpers
-from `yaml_serializer`.
+The lower-level internals in `safe_constructor.py` and most of `serializer.py`
+are implementation details of the current codebase. When using the library
+directly, prefer `SerializerSession` plus the re-exported helpers from
+`yaml_serializer`.
+
+---
+
+## 🛡️ Public API Stability
+
+The following functions from `yaml_serializer.utils` are considered part of the
+intended public API for advanced use. While the project is still in the `0.x`
+phase, this API may still evolve when needed, but breaking changes should be
+called out explicitly in the release notes. Once `yaml_serializer` reaches
+`1.0.0`, these functions will be covered by backward-compatibility guarantees
+for the `yaml_serializer 1.x` line:
+
+- `canonical_repr`
+- `compute_hash`
+- `resolve_include_path`
+- `is_path_within_root`
+- `mark_node`
+- `mark_dirty`
+- `clear_dirty`
+- `update_file_attr`
+- `replace_included`
+- `mark_includes`
+
+These functions are exported via `yaml_serializer.utils.__all__` and marked with
+the `_stable_api` metadata decorator in the source.
+
+Helpers prefixed with `_` are internal implementation details and may change
+without notice.
 
 ---
 

@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   discovery helpers, and independent tests/docs so validation logic can evolve
   outside `protocollab.*` internals while remaining reusable from them.
 
+- **`src/yaml_serializer/tests/test_public_api.py`**: Added explicit stability
+  and metadata-integrity coverage for the advanced-use public API exposed from
+  `yaml_serializer.utils`, including export boundaries and invariants for
+  `_yaml_file`, `_yaml_parent`, and `_yaml_include_path`.
+
 - **`src/jsonschema_validator/backends/`**: Added three backend adapters with
   explicit policy boundaries:
   - `jsonschema` as the compatibility-oriented safe fallback
@@ -64,6 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`yaml_serializer/utils.py`**, **`yaml_serializer/safe_constructor.py`**,
   **`yaml_serializer/merge.py`**: All remaining Russian docstrings and comments
   translated to English ([`141eef5`]).
+
+- **`src/yaml_serializer/utils.py`**, **`src/yaml_serializer/README.md`**, and
+  **`src/yaml_serializer/README_ru.md`**: Phase 0 of ADR 003 is now implemented.
+  The placeholder `merge.py` was removed, a stable advanced-use API was defined
+  for `yaml_serializer.utils`, internal helpers were renamed with a leading `_`,
+  and both English and Russian package READMEs now document the public API
+  stability boundary for future `yaml_merger` integration.
 
 - **`protocollab/loader/__init__.py`**: Added `get_global_loader()` to expose the
   module-level `ProtocolLoader` for inspection and cache management, and

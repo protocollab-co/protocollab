@@ -12,7 +12,7 @@ from .utils import (
     mark_includes,
     replace_included,
     update_file_attr,
-    update_parent_file_attr,
+    _update_parent_file_attr,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ def _make_include_constructor(session):
             logger.debug(
                 "Marked included node with file %s, include path: %s", included_path, filename
             )
-            saved_hash = utils.load_hash_from_file(included_path)
+            saved_hash = utils._load_hash_from_file(included_path)
             session._loaded_hashes[included_path] = saved_hash
             logger.debug("Loaded saved hash for included file: %s", saved_hash)
             return data
@@ -244,7 +244,7 @@ class SerializerSession:
         mark_node(data, main_path)
         self._file_roots[main_path] = data
         logger.debug("Root node marked with file %s", main_path)
-        saved_hash = utils.load_hash_from_file(main_path)
+        saved_hash = utils._load_hash_from_file(main_path)
         self._loaded_hashes[main_path] = saved_hash
         logger.debug("Loaded saved hash for %s: %s", main_path, saved_hash)
         return data
@@ -278,7 +278,7 @@ class SerializerSession:
                     os.fsync(f.fileno())
             finally:
                 self._current_saving_file = None
-            utils.save_hash_to_file(filename, curr_hash)
+            utils._save_hash_to_file(filename, curr_hash)
             self._loaded_hashes[filename] = curr_hash
             clear_dirty(root)
             logger.debug("Saved hash and cleared dirty for %s", filename)
@@ -297,9 +297,9 @@ class SerializerSession:
         }
         Path(old_abs).rename(new_abs)
         logger.debug("Physical rename done")
-        old_hash_file = utils.hash_file_path(old_abs)
+        old_hash_file = utils._hash_file_path(old_abs)
         if os.path.exists(old_hash_file):
-            new_hash_file = utils.hash_file_path(new_abs)
+            new_hash_file = utils._hash_file_path(new_abs)
             Path(old_hash_file).rename(new_hash_file)
             logger.debug("Hash file renamed from %s to %s", old_hash_file, new_hash_file)
         root = self._file_roots.pop(old_abs)
@@ -308,7 +308,7 @@ class SerializerSession:
             self._loaded_hashes[new_abs] = self._loaded_hashes.pop(old_abs)
         logger.debug("Updated session structures: _file_roots and _loaded_hashes")
         update_file_attr(root, old_abs, new_abs)
-        update_parent_file_attr(root, old_abs, new_abs)
+        _update_parent_file_attr(root, old_abs, new_abs)
         mark_dirty(root)
         logger.debug("Marked renamed root of file %s as dirty", new_abs)
         logger.debug("Updated _yaml_file attributes for root and descendants")

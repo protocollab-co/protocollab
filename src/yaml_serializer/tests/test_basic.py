@@ -211,13 +211,13 @@ def test_rename_with_existing_hash(temp_dir, create_yaml_file):
     s.save()
 
     assert os.path.exists(main_yaml + ".hash")
-    old_hash = utils.load_hash_from_file(main_yaml)
+    old_hash = utils._load_hash_from_file(main_yaml)
 
     s.rename(main_yaml, new_main)
 
     assert not os.path.exists(main_yaml + ".hash")
     assert os.path.exists(new_main + ".hash")
-    new_hash = utils.load_hash_from_file(new_main)
+    new_hash = utils._load_hash_from_file(new_main)
     assert new_hash == old_hash
 
 

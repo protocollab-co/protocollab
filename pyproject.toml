@@ -2,7 +2,7 @@
 name = "protocollab"
 version = "0.1.0"
 description = "Protocol specification analyser, validator and code generator"
-authors = ["Dmitry Chernikov <d.chernikov@tk-chel.ru>"]
+authors = ["cherninkiy <cherninkiy@gmail.com>"]
 license = "Apache-2.0"
 readme = "README.md"
 homepage = "https://github.com/cherninkiy/protocollab"

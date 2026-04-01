@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yaml-serializer"
-version = "1.0.0"
+version = "1.0.1"
 description = "Secure YAML loader/dumper with !include support, change tracking, and round-trip preservation"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Dmitry Chernikov", email = "d.chernikov@tk-chel.ru" },
+    { name = "cherninkiy", email = "cherninkiy@gmail.com" },
 ]
 keywords = ["yaml", "serializer", "include", "round-trip", "security"]
 classifiers = [

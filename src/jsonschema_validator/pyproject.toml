@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonschema-pluggable-validator"
-version = "1.0.0"
+version = "1.0.1"
 description = "Pluggable JSON Schema validation facade with a unified error model"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Dmitry Chernikov", email = "d.chernikov@tk-chel.ru" },
+    { name = "cherninkiy", email = "cherninkiy@gmail.com" },
 ]
 keywords = ["jsonschema", "validation", "validator", "jsonscreamer", "fastjsonschema"]
 classifiers = [

@@ -1,0 +1,43 @@
+# <type>(<scope>): <subject>
+# <subject> — short description (up to 50 chars, imperative mood)
+
+# <body> — details with bullet points (-), each line up to 72 chars
+
+# <footer> — references to issues, breaking changes
+
+# Examples:
+# fix(ci): align validator backends and Poetry workflow
+# - collect all validation errors in the fastjsonschema backend via jsonschema fallback
+# - normalize jsonscreamer schema_path reporting and remove obsolete fastjsonschema path helper code
+#
+# docs(yaml_serializer): align README with current session API
+#
+# refactor(demo): unify mock entrypoint workflow
+# - align demo/mock/demo.py with the demo/l3 orchestration model so generated artefacts are built
+#   through the Python generator API instead of subprocess CLI calls.
+# - generate the parser once, invoke MockClientGenerator and MockServerGenerator directly,
+#   clean nested generated directories, and make run_demo() return the parsed response while
+#   still stopping the server in a finally block.
+
+# Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build# <type>(<scope>): <subject>
+# <subject> — short description (up to 50 chars, imperative mood)
+
+# <body> — details with bullet points (-), each line up to 72 chars
+
+# <footer> — references to issues, breaking changes
+
+# Examples:
+# fix(ci): align validator backends and Poetry workflow
+# - collect all validation errors in the fastjsonschema backend via jsonschema fallback
+# - normalize jsonscreamer schema_path reporting and remove obsolete fastjsonschema path helper code
+#
+# docs(yaml_serializer): align README with current session API
+#
+# refactor(demo): unify mock entrypoint workflow
+# - align demo/mock/demo.py with the demo/l3 orchestration model so generated artefacts are built
+#   through the Python generator API instead of subprocess CLI calls.
+# - generate the parser once, invoke MockClientGenerator and MockServerGenerator directly,
+#   clean nested generated directories, and make run_demo() return the parsed response while
+#   still stopping the server in a finally block.
+
+# Types: feat, fix, docs, style, refactor, test, chore, perf, ci, build

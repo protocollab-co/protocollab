@@ -37,6 +37,86 @@ This project and everyone participating in it is governed by our [Code of Conduc
 - Limit the first line to 72 characters or less.
 - Reference issues and pull requests liberally after the first line.
 
+Preferred format:
+
+```text
+<type>(<scope>): <subject>
+
+- <detail>
+- <detail>
+
+Refs #<issue>
+```
+
+- Keep the subject short, imperative, and ideally within 50 characters.
+- Use bullet points in the body for multi-part changes.
+- Use the footer for issue references or breaking-change notes.
+- Preferred types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`, `perf`, `ci`, `build`.
+
+Examples:
+
+```text
+fix(ci): align validator backends and Poetry workflow
+- collect all validation errors in the fastjsonschema backend via jsonschema fallback
+- normalize jsonscreamer schema_path reporting and remove obsolete helper code
+
+Refs #22
+```
+
+```text
+docs(yaml_serializer): align README with current session API
+```
+
+```text
+refactor(demo): unify mock entrypoint workflow
+- align demo/mock/demo.py with the demo/l3 orchestration model
+- invoke generators directly instead of subprocess CLI calls
+```
+
+This repository also includes a reusable commit message template in `.gitmessage.txt`.
+To enable it locally:
+
+```bash
+git config commit.template .gitmessage.txt
+```
+
+That gives contributors a guided commit editor without forcing extra tooling.
+
+For an optional lightweight local check, enable the tracked git hooks directory:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+This installs the repository `commit-msg` hook, which validates only the first
+line and keeps local commits fast.
+
+#### Lightweight Automation Options
+
+To improve consistency without making the workflow heavy, prefer this order:
+
+1. **Prepare locally with `commit.template`**
+	Use `.gitmessage.txt` as the default template so authors start from the accepted format.
+2. **Use a lightweight local `commit-msg` hook**
+	Validate only the first line against a simple pattern such as
+	`^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)\([^)]+\): .+`.
+	Keep the hook fast and focused on the subject line so it does not slow commits down.
+3. **Enforce strictly at PR boundary, not on every local step**
+	If stronger enforcement is needed, validate the PR title or squash-merge title in CI
+	instead of rejecting every local work-in-progress commit.
+
+Recommended balance:
+
+- Use `.gitmessage.txt` for message preparation.
+- Keep any local hook minimal and fast.
+- Enforce the final human-facing title at PR or squash-merge time.
+
+The repository follows that model:
+
+- `.gitmessage.txt` prepares commit messages locally.
+- `.githooks/commit-msg` validates the commit subject locally when enabled.
+- CI validates PR titles with the same parser used by the local hook.
+
 ### Python Style Guide
 
 - Follow [PEP 8](https://www.python.org/dev/peps/pep-0008/).

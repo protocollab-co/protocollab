@@ -1,0 +1,3 @@
+#!/bin/sh
+
+python scripts/validate_commit_message.py --commit-msg-file "$1"

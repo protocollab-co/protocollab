@@ -1,11 +1,20 @@
 # ADR 003: Extract YAML Merge into a Separate Submodule
 
-| **Date**       | 2026-04-01 |
-|----------------|------------|
-| **Status**     | Accepted   |
-| **Author**     | @cherninkiy |
-| **Deciders**   | Protocollab maintainers |
+## Status
 
+Accepted
+
+## Date
+
+2026-04-01
+
+## Author
+
+@cherninkiy
+
+## Deciders
+
+Protocollab maintainers
 ## Context
 
 The `yaml_serializer` module currently contains an empty placeholder file `merge.py` with a TODO comment indicating that three‑way merge functionality should be implemented. The module is otherwise focused on secure loading, saving, and change‑tracking of YAML files (with `!include` support and comment preservation).  

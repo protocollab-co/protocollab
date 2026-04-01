@@ -21,16 +21,22 @@
 
 ## 📦 Installation
 
-`yaml_serializer` is part of the `protocollab` package. You can install the whole framework (recommended):
+Install the standalone package:
+
+```bash
+pip install yaml-serializer
+```
+
+Install the whole framework when you also need the generators and CLI:
 
 ```bash
 pip install protocollab
 ```
 
-If you prefer to use only the serializer without the rest of `protocollab`, you can copy the `yaml_serializer` folder into your project or install directly from the repository:
+For development directly from this repository, either install the full monorepo from the repository root or install this package in editable mode:
 
 ```bash
-pip install git+https://github.com/cherninkiy/protocollab.git
+pip install -e src/yaml_serializer
 ```
 
 After installation, import it as:
@@ -231,12 +237,9 @@ directly, prefer `SerializerSession` plus the re-exported helpers from
 
 ## 🛡️ Public API Stability
 
-The following functions from `yaml_serializer.utils` are considered part of the
-intended public API for advanced use. While the project is still in the `0.x`
-phase, this API may still evolve when needed, but breaking changes should be
-called out explicitly in the release notes. Once `yaml_serializer` reaches
-`1.0.0`, these functions will be covered by backward-compatibility guarantees
-for the `yaml_serializer 1.x` line:
+The following functions from `yaml_serializer.utils` are part of the stable
+advanced-use API for `yaml_serializer 1.0.0` and are covered by
+backward-compatibility guarantees for the `yaml_serializer 1.x` line:
 
 - `canonical_repr`
 - `compute_hash`
@@ -280,16 +283,16 @@ The module has an extensive test suite covering all critical paths.
 - **Code coverage**: 100% (yaml_serializer)  
 - **Structure**: thematic test modules + `conftest.py` (shared fixtures)
 
-To run tests locally:
+To run tests locally from the package directory:
 
 ```bash
-poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer
+pytest tests/ --cov=yaml_serializer
 ```
 
 For more detailed output:
 
 ```bash
-poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
+pytest tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ```
 
 ---
@@ -299,13 +302,13 @@ poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-repo
 ```bash
 # Clone the repository (if not already done)
 git clone https://github.com/cherninkiy/protocollab
-cd protocollab
+cd protocollab/src/yaml_serializer
 
-# Install dependencies
-poetry install
+# Install the package in editable mode
+pip install -e .
 
 # Run tests
-poetry run pytest src/yaml_serializer/tests/
+pytest tests/
 ```
 
 ---
@@ -320,10 +323,9 @@ If you discover a security vulnerability, **do not** open a public issue; instea
 
 ## 📄 License
 
-`yaml_serializer` is part of the `protocollab` project and inherits the
-project's **Apache License 2.0**. A copy of the license is available in
-[LICENSE](LICENSE), and the repository root also contains the canonical project
-license text in [../../LICENSE](../../LICENSE).
+`yaml_serializer` is released under the **Apache License 2.0**. A local copy is
+available in [LICENSE](LICENSE), and the repository root also contains the
+canonical project license text in [../../LICENSE](../../LICENSE).
 
 ---
 

@@ -20,30 +20,35 @@
 
 ## Установка
 
-`jsonschema_validator` поставляется как часть `protocollab`.
+Установка standalone-пакета:
 
-Установка базового пакета:
+```bash
+pip install jsonschema-validator
+```
+
+Если нужен весь фреймворк вместе с CLI и генераторами:
 
 ```bash
 pip install protocollab
 ```
 
-Установка с предпочтительным дополнительным backend `jsonscreamer`:
+Установка standalone-пакета с предпочтительным дополнительным backend `jsonscreamer`:
 
 ```bash
-pip install "protocollab[validator-jsonscreamer]"
+pip install "jsonschema-validator[jsonscreamer]"
 ```
 
 Установка с дополнительным backend `fastjsonschema`:
 
 ```bash
-pip install "protocollab[validator-fastjsonschema]"
+pip install "jsonschema-validator[fastjsonschema]"
 ```
 
-Для разработки из текущего репозитория:
+Для разработки из текущего репозитория можно либо установить весь monorepo из
+корня, либо поставить этот пакет в editable-режиме:
 
 ```bash
-poetry install --with dev --extras validator-jsonscreamer --extras validator-fastjsonschema
+pip install -e "src/jsonschema_validator[jsonscreamer,fastjsonschema]"
 ```
 
 После установки импортируйте так:
@@ -176,6 +181,22 @@ from jsonschema_validator import SchemaValidationError
 
 ---
 
+## Стабильность публичного API
+
+Стабильная публичная API для `jsonschema_validator 1.0.0` ограничена корневым
+API пакета, экспортируемым через `jsonschema_validator.__all__`:
+
+- `ValidatorFactory`
+- `BackendNotAvailableError`
+- `SchemaValidationError`
+- `available_backends`
+
+Внутренние backend-модули в `jsonschema_validator.backends` считаются деталями
+реализации и могут развиваться независимо, пока корневой API пакета остаётся
+обратно совместимым в рамках ветки `1.x`.
+
+---
+
 ## Пример обработки ошибок
 
 ```python
@@ -224,16 +245,16 @@ assert errors[0].schema_path.endswith("pattern")
 - ошибок factory и probing backend-ов
 - поведения кэша backend-ов
 
-Локальный запуск тестов:
+Локальный запуск тестов из директории пакета:
 
 ```bash
-poetry run pytest src/jsonschema_validator/tests/ --cov=jsonschema_validator
+pytest tests/ --cov=jsonschema_validator
 ```
 
 Для подробного отчёта по покрытию:
 
 ```bash
-poetry run pytest src/jsonschema_validator/tests/ --cov=jsonschema_validator --cov-report=term-missing
+pytest tests/ --cov=jsonschema_validator --cov-report=term-missing
 ```
 
 Текущее покрытие: 100% для `jsonschema_validator`.
@@ -252,5 +273,5 @@ poetry run pytest src/jsonschema_validator/tests/ --cov=jsonschema_validator --c
 
 `jsonschema_validator` распространяется по лицензии Apache License 2.0.
 
-- Локальная лицензия пакета: `src/jsonschema_validator/LICENSE`
+- Локальная лицензия пакета: `LICENSE`
 - Лицензия репозитория: `LICENSE`

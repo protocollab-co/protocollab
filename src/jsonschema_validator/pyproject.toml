@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jsonschema-validator"
+version = "1.0.0"
+description = "Pluggable JSON Schema validation facade with a unified error model"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Dmitry Chernikov", email = "d.chernikov@tk-chel.ru" },
+]
+keywords = ["jsonschema", "validation", "validator", "jsonscreamer", "fastjsonschema"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "jsonschema>=4.0",
+]
+
+[project.optional-dependencies]
+jsonscreamer = ["jsonscreamer>=0.1.0"]
+fastjsonschema = ["fastjsonschema>=2.0.0"]
+all = [
+    "jsonscreamer>=0.1.0",
+    "fastjsonschema>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cherninkiy/protocollab"
+Repository = "https://github.com/cherninkiy/protocollab"
+Source = "https://github.com/cherninkiy/protocollab/tree/main/src/jsonschema_validator"
+
+[tool.setuptools]
+packages = ["jsonschema_validator"]
+
+[tool.setuptools.package-dir]
+jsonschema_validator = "."

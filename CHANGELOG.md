@@ -77,11 +77,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and both English and Russian package READMEs now document the public API
   stability boundary for future `yaml_merger` integration.
 
+- **`src/yaml_serializer/pyproject.toml`** and
+  **`src/jsonschema_validator/pyproject.toml`**: Added standalone package
+  manifests with independent versioning so `yaml_serializer` and
+  `jsonschema_validator` can be built and released separately as `1.0.0`
+  packages while remaining part of the monorepo.
+
 - **`protocollab/loader/__init__.py`**: Added `get_global_loader()` to expose the
   module-level `ProtocolLoader` for inspection and cache management, and
   `configure_global(max_cache_size)` to reconfigure the shared cache at runtime.
   Module docstring expanded with hybrid-design guide, usage examples, and thread-safety
   warning ([`ffeae03`]).
+
+- **`src/protocollab/loader/base_loader.py`** and
+  **`src/protocollab/validator/schema_validator.py`**: Internal integration now
+  prefers the package-root public APIs of `yaml_serializer` and
+  `jsonschema_validator`, reducing coupling to internal implementation modules
+  before separate package releases.
 
 - **`protocollab/loader/cache/memory_cache.py`**: `MemoryCache` now supports a
   `max_size` bound with LRU eviction ([`ffeae03`]).

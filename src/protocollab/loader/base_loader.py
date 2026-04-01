@@ -10,7 +10,7 @@ from protocollab.exceptions import FileLoadError, YAMLParseError
 from protocollab.loader.cache.base_cache import BaseCache
 from protocollab.loader.cache.memory_cache import MemoryCache
 from protocollab.types import ProtocolData
-from yaml_serializer.serializer import SerializerSession
+from yaml_serializer import SerializerSession
 from yaml_serializer.utils import canonical_repr
 
 logger = logging.getLogger(__name__)

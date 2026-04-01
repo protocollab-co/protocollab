@@ -21,16 +21,23 @@
 
 ## 📦 Установка
 
-`yaml_serializer` является частью пакета `protocollab`. Установка всего фреймворка (рекомендуется):
+Установка standalone-пакета:
+
+```bash
+pip install yaml-serializer
+```
+
+Если нужен весь фреймворк вместе с CLI и генераторами:
 
 ```bash
 pip install protocollab
 ```
 
-Для использования только сериализатора без остальной части `protocollab`:
+Для разработки прямо из этого репозитория можно либо установить весь monorepo
+из корня, либо поставить этот пакет в editable-режиме:
 
 ```bash
-pip install git+https://github.com/cherninkiy/protocollab.git
+pip install -e src/yaml_serializer
 ```
 
 После установки импортируйте так:
@@ -216,11 +223,8 @@ from yaml_serializer import SerializerSession
 
 ## 🛡️ Стабильность публичного API
 
-Следующие функции из `yaml_serializer.utils` считаются целевой публичной API
-границей для продвинутого использования. Пока проект находится в фазе `0.x`,
-этот API при необходимости ещё может эволюционировать, но любые ломающие
-изменения должны явно фиксироваться в release notes. После выхода
-`yaml_serializer 1.0.0` для этих функций будут действовать гарантии обратной
+Следующие функции из `yaml_serializer.utils` входят в стабильную advanced-use
+API для `yaml_serializer 1.0.0` и покрываются гарантиями обратной
 совместимости в ветке `yaml_serializer 1.x`:
 
 - `canonical_repr`
@@ -266,16 +270,16 @@ from yaml_serializer import SerializerSession
 - **Покрыто строк**: 100%
 - **Структура**: тематические тестовые модули + `conftest.py`
 
-Запуск тестов локально:
+Локальный запуск тестов из директории пакета:
 
 ```bash
-poetry run pytest src/yaml_serializer/tests/ --cov=yaml_serializer
+pytest tests/ --cov=yaml_serializer
 ```
 
 Для более детального вывода:
 
 ```bash
-poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-report=term-missing
+pytest tests/ -v --cov=yaml_serializer --cov-report=term-missing
 ```
 
 ---
@@ -285,23 +289,22 @@ poetry run pytest src/yaml_serializer/tests/ -v --cov=yaml_serializer --cov-repo
 ```bash
 # Клонировать репозиторий (если ещё не сделано)
 git clone https://github.com/cherninkiy/protocollab
-cd protocollab
+cd protocollab/src/yaml_serializer
 
-# Установить зависимости
-poetry install
+# Установить пакет в editable-режиме
+pip install -e .
 
 # Запустить тесты
-poetry run pytest src/yaml_serializer/tests/
+pytest tests/
 ```
 
 ---
 
 ## 📄 Лицензия
 
-`yaml_serializer` является частью проекта `protocollab` и наследует его
-лицензию **Apache License 2.0**. Копия лицензии доступна в файле
-[LICENSE](LICENSE), а канонический текст лицензии проекта также находится в
-корне репозитория: [../../LICENSE](../../LICENSE).
+`yaml_serializer` распространяется по лицензии **Apache License 2.0**. Локальная
+копия доступна в файле [LICENSE](LICENSE), а канонический текст лицензии проекта
+также находится в корне репозитория: [../../LICENSE](../../LICENSE).
 
 ---
 

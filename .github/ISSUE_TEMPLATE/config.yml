@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: https://github.com/cherninkiy/protocollab/security/policy
+    about: Please report security vulnerabilities through the security policy, not public issues.
+  - name: Discussions
+    url: https://github.com/cherninkiy/protocollab/discussions
+    about: Use Discussions for questions, roadmap ideas, and broader design conversations.

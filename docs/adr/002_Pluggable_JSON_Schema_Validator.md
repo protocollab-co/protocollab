@@ -1,7 +1,7 @@
 # ADR 002: Pluggable JSON Schema Validation Module
 
 ## Status
-Proposed
+Accepted
 
 ## Context
 `protocollab` relies on JSON Schema validation to verify protocol specifications (both permissive `base` and strict `protocol` schemas). Currently, validation is implemented using the `jsonschema` library directly inside the `protocollab.validator` module.

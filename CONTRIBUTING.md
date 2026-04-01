@@ -101,21 +101,21 @@ To improve consistency without making the workflow heavy, prefer this order:
 	Validate only the first line against a simple pattern such as
 	`^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)\([^)]+\): .+`.
 	Keep the hook fast and focused on the subject line so it does not slow commits down.
-3. **Enforce strictly at PR boundary, not on every local step**
-	If stronger enforcement is needed, validate the PR title or squash-merge title in CI
-	instead of rejecting every local work-in-progress commit.
+3. **Prefer guidance over hard gates**
+	Use PR review and squash-merge hygiene for the final human-facing title instead
+	of rejecting work in progress in CI.
 
 Recommended balance:
 
 - Use `.gitmessage.txt` for message preparation.
 - Keep any local hook minimal and fast.
-- Enforce the final human-facing title at PR or squash-merge time.
+- Keep CI focused on code quality, tests, and demos.
 
 The repository follows that model:
 
 - `.gitmessage.txt` prepares commit messages locally.
 - `.githooks/commit-msg` validates the commit subject locally when enabled.
-- CI validates PR titles with the same parser used by the local hook.
+- CI does not currently block on commit-message or PR-title format.
 
 ### Python Style Guide
 

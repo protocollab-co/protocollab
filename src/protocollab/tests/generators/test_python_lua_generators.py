@@ -56,7 +56,7 @@ class TestPythonGeneratorContent:
         ast.parse(src)
 
     def test_all_int_types(self, tmp_path):
-        for type_name in ["u1", "u2", "u4", "u8", "s1", "s2", "s4", "s8"]:
+        for type_name in ["u1", "u2", "u3", "u4", "u8", "s1", "s2", "s4", "s8"]:
             spec = {"meta": {"id": "t_proto", "endian": "le"}, "seq": [{"id": "x", "type": type_name}]}
             src = PythonGenerator().generate(spec, tmp_path)[0].read_text(encoding="utf-8")
             ast.parse(src)
@@ -96,6 +96,24 @@ class TestPythonGeneratorFunctional:
         obj = module.BeProto.parse(struct.pack(">H", 0x0800))
         assert obj.value == 0x0800
 
+    def test_u3_big_endian_round_trip(self, tmp_path):
+        spec = {"meta": {"id": "u3_be", "endian": "be"}, "seq": [{"id": "value", "type": "u3"}]}
+        module = self._import_module(PythonGenerator().generate(spec, tmp_path)[0])
+        cls = module.U3Be
+        raw = bytes([0x01, 0x02, 0x03])
+        obj = cls.parse(raw)
+        assert obj.value == 0x010203
+        assert obj.serialize() == raw
+
+    def test_u3_little_endian_round_trip(self, tmp_path):
+        spec = {"meta": {"id": "u3_le", "endian": "le"}, "seq": [{"id": "value", "type": "u3"}]}
+        module = self._import_module(PythonGenerator().generate(spec, tmp_path)[0])
+        cls = module.U3Le
+        raw = bytes([0x03, 0x02, 0x01])
+        obj = cls.parse(raw)
+        assert obj.value == 0x010203
+        assert obj.serialize() == raw
+
 
 class TestLuaGeneratorOutput:
     def test_creates_lua_file(self, ping_spec, tmp_path):
@@ -128,9 +146,21 @@ class TestLuaGeneratorContent:
         assert LuaGenerator().generate(empty_seq_spec, tmp_path)[0].exists()
 
     def test_all_int_types_lua(self, tmp_path):
-        for type_name in ["u1", "u2", "u4", "u8", "s1", "s2", "s4", "s8"]:
+        for type_name in ["u1", "u2", "u3", "u4", "u8", "s1", "s2", "s4", "s8"]:
             spec = {"meta": {"id": "t_proto", "endian": "le"}, "seq": [{"id": "x", "type": type_name}]}
             assert LuaGenerator().generate(spec, tmp_path)[0].exists()
+
+    def test_u3_lua_field_uses_explicit_value_add(self, tmp_path):
+        spec = {"meta": {"id": "u3_proto", "endian": "be"}, "seq": [{"id": "x", "type": "u3"}]}
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "ProtoField.uint24" in src
+        assert "subtree:add(f_x, range, value_x)" in src
+
+    def test_u3_lua_little_endian_manual_assembly(self, tmp_path):
+        spec = {"meta": {"id": "u3_le_proto", "endian": "le"}, "seq": [{"id": "x", "type": "u3"}]}
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "bit32.lshift((buffer(offset + 1, 1):uint()), 8)" in src
+        assert "bit32.lshift((buffer(offset + 2, 1):uint()), 16)" in src
 
     def test_supports_expression_backed_wireshark_fields(self, ping_spec_with_instances, tmp_path):
         src = LuaGenerator().generate(ping_spec_with_instances, tmp_path)[0].read_text()

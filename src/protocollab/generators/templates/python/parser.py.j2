@@ -29,7 +29,11 @@ class {{ class_name }}:
         values = struct.unpack_from(cls._FORMAT, data, offset)
         return cls(
 {%- for field in fields %}
+{%- if field.is_u3 %}
+        {{ field.id }}=int.from_bytes(values[{{ loop.index0 }}], byteorder={% if endian_char == '<' %}"little"{% else %}"big"{% endif %}, signed=False),
+{%- else %}
             {{ field.id }}=values[{{ loop.index0 }}],
+{%- endif %}
 {%- endfor %}
         )
 {%- else %}
@@ -42,7 +46,11 @@ class {{ class_name }}:
         return struct.pack(
             self._FORMAT,
 {%- for field in fields %}
+    {%- if field.is_u3 %}
+            self.{{ field.id }}.to_bytes(3, byteorder={% if endian_char == '<' %}"little"{% else %}"big"{% endif %}, signed=False),
+    {%- else %}
             self.{{ field.id }},
+    {%- endif %}
 {%- endfor %}
         )
 {%- else %}

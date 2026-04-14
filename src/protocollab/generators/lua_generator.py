@@ -24,6 +24,7 @@ from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 _LUA_TYPE_MAP: Dict[str, tuple] = {
     "u1": ("uint8", 1, None),
     "u2": ("uint16", 2, "base.DEC"),
+    "u3": ("uint24", 3, None),
     "u4": ("uint32", 4, "base.DEC"),
     "u8": ("uint64", 8, "base.DEC"),
     "s1": ("int8", 1, None),
@@ -202,6 +203,22 @@ def _field_value_expr(spec_type: str, endian: str) -> str:
         return "range:string()"
     if spec_type == "u1":
         return "range:uint()"
+    if spec_type == "u3":
+        if endian == "le":
+            return (
+                "(bit32.bor("
+                "(buffer(offset, 1):uint()), "
+                "bit32.lshift((buffer(offset + 1, 1):uint()), 8), "
+                "bit32.lshift((buffer(offset + 2, 1):uint()), 16)"
+                "))"
+            )
+        return (
+            "(bit32.bor("
+            "bit32.lshift((buffer(offset, 1):uint()), 16), "
+            "bit32.lshift((buffer(offset + 1, 1):uint()), 8), "
+            "(buffer(offset + 2, 1):uint())"
+            "))"
+        )
     if spec_type == "s1":
         return "range:int()"
     if spec_type in {"u2", "u4"}:
@@ -216,7 +233,7 @@ def _field_value_expr(spec_type: str, endian: str) -> str:
 
 
 def _uses_little_endian(spec_type: str, endian: str) -> bool:
-    return endian == "le" and spec_type not in {"u1", "s1", "str"}
+    return endian == "le" and spec_type not in {"u1", "u3", "s1", "str"}
 
 
 def _normalize_wireshark_instances(
@@ -352,6 +369,7 @@ class LuaGenerator(BaseGenerator):
                     "size": size,
                     "value_expr": _field_value_expr(spec_type, endian),
                     "use_add_le": _uses_little_endian(spec_type, endian),
+                    "needs_explicit_value": spec_type == "u3",
                     "field_path_lua": _lua_string_literal(f"{proto_id}.{field_id}"),
                     "field_var": f"f_{field_id}",
                     "value_name": f"value_{field_id}",

@@ -41,6 +41,13 @@ class TestPrimitiveTypeDataclass:
         assert pt.size_bytes == 2
         assert pt.struct_format == "H"
 
+    def test_u3_fields(self) -> None:
+        pt = PRIMITIVE_TYPES["u3"]
+        assert pt.name == "u3"
+        assert pt.size_bytes == 3
+        assert pt.struct_format is None
+        assert pt.lua_field_type == "uint24"
+
     def test_u4_fields(self) -> None:
         pt = PRIMITIVE_TYPES["u4"]
         assert pt.size_bytes == 4

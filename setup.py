@@ -15,7 +15,7 @@ setup(
     packages=find_packages(where="src"),
     entry_points={
         "console_scripts": [
-            "protocollab=protocollab.main:main",
+            "pc=protocollab.main:main",
         ],
     },
 )

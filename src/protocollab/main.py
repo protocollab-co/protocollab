@@ -2,11 +2,11 @@
 
 Usage examples::
 
-    protocollab load protocol.yaml
-    protocollab load protocol.yaml --output-format json
-    protocollab load protocol.yaml --no-cache
-    protocollab validate protocol.yaml
-    protocollab validate protocol.yaml --schema custom.json --strict
+    pc load protocol.yaml
+    pc load protocol.yaml --output-format json
+    pc load protocol.yaml --no-cache
+    pc validate protocol.yaml
+    pc validate protocol.yaml --schema custom.json --strict
 """
 
 import sys
@@ -27,7 +27,7 @@ from protocollab.generators import generate, GeneratorError
 
 @click.group()
 def cli() -> None:
-    """`protocollab` — protocol specification analyser."""
+    """`pc` — protocol specification analyser."""
 
 
 # ---------------------------------------------------------------------------

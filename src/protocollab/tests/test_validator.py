@@ -282,6 +282,14 @@ class TestSchemaValidatorDslFields:
         }
         assert sv.validate(data) == []
 
+    def test_u3_type_accepted(self):
+        sv = SchemaValidator()
+        data = {
+            "meta": {"id": "p"},
+            "seq": [{"id": "triple", "type": "u3"}],
+        }
+        assert sv.validate(data) == []
+
     def test_size_integer_accepted(self):
         sv = SchemaValidator()
         data = {

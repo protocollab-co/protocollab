@@ -10,20 +10,28 @@ from jinja2 import Environment, FileSystemLoader
 from protocollab.expression import (
     Attribute,
     BinOp,
+    Comprehension,
+    DictLiteral,
     ExpressionSyntaxError,
+    InOp,
+    ListLiteral,
     Literal,
+    Match,
     Name,
     Subscript,
     Ternary,
     UnaryOp,
+    Wildcard,
     parse_expr,
 )
+from protocollab.expression import lexer as expression_lexer
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 
 # lua_type, size_bytes, optional_base
 _LUA_TYPE_MAP: Dict[str, tuple] = {
     "u1": ("uint8", 1, None),
     "u2": ("uint16", 2, "base.DEC"),
+    "u3": ("uint24", 3, None),
     "u4": ("uint32", 4, "base.DEC"),
     "u8": ("uint64", 8, "base.DEC"),
     "s1": ("int8", 1, None),
@@ -35,7 +43,8 @@ _LUA_TYPE_MAP: Dict[str, tuple] = {
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "lua"
 _INSTANCE_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_EXPR_RESERVED_NAMES = {"and", "or", "not", "if", "else", "true", "false"}
+# Keep expression-reserved names in sync with lexer keywords.
+_EXPR_RESERVED_NAMES = set(getattr(expression_lexer, "_KEYWORDS", set()))
 _LUA_KEYWORDS = {
     "and",
     "break",
@@ -83,6 +92,125 @@ def _compile_lua_expr(node: Any) -> str:
         return f"({_compile_lua_expr(node.obj)}).{node.attr}"
     if isinstance(node, Subscript):
         return f"({_compile_lua_expr(node.obj)})[{_compile_lua_expr(node.index)}]"
+    if isinstance(node, ListLiteral):
+        compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
+        return f"{{{compiled_elems}}}"
+    if isinstance(node, DictLiteral):
+        # Compile dict keys with bracket syntax to avoid Lua keyword/identifier pitfalls.
+        pairs = []
+        for key, value in zip(node.keys, node.values):
+            compiled_value = _compile_lua_expr(value)
+            if isinstance(key, Literal) and isinstance(key.value, str):
+                compiled_key = _lua_string_literal(key.value)
+                pairs.append(f"[{compiled_key}]={compiled_value}")
+            else:
+                # Computed key: use {[key]=value}
+                compiled_key = _compile_lua_expr(key)
+                pairs.append(f"[{compiled_key}]={compiled_value}")
+        return "{" + ", ".join(pairs) + "}"
+    if isinstance(node, InOp):
+        # x in values → check membership (via table.contains helper or loop)
+        # For now, generate a helper function call
+        left = _compile_lua_expr(node.left)
+        right = _compile_lua_expr(node.right)
+        return f"(_contains({right}, {left}))"
+    if isinstance(node, Comprehension):
+        # Comprehensions: any(x > 0 for x in values), all(...), first(...), filter(...), map(...)
+        var_name = f"value_{node.var.name}"
+        iterable = _compile_lua_expr(node.iterable)
+        expr = _compile_lua_expr(node.expr)
+        condition = _compile_lua_expr(node.condition) if node.condition else "true"
+        kind = node.kind
+
+        if kind == "any":
+            return (
+                f"(function() for _, {var_name} in ipairs({iterable}) do "
+                f"if ({condition}) and ({expr}) then return true end end; "
+                f"return false end)()"
+            )
+        elif kind == "all":
+            return (
+                f"(function() for _, {var_name} in ipairs({iterable}) do "
+                f"if ({condition}) and not ({expr}) then return false end end; "
+                f"return true end)()"
+            )
+        elif kind == "first":
+            return (
+                f"(function() for _, {var_name} in ipairs({iterable}) do "
+                f"if ({condition}) then return ({expr}) end end; "
+                f"return nil end)()"
+            )
+        elif kind == "filter":
+            return (
+                f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
+                f"if ({condition}) and ({expr}) then table.insert(result, {var_name}) end end; "
+                f"return result end)()"
+            )
+        elif kind == "map":
+            return (
+                f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
+                f"if ({condition}) then table.insert(result, ({expr})) end end; "
+                f"return result end)()"
+            )
+        else:
+            raise GeneratorError(f"Unsupported comprehension kind {kind!r} in Lua expression.")
+    if isinstance(node, Match):
+        # Match expressions: match x with 1 -> "a" | 2 -> "b" | else -> "c"
+        subject = _compile_lua_expr(node.subject)
+
+        # Build if/elseif/else chain and ensure a single default branch.
+        conditions = []
+        default_body = None
+        for index, case in enumerate(node.cases):
+            pattern = case.pattern
+            body = _compile_lua_expr(case.body)
+
+            if isinstance(pattern, Wildcard):
+                if default_body is not None:
+                    raise GeneratorError("Match expression defines multiple default branches.")
+                if index != len(node.cases) - 1:
+                    raise GeneratorError("Wildcard '_' pattern must be the last match case.")
+                if node.else_case is not None:
+                    raise GeneratorError(
+                        "Match expression cannot define both wildcard '_' and else branch."
+                    )
+                default_body = body
+            elif isinstance(pattern, Literal):
+                # Literal pattern: subject == pattern
+                compiled_pattern = _lua_literal(pattern.value)
+                conditions.append((f"({subject}) == ({compiled_pattern})", body))
+            else:
+                # Complex pattern: compile it and check equality
+                compiled_pattern = _compile_lua_expr(pattern)
+                conditions.append((f"({subject}) == ({compiled_pattern})", body))
+
+        # Add else case if present
+        if node.else_case:
+            if default_body is not None:
+                raise GeneratorError("Match expression defines multiple default branches.")
+            default_body = _compile_lua_expr(node.else_case)
+
+        if not conditions and default_body is None:
+            raise GeneratorError("Match expression has no cases.")
+
+        # Build the if/elseif/else chain as an IIFE
+        lua_code = "(function() "
+        for i, (cond, body) in enumerate(conditions):
+            if i == 0:
+                lua_code += f"if {cond} then return ({body}) "
+            else:
+                lua_code += f"elseif {cond} then return ({body}) "
+        if default_body is not None:
+            if conditions:
+                lua_code += f"else return ({default_body}) end end)()"
+            else:
+                lua_code += f"return ({default_body}) end)()"
+        else:
+            lua_code += "else return nil end end)()"
+        return lua_code
+    if isinstance(node, Wildcard):
+        # Wildcard outside of match context: not directly compilable
+        raise GeneratorError("Wildcard '_' can only appear in match patterns.")
     if isinstance(node, UnaryOp):
         operand = _compile_lua_expr(node.operand)
         if node.op == "-":
@@ -127,10 +255,42 @@ def _collect_name_refs(node: Any) -> set[str]:
         return set()
     if isinstance(node, Name):
         return {node.name}
+    if isinstance(node, Wildcard):
+        return set()  # Wildcard doesn't reference names
     if isinstance(node, Attribute):
         return _collect_name_refs(node.obj)
     if isinstance(node, Subscript):
         return _collect_name_refs(node.obj) | _collect_name_refs(node.index)
+    if isinstance(node, ListLiteral):
+        result = set()
+        for elem in node.elements:
+            result |= _collect_name_refs(elem)
+        return result
+    if isinstance(node, DictLiteral):
+        result = set()
+        for key in node.keys:
+            result |= _collect_name_refs(key)
+        for value in node.values:
+            result |= _collect_name_refs(value)
+        return result
+    if isinstance(node, InOp):
+        return _collect_name_refs(node.left) | _collect_name_refs(node.right)
+    if isinstance(node, Comprehension):
+        # Comprehension: any(x > 0 for x in values)
+        # var (node.var) is locally bound, so exclude it from outer refs
+        iterable_refs = _collect_name_refs(node.iterable)
+        expr_refs = _collect_name_refs(node.expr)
+        condition_refs = _collect_name_refs(node.condition) if node.condition else set()
+        # Remove the local variable from the collected names
+        local_var = node.var.name
+        return (iterable_refs | expr_refs | condition_refs) - {local_var}
+    if isinstance(node, Match):
+        refs = _collect_name_refs(node.subject)
+        for case in node.cases:
+            refs |= _collect_name_refs(case.pattern) | _collect_name_refs(case.body)
+        if node.else_case:
+            refs |= _collect_name_refs(node.else_case)
+        return refs
     if isinstance(node, UnaryOp):
         return _collect_name_refs(node.operand)
     if isinstance(node, BinOp):
@@ -202,6 +362,22 @@ def _field_value_expr(spec_type: str, endian: str) -> str:
         return "range:string()"
     if spec_type == "u1":
         return "range:uint()"
+    if spec_type == "u3":
+        if endian == "le":
+            return (
+                "(bit32.bor("
+                "(buffer(offset, 1):uint()), "
+                "bit32.lshift((buffer(offset + 1, 1):uint()), 8), "
+                "bit32.lshift((buffer(offset + 2, 1):uint()), 16)"
+                "))"
+            )
+        return (
+            "(bit32.bor("
+            "bit32.lshift((buffer(offset, 1):uint()), 16), "
+            "bit32.lshift((buffer(offset + 1, 1):uint()), 8), "
+            "(buffer(offset + 2, 1):uint())"
+            "))"
+        )
     if spec_type == "s1":
         return "range:int()"
     if spec_type in {"u2", "u4"}:
@@ -216,7 +392,7 @@ def _field_value_expr(spec_type: str, endian: str) -> str:
 
 
 def _uses_little_endian(spec_type: str, endian: str) -> bool:
-    return endian == "le" and spec_type not in {"u1", "s1", "str"}
+    return endian == "le" and spec_type not in {"u1", "u3", "s1", "str"}
 
 
 def _normalize_wireshark_instances(
@@ -352,6 +528,7 @@ class LuaGenerator(BaseGenerator):
                     "size": size,
                     "value_expr": _field_value_expr(spec_type, endian),
                     "use_add_le": _uses_little_endian(spec_type, endian),
+                    "needs_explicit_value": spec_type == "u3",
                     "field_path_lua": _lua_string_literal(f"{proto_id}.{field_id}"),
                     "field_var": f"f_{field_id}",
                     "value_name": f"value_{field_id}",

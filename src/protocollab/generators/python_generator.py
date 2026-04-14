@@ -12,6 +12,7 @@ from protocollab.generators.utils import to_class_name
 _PY_TYPE_MAP: Dict[str, tuple] = {
     "u1": ("B", 1, "int"),
     "u2": ("H", 2, "int"),
+    "u3": ("3s", 3, "int"),
     "u4": ("I", 4, "int"),
     "u8": ("Q", 8, "int"),
     "s1": ("b", 1, "int"),
@@ -77,6 +78,7 @@ class PythonGenerator(BaseGenerator):
                     "py_type": py_type,
                     "fmt_char": fmt_char,
                     "size": size,
+                    "is_u3": spec_type == "u3",
                 }
             )
 

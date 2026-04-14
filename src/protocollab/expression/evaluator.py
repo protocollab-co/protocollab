@@ -9,11 +9,18 @@ from protocollab.expression.ast_nodes import (
     ASTNode,
     Attribute,
     BinOp,
+    Comprehension,
+    DictLiteral,
+    InOp,
+    ListLiteral,
     Literal,
+    Match,
+    MatchCase,
     Name,
     Subscript,
     Ternary,
     UnaryOp,
+    Wildcard,
 )
 
 
@@ -110,6 +117,28 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
             except (IndexError, KeyError, TypeError) as exc:
                 raise ExpressionEvalError(str(exc))
 
+        case ListLiteral(elements=elements):
+            return [evaluate(el, context) for el in elements]
+
+        case DictLiteral(keys=keys, values=values):
+            out: dict[Any, Any] = {}
+            for key_node, value_node in zip(keys, values):
+                key = evaluate(key_node, context)
+                try:
+                    hash(key)
+                except TypeError as exc:
+                    raise ExpressionEvalError(f"Unhashable dict key {key!r}: {exc}")
+                out[key] = evaluate(value_node, context)
+            return out
+
+        case InOp(left=left, right=right):
+            left_val = evaluate(left, context)
+            right_val = evaluate(right, context)
+            try:
+                return left_val in right_val
+            except TypeError as exc:
+                raise ExpressionEvalError(str(exc))
+
         case UnaryOp(op="-", operand=operand):
             val = evaluate(operand, context)
             try:
@@ -138,5 +167,79 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
                 return evaluate(vt, context)
             return evaluate(vf, context)
 
+        case Comprehension(kind=kind, expr=expr, var=var, iterable=iterable, condition=condition):
+            iterable_value = evaluate(iterable, context)
+            try:
+                iterator = iter(iterable_value)
+            except TypeError as exc:
+                raise ExpressionEvalError(f"Object is not iterable: {iterable_value!r} ({exc})")
+
+            if kind == "any":
+                for item in iterator:
+                    local_ctx = dict(context)
+                    local_ctx[var.name] = item
+                    if condition is not None and not evaluate(condition, local_ctx):
+                        continue
+                    if evaluate(expr, local_ctx):
+                        return True
+                return False
+
+            if kind == "all":
+                for item in iterator:
+                    local_ctx = dict(context)
+                    local_ctx[var.name] = item
+                    if condition is not None and not evaluate(condition, local_ctx):
+                        continue
+                    if not evaluate(expr, local_ctx):
+                        return False
+                return True
+
+            if kind == "first":
+                for item in iterator:
+                    local_ctx = dict(context)
+                    local_ctx[var.name] = item
+                    if condition is not None and not evaluate(condition, local_ctx):
+                        continue
+                    return evaluate(expr, local_ctx)
+                return None
+
+            if kind == "filter":
+                result: list[Any] = []
+                for item in iterator:
+                    local_ctx = dict(context)
+                    local_ctx[var.name] = item
+                    if condition is not None and not evaluate(condition, local_ctx):
+                        continue
+                    if evaluate(expr, local_ctx):
+                        result.append(item)
+                return result
+
+            if kind == "map":
+                result: list[Any] = []
+                for item in iterator:
+                    local_ctx = dict(context)
+                    local_ctx[var.name] = item
+                    if condition is not None and not evaluate(condition, local_ctx):
+                        continue
+                    result.append(evaluate(expr, local_ctx))
+                return result
+
+            raise ExpressionEvalError(f"Unsupported comprehension kind {kind!r}")
+
+        case Match(subject=subject, cases=cases, else_case=else_case):
+            subject_value = evaluate(subject, context)
+            for case in cases:
+                if _match_case(case, subject_value, context):
+                    return evaluate(case.body, context)
+            if else_case is not None:
+                return evaluate(else_case, context)
+            return None
+
         case _:
             raise ExpressionEvalError(f"Unknown AST node type: {type(node)!r}")
+
+
+def _match_case(case: MatchCase, subject_value: Any, context: dict[str, Any]) -> bool:
+    if isinstance(case.pattern, Wildcard):
+        return True
+    return evaluate(case.pattern, context) == subject_value

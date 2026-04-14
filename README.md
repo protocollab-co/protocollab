@@ -155,6 +155,14 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 `instances:` can define virtual Wireshark fields when an entry contains a `value:` expression and a `wireshark:` block.
 
+Supported expression forms in `instances.*.value` include:
+
+- Ternary: `"lan" if src_ip == 1 else "inet"`
+- Membership: `type_id in [1, 2, 3]`
+- List/dict literals: `[1, type_id, 3]`, `{"count": type_id}`
+- Comprehensions: `any(x > 2 for x in values)`, `filter(x > 0 for x in values)`
+- Match: `match type_id with 1 -> "req" | _ -> "other"`
+
 - Use `wireshark.type: bool` with `filter-only: true` for shortcut fields such as `myproto.lan`
 - Use `wireshark.type: string` for summary fields such as `myproto.scope == "lan"`
 

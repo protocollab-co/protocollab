@@ -37,7 +37,32 @@
         "required": ["id"],
         "properties": {
           "id":       { "type": "string" },
-          "type":     { "type": "string" },
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "u1",
+                  "u2",
+                  "u3",
+                  "u4",
+                  "u8",
+                  "s1",
+                  "s2",
+                  "s4",
+                  "s8",
+                  "f4",
+                  "f8",
+                  "str",
+                  "strz",
+                  "bytes"
+                ]
+              },
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              }
+            ]
+          },
           "size":     { "type": "integer", "minimum": 0 },
           "if":       { "type": "string", "description": "DSL expression — field is included only when this evaluates to true" },
           "repeat":   { "type": "string" },

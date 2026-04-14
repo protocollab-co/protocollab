@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reflected by the implemented package structure, backend policy, and packaging
   approach used in the repository.
 
+- **Lua expression compilation coverage**: Added focused generator tests for
+  expression-backed Wireshark instances to validate code generation for `in`
+  membership checks, list/dict literals, comprehensions (`any/all/first/filter/map`),
+  and `match` expressions.
+
 ### Changed
 
 - **CLI entrypoint**: Renamed installed command from `protocollab` to `pc` as a
@@ -64,6 +69,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `protocollab`), includes language-switch links between English and Russian,
   points to the external `protocollab-specs` repository, and describes coverage
   as 100% for the critical modules rather than a single submodule.
+
+- **`src/protocollab/generators/lua_generator.py`** and
+  **`src/protocollab/generators/templates/lua/dissector.lua.j2`**: Wireshark Lua
+  generation now supports the full expression set used by instance fields,
+  including list/dict literals, `in` operator membership checks, comprehensions,
+  and `match` expressions. Added helper `_contains(tbl, value)` in the Lua
+  template to support membership semantics.
 
 - **`yaml_serializer/serializer.py`**: Replaced the module-level `SerializerContext`
   singleton and free functions (`load_yaml_root`, `save_yaml_root`, `rename_yaml_file`,

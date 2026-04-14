@@ -17,7 +17,6 @@ from protocollab.expression import (
     ListLiteral,
     Literal,
     Match,
-    MatchCase,
     Name,
     Subscript,
     Ternary,
@@ -25,6 +24,7 @@ from protocollab.expression import (
     Wildcard,
     parse_expr,
 )
+from protocollab.expression import lexer as expression_lexer
 from protocollab.generators.base_generator import BaseGenerator, GeneratorError
 
 # lua_type, size_bytes, optional_base
@@ -43,7 +43,8 @@ _LUA_TYPE_MAP: Dict[str, tuple] = {
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "lua"
 _INSTANCE_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_EXPR_RESERVED_NAMES = {"and", "or", "not", "if", "else", "true", "false"}
+# Keep expression-reserved names in sync with lexer keywords.
+_EXPR_RESERVED_NAMES = set(getattr(expression_lexer, "_KEYWORDS", set()))
 _LUA_KEYWORDS = {
     "and",
     "break",
@@ -95,14 +96,13 @@ def _compile_lua_expr(node: Any) -> str:
         compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
         return f"{{{compiled_elems}}}"
     if isinstance(node, DictLiteral):
-        # Compile dict as {key1=value1, key2=value2} for string keys
-        # or {[key]=value} for computed keys
+        # Compile dict keys with bracket syntax to avoid Lua keyword/identifier pitfalls.
         pairs = []
         for key, value in zip(node.keys, node.values):
             compiled_value = _compile_lua_expr(value)
             if isinstance(key, Literal) and isinstance(key.value, str):
-                # String literal key: use shorthand {key=value}
-                pairs.append(f"{key.value}={compiled_value}")
+                compiled_key = _lua_string_literal(key.value)
+                pairs.append(f"[{compiled_key}]={compiled_value}")
             else:
                 # Computed key: use {[key]=value}
                 compiled_key = _compile_lua_expr(key)
@@ -119,11 +119,9 @@ def _compile_lua_expr(node: Any) -> str:
         var_name = f"value_{node.var.name}"
         iterable = _compile_lua_expr(node.iterable)
         expr = _compile_lua_expr(node.expr)
-        condition = (
-            _compile_lua_expr(node.condition) if node.condition else "true"
-        )
+        condition = _compile_lua_expr(node.condition) if node.condition else "true"
         kind = node.kind
-        
+
         if kind == "any":
             return (
                 f"(function() for _, {var_name} in ipairs({iterable}) do "
@@ -159,16 +157,24 @@ def _compile_lua_expr(node: Any) -> str:
     if isinstance(node, Match):
         # Match expressions: match x with 1 -> "a" | 2 -> "b" | else -> "c"
         subject = _compile_lua_expr(node.subject)
-        
-        # Build if/elseif/else chain
+
+        # Build if/elseif/else chain and ensure a single default branch.
         conditions = []
-        for case in node.cases:
+        default_body = None
+        for index, case in enumerate(node.cases):
             pattern = case.pattern
             body = _compile_lua_expr(case.body)
-            
+
             if isinstance(pattern, Wildcard):
-                # Wildcard matches anything - this should be the else case
-                conditions.append(("true", body))
+                if default_body is not None:
+                    raise GeneratorError("Match expression defines multiple default branches.")
+                if index != len(node.cases) - 1:
+                    raise GeneratorError("Wildcard '_' pattern must be the last match case.")
+                if node.else_case is not None:
+                    raise GeneratorError(
+                        "Match expression cannot define both wildcard '_' and else branch."
+                    )
+                default_body = body
             elif isinstance(pattern, Literal):
                 # Literal pattern: subject == pattern
                 compiled_pattern = _lua_literal(pattern.value)
@@ -177,15 +183,16 @@ def _compile_lua_expr(node: Any) -> str:
                 # Complex pattern: compile it and check equality
                 compiled_pattern = _compile_lua_expr(pattern)
                 conditions.append((f"({subject}) == ({compiled_pattern})", body))
-        
+
         # Add else case if present
         if node.else_case:
-            else_body = _compile_lua_expr(node.else_case)
-            conditions.append(("true", else_body))
-        
-        if not conditions:
+            if default_body is not None:
+                raise GeneratorError("Match expression defines multiple default branches.")
+            default_body = _compile_lua_expr(node.else_case)
+
+        if not conditions and default_body is None:
             raise GeneratorError("Match expression has no cases.")
-        
+
         # Build the if/elseif/else chain as an IIFE
         lua_code = "(function() "
         for i, (cond, body) in enumerate(conditions):
@@ -193,7 +200,13 @@ def _compile_lua_expr(node: Any) -> str:
                 lua_code += f"if {cond} then return ({body}) "
             else:
                 lua_code += f"elseif {cond} then return ({body}) "
-        lua_code += "else return nil end end)()"
+        if default_body is not None:
+            if conditions:
+                lua_code += f"else return ({default_body}) end end)()"
+            else:
+                lua_code += f"return ({default_body}) end)()"
+        else:
+            lua_code += "else return nil end end)()"
         return lua_code
     if isinstance(node, Wildcard):
         # Wildcard outside of match context: not directly compilable

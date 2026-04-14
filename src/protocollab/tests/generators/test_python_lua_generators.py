@@ -57,7 +57,10 @@ class TestPythonGeneratorContent:
 
     def test_all_int_types(self, tmp_path):
         for type_name in ["u1", "u2", "u3", "u4", "u8", "s1", "s2", "s4", "s8"]:
-            spec = {"meta": {"id": "t_proto", "endian": "le"}, "seq": [{"id": "x", "type": type_name}]}
+            spec = {
+                "meta": {"id": "t_proto", "endian": "le"},
+                "seq": [{"id": "x", "type": type_name}],
+            }
             src = PythonGenerator().generate(spec, tmp_path)[0].read_text(encoding="utf-8")
             ast.parse(src)
 
@@ -147,7 +150,10 @@ class TestLuaGeneratorContent:
 
     def test_all_int_types_lua(self, tmp_path):
         for type_name in ["u1", "u2", "u3", "u4", "u8", "s1", "s2", "s4", "s8"]:
-            spec = {"meta": {"id": "t_proto", "endian": "le"}, "seq": [{"id": "x", "type": type_name}]}
+            spec = {
+                "meta": {"id": "t_proto", "endian": "le"},
+                "seq": [{"id": "x", "type": type_name}],
+            }
             assert LuaGenerator().generate(spec, tmp_path)[0].exists()
 
     def test_u3_lua_field_uses_explicit_value_add(self, tmp_path):
@@ -242,7 +248,22 @@ class TestLuaGeneratorContent:
         }
         src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
         assert "local value_list_value = {1, value_type_id, 3}" in src
-        assert "local value_dict_value = {count=value_type_id, fixed=7}" in src
+        assert 'local value_dict_value = {["count"]=value_type_id, ["fixed"]=7}' in src
+
+    def test_dict_literal_string_keys_use_bracket_syntax(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "dict_value": {
+                    "value": '{"end": type_id, "a-b": 1}',
+                    "wireshark": {"type": "string", "label": "Dict Value"},
+                }
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert '["end"]=value_type_id' in src
+        assert '["a-b"]=1' in src
 
     def test_comprehension_and_match_compile_to_iife(self, tmp_path):
         spec = {
@@ -263,8 +284,37 @@ class TestLuaGeneratorContent:
         assert "local value_has_large = (function()" in src
         assert "for _, value_x in ipairs({1, value_type_id, 3}) do" in src
         assert "local value_class_name = (function()" in src
-        assert "if (value_type_id) == (1) then return (\"one\")" in src
-        assert "elseif true then return (\"other\")" in src
+        assert 'if (value_type_id) == (1) then return ("one")' in src
+        assert 'else return ("other")' in src
+
+    def test_match_wildcard_and_else_together_raises(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "class_name": {
+                    "value": 'match type_id with _ -> "other" | else -> "fallback"',
+                    "wireshark": {"type": "string", "label": "Class Name"},
+                }
+            },
+        }
+        with pytest.raises(GeneratorError, match="wildcard '_' and else"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_in_operator_contains_helper_handles_dict_keys(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "is_known": {
+                    "value": '"key" in {"key": 1}',
+                    "wireshark": {"type": "bool", "label": "Is Known"},
+                }
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "local has_non_array_key = false" in src
+        assert "return tbl[value] ~= nil" in src
 
 
 class TestGeneratorErrors:
@@ -289,7 +339,10 @@ class TestGeneratorErrors:
             LuaGenerator().generate(spec, tmp_path)
 
     def test_str_with_size_python(self, tmp_path):
-        spec = {"meta": {"id": "p", "endian": "le"}, "seq": [{"id": "name", "type": "str", "size": 8}]}
+        spec = {
+            "meta": {"id": "p", "endian": "le"},
+            "seq": [{"id": "name", "type": "str", "size": 8}],
+        }
         src = PythonGenerator().generate(spec, tmp_path)[0].read_text()
         ast.parse(src)
         assert "8s" in src
@@ -380,4 +433,18 @@ class TestGeneratorErrors:
             },
         }
         with pytest.raises(GeneratorError, match="wireshark.type"):
+            LuaGenerator().generate(spec, tmp_path)
+
+    def test_expression_keyword_instance_id_raises(self, tmp_path):
+        spec = {
+            "meta": {"id": "bad_proto", "endian": "le"},
+            "seq": [{"id": "src_ip", "type": "u4"}],
+            "instances": {
+                "match": {
+                    "value": '"lan"',
+                    "wireshark": {"type": "string", "label": "Scope"},
+                }
+            },
+        }
+        with pytest.raises(GeneratorError, match="reserved expression keyword"):
             LuaGenerator().generate(spec, tmp_path)

@@ -196,7 +196,7 @@ class Parser:
 
             self._advance()
 
-        body_tokens = self._tokens[start:self._pos]
+        body_tokens = self._tokens[start : self._pos]
         return self._parse_from_token_slice(body_tokens)
 
     def _parse_until_delimiters(
@@ -242,7 +242,7 @@ class Parser:
 
             self._advance()
 
-        expr_tokens = self._tokens[start:self._pos]
+        expr_tokens = self._tokens[start : self._pos]
         return self._parse_from_token_slice(expr_tokens)
 
     # ------------------------------------------------------------------
@@ -407,9 +407,10 @@ class Parser:
             return Literal(value=str(tok.value))
 
         if tok.kind == TokenKind.NAME:
-            if tok.value in {"any", "all", "first", "filter", "map"} and self._peek_n(
-                1
-            ).kind == TokenKind.LPAREN:
+            if (
+                tok.value in {"any", "all", "first", "filter", "map"}
+                and self._peek_n(1).kind == TokenKind.LPAREN
+            ):
                 return self._parse_comprehension_or_first_simple()
 
             if tok.value == "match":

@@ -17,14 +17,18 @@ class TestCLIGenerate:
         assert result.exit_code == 0
 
     def test_generate_mock_client_also_generates_parser(self, runner, ping_yaml, tmp_path):
-        result = runner.invoke(cli, ["generate", "mock-client", str(ping_yaml), "-o", str(tmp_path)])
+        result = runner.invoke(
+            cli, ["generate", "mock-client", str(ping_yaml), "-o", str(tmp_path)]
+        )
         assert result.exit_code == 0
         assert (tmp_path / "ping_protocol_parser.py").exists()
         assert (tmp_path / "ping_protocol_mock_client.py").exists()
         assert result.output.count("Generated:") == 2
 
     def test_generate_mock_server_also_generates_parser(self, runner, ping_yaml, tmp_path):
-        result = runner.invoke(cli, ["generate", "mock-server", str(ping_yaml), "-o", str(tmp_path)])
+        result = runner.invoke(
+            cli, ["generate", "mock-server", str(ping_yaml), "-o", str(tmp_path)]
+        )
         assert result.exit_code == 0
         assert (tmp_path / "ping_protocol_parser.py").exists()
         assert (tmp_path / "ping_protocol_mock_server.py").exists()
@@ -59,7 +63,9 @@ class TestCLIGenerate:
         assert result.output.count("Generated:") == 2
 
     def test_generate_missing_file_exits_one(self, runner, tmp_path):
-        result = runner.invoke(cli, ["generate", "python", "/no/such/file.yaml", "-o", str(tmp_path)])
+        result = runner.invoke(
+            cli, ["generate", "python", "/no/such/file.yaml", "-o", str(tmp_path)]
+        )
         assert result.exit_code == 1
 
     def test_generate_invalid_yaml_exits_two(self, runner, invalid_yaml, tmp_path):

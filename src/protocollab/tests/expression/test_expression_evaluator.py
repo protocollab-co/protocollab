@@ -61,12 +61,27 @@ class TestEvaluate:
         assert evaluate(parse_expr("not flag"), {"flag": 0}) is True
 
     def test_comprehensions(self) -> None:
-        assert evaluate(parse_expr("any(item > 5 for item in values)"), {"values": [1, 6, 3]}) is True
-        assert evaluate(parse_expr("all(item > 0 for item in values)"), {"values": [1, 2, 3]}) is True
-        assert evaluate(parse_expr("first(item for item in values if item > 5)"), {"values": [1, 6, 7]}) == 6
+        assert (
+            evaluate(parse_expr("any(item > 5 for item in values)"), {"values": [1, 6, 3]}) is True
+        )
+        assert (
+            evaluate(parse_expr("all(item > 0 for item in values)"), {"values": [1, 2, 3]}) is True
+        )
+        assert (
+            evaluate(
+                parse_expr("first(item for item in values if item > 5)"), {"values": [1, 6, 7]}
+            )
+            == 6
+        )
         assert evaluate(parse_expr("first(values)"), {"values": [9, 8, 7]}) == 9
-        assert evaluate(parse_expr("filter(item > 3 for item in values)"), {"values": [1, 4, 5]}) == [4, 5]
-        assert evaluate(parse_expr("map(item * 2 for item in values)"), {"values": [1, 2, 3]}) == [2, 4, 6]
+        assert evaluate(
+            parse_expr("filter(item > 3 for item in values)"), {"values": [1, 4, 5]}
+        ) == [4, 5]
+        assert evaluate(parse_expr("map(item * 2 for item in values)"), {"values": [1, 2, 3]}) == [
+            2,
+            4,
+            6,
+        ]
         ctx = {"values": [1, 2], "item": 42}
         assert evaluate(parse_expr("map(item for item in values)"), ctx) == [1, 2]
         assert ctx["item"] == 42

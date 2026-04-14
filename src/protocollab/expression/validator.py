@@ -108,7 +108,9 @@ def _validate_comprehension_vars(
         case Comprehension(expr=expr, var=var, iterable=iterable, condition=condition):
             if var.name in active_vars:
                 errors.append(
-                    ExprError(message=f"Comprehension variable '{var.name}' conflicts with outer scope")
+                    ExprError(
+                        message=f"Comprehension variable '{var.name}' conflicts with outer scope"
+                    )
                 )
             _validate_comprehension_vars(iterable, errors, active_vars)
             local = set(active_vars)

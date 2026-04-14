@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`scripts/check_pc_conflicts.sh`**: Added a Linux-friendly smoke-check script
+  for `pc` command collisions (`command -v pc`) and Python module fallback
+  verification (`python -m protocollab --help`) to support CLI migration
+  troubleshooting.
+
 - **`src/jsonschema_validator/`**: Introduced a standalone pluggable JSON Schema
   validation facade as described by ADR 002. The package now provides a backend-
   agnostic public API, `ValidatorFactory`, `SchemaValidationError`, backend
@@ -35,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   approach used in the repository.
 
 ### Changed
+
+- **CLI entrypoint**: Renamed installed command from `protocollab` to `pc` as a
+  deliberate breaking change. Packaging entrypoints in `setup.py` and
+  `pyproject.toml` now expose `pc` only; docs/examples were updated accordingly.
 
 - **`src/protocollab/validator/`**: Replaced direct `jsonschema` coupling with the
   new `jsonschema_validator` facade so backend selection, error normalization, and

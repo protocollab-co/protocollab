@@ -94,22 +94,47 @@ seq:
 ### Load and Validate
 
 ```bash
-protocollab load examples/simple/ping_protocol.yaml --output-format json
-protocollab validate examples/simple/ping_protocol.yaml
-protocollab validate examples/simple/ping_protocol.yaml --strict
+pc load examples/simple/ping_protocol.yaml --output-format json
+pc validate examples/simple/ping_protocol.yaml
+pc validate examples/simple/ping_protocol.yaml --strict
 ```
 
 ### Generate Artifacts
 
 ```bash
-protocollab generate python examples/simple/ping_protocol.yaml --output build/
-protocollab generate wireshark examples/simple/ping_protocol.yaml --output build/
-protocollab generate mock-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate mock-server examples/simple/ping_protocol.yaml --output build/
-protocollab generate l2-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate l2-server examples/simple/ping_protocol.yaml --output build/
-protocollab generate l3-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate l3-server examples/simple/ping_protocol.yaml --output build/
+pc generate python examples/simple/ping_protocol.yaml --output build/
+pc generate wireshark examples/simple/ping_protocol.yaml --output build/
+pc generate mock-client examples/simple/ping_protocol.yaml --output build/
+pc generate mock-server examples/simple/ping_protocol.yaml --output build/
+pc generate l2-client examples/simple/ping_protocol.yaml --output build/
+pc generate l2-server examples/simple/ping_protocol.yaml --output build/
+pc generate l3-client examples/simple/ping_protocol.yaml --output build/
+pc generate l3-server examples/simple/ping_protocol.yaml --output build/
+```
+
+### CLI rename and conflict check
+
+CLI command name is now `pc`.
+
+The `scripts/check_pc_conflicts.sh` helper is repository-only and is not installed from PyPI.
+
+If you are working from this repository and `pc` is already used by another executable in your environment, run:
+
+```bash
+scripts/check_pc_conflicts.sh
+```
+
+Equivalent manual checks:
+
+```bash
+command -v pc
+python -m protocollab --help
+```
+
+Fallback invocation is always available:
+
+```bash
+python -m protocollab --help
 ```
 
 ### Use the Generated Parser

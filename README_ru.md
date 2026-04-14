@@ -94,22 +94,47 @@ seq:
 ### Загрузить и Провалидировать
 
 ```bash
-protocollab load examples/simple/ping_protocol.yaml --output-format json
-protocollab validate examples/simple/ping_protocol.yaml
-protocollab validate examples/simple/ping_protocol.yaml --strict
+pc load examples/simple/ping_protocol.yaml --output-format json
+pc validate examples/simple/ping_protocol.yaml
+pc validate examples/simple/ping_protocol.yaml --strict
 ```
 
 ### Сгенерировать Артефакты
 
 ```bash
-protocollab generate python examples/simple/ping_protocol.yaml --output build/
-protocollab generate wireshark examples/simple/ping_protocol.yaml --output build/
-protocollab generate mock-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate mock-server examples/simple/ping_protocol.yaml --output build/
-protocollab generate l2-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate l2-server examples/simple/ping_protocol.yaml --output build/
-protocollab generate l3-client examples/simple/ping_protocol.yaml --output build/
-protocollab generate l3-server examples/simple/ping_protocol.yaml --output build/
+pc generate python examples/simple/ping_protocol.yaml --output build/
+pc generate wireshark examples/simple/ping_protocol.yaml --output build/
+pc generate mock-client examples/simple/ping_protocol.yaml --output build/
+pc generate mock-server examples/simple/ping_protocol.yaml --output build/
+pc generate l2-client examples/simple/ping_protocol.yaml --output build/
+pc generate l2-server examples/simple/ping_protocol.yaml --output build/
+pc generate l3-client examples/simple/ping_protocol.yaml --output build/
+pc generate l3-server examples/simple/ping_protocol.yaml --output build/
+```
+
+### Переименование CLI и проверка конфликтов
+
+Имя CLI-команды теперь `pc`.
+
+Хелпер `scripts/check_pc_conflicts.sh` доступен только в репозитории и не устанавливается из PyPI.
+
+Если вы работаете из этого репозитория и в окружении уже есть другая команда `pc`, выполните:
+
+```bash
+scripts/check_pc_conflicts.sh
+```
+
+Эквивалентные ручные проверки:
+
+```bash
+command -v pc
+python -m protocollab --help
+```
+
+Резервный запуск всегда доступен:
+
+```bash
+python -m protocollab --help
 ```
 
 ### Использовать Сгенерированный Парсер

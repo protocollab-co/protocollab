@@ -210,6 +210,62 @@ class TestLuaGeneratorContent:
         assert 'ProtoField.string("quoted_proto.scope", "LAN \\"локал\\"")' in src
         assert "\\u041b" not in src
 
+    def test_in_operator_compiles_to_contains_call(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "is_known": {
+                    "value": "type_id in [1, 2, 3]",
+                    "wireshark": {"type": "bool", "label": "Is Known"},
+                }
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "local function _contains(tbl, value)" in src
+        assert "local value_is_known = (_contains({1, 2, 3}, value_type_id))" in src
+
+    def test_list_and_dict_literals_compile_to_lua_tables(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "list_value": {
+                    "value": "[1, type_id, 3]",
+                    "wireshark": {"type": "string", "label": "List Value"},
+                },
+                "dict_value": {
+                    "value": '{"count": type_id, "fixed": 7}',
+                    "wireshark": {"type": "string", "label": "Dict Value"},
+                },
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "local value_list_value = {1, value_type_id, 3}" in src
+        assert "local value_dict_value = {count=value_type_id, fixed=7}" in src
+
+    def test_comprehension_and_match_compile_to_iife(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "has_large": {
+                    "value": "any(x > 2 for x in [1, type_id, 3])",
+                    "wireshark": {"type": "bool", "label": "Has Large"},
+                },
+                "class_name": {
+                    "value": 'match type_id with 1 -> "one" | _ -> "other"',
+                    "wireshark": {"type": "string", "label": "Class Name"},
+                },
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "local value_has_large = (function()" in src
+        assert "for _, value_x in ipairs({1, value_type_id, 3}) do" in src
+        assert "local value_class_name = (function()" in src
+        assert "if (value_type_id) == (1) then return (\"one\")" in src
+        assert "elseif true then return (\"other\")" in src
+
 
 class TestGeneratorErrors:
     def test_unknown_type_python(self, tmp_path):

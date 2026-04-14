@@ -155,6 +155,14 @@ print(proto.type_id, proto.sequence_number, proto.payload_size)
 
 Через `instances:` можно объявлять виртуальные поля Wireshark, если запись содержит выражение `value:` и блок `wireshark:`.
 
+Поддерживаемые формы выражений в `instances.*.value`:
+
+- Тернарный оператор: `"lan" if src_ip == 1 else "inet"`
+- Проверка принадлежности: `type_id in [1, 2, 3]`
+- Литералы list/dict: `[1, type_id, 3]`, `{"count": type_id}`
+- Comprehension-выражения: `any(x > 2 for x in values)`, `filter(x > 0 for x in values)`
+- Match-выражения: `match type_id with 1 -> "req" | _ -> "other"`
+
 - Используйте `wireshark.type: bool` вместе с `filter-only: true` для shortcut-полей вроде `myproto.lan`
 - Используйте `wireshark.type: string` для summary-полей вроде `myproto.scope == "lan"`
 

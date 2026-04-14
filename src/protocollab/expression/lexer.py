@@ -22,6 +22,7 @@ class TokenKind(Enum):
     FLOOR_DIV = auto()  # //
     LSHIFT = auto()  # <<
     RSHIFT = auto()  # >>
+    ARROW = auto()  # ->
     # Single-character operators / punctuation
     LT = auto()  # <
     GT = auto()  # >
@@ -38,12 +39,33 @@ class TokenKind(Enum):
     RPAREN = auto()  # )
     LBRACKET = auto()  # [
     RBRACKET = auto()  # ]
+    LBRACE = auto()  # {
+    RBRACE = auto()  # }
+    COLON = auto()  # :
+    COMMA = auto()  # ,
     # Sentinel
     EOF = auto()
 
 
 # Keywords recognised by the lexer (returned as NAME tokens with .value set)
-_KEYWORDS: set[str] = {"and", "or", "not", "if", "else", "true", "false"}
+_KEYWORDS: set[str] = {
+    "and",
+    "or",
+    "not",
+    "if",
+    "else",
+    "true",
+    "false",
+    "in",
+    "for",
+    "any",
+    "all",
+    "first",
+    "filter",
+    "map",
+    "match",
+    "with",
+}
 
 
 @dataclass
@@ -68,6 +90,7 @@ _TOKEN_SPEC: list[tuple[str, TokenKind]] = [
     # Identifiers / keywords
     (r"[A-Za-z_][A-Za-z0-9_]*", TokenKind.NAME),
     # Two-character operators (MUST come before single-char)
+    (r"->", TokenKind.ARROW),
     (r"==", TokenKind.EQ),
     (r"!=", TokenKind.NEQ),
     (r"<=", TokenKind.LEQ),
@@ -91,6 +114,10 @@ _TOKEN_SPEC: list[tuple[str, TokenKind]] = [
     (r"\)", TokenKind.RPAREN),
     (r"\[", TokenKind.LBRACKET),
     (r"\]", TokenKind.RBRACKET),
+    (r"\{", TokenKind.LBRACE),
+    (r"\}", TokenKind.RBRACE),
+    (r":", TokenKind.COLON),
+    (r",", TokenKind.COMMA),
     # Whitespace — consumed but not emitted
     (r"\s+", None),  # type: ignore[misc]
 ]

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Union
+from typing import Any, Optional, Union
 
 # ---------------------------------------------------------------------------
 # Type alias for any AST node
@@ -13,6 +13,12 @@ ASTNode = Union[
     "Name",
     "Attribute",
     "Subscript",
+    "ListLiteral",
+    "DictLiteral",
+    "InOp",
+    "Comprehension",
+    "Match",
+    "Wildcard",
     "UnaryOp",
     "BinOp",
     "Ternary",
@@ -42,6 +48,11 @@ class Name:
     """
 
     name: str
+
+
+@dataclass(frozen=True)
+class Wildcard:
+    """Wildcard pattern for match cases: ``_``."""
 
 
 # ---------------------------------------------------------------------------
@@ -79,6 +90,63 @@ class Subscript:
 
     obj: ASTNode
     index: ASTNode
+
+
+@dataclass(frozen=True)
+class ListLiteral:
+    """List literal expression: ``[1, 2, x]``."""
+
+    elements: list[ASTNode]
+
+
+@dataclass(frozen=True)
+class DictLiteral:
+    """Dict literal expression: ``{"key": value}``."""
+
+    keys: list[ASTNode]
+    values: list[ASTNode]
+
+
+@dataclass(frozen=True)
+class InOp:
+    """Membership expression: ``left in right``."""
+
+    left: ASTNode
+    right: ASTNode
+
+
+@dataclass(frozen=True)
+class Comprehension:
+    """Comprehension-style call.
+
+    Example: ``any(x > 0 for x in values if x != 3)``.
+    """
+
+    kind: str
+    expr: ASTNode
+    var: Name
+    iterable: ASTNode
+    condition: Optional[ASTNode]
+
+
+@dataclass(frozen=True)
+class MatchCase:
+    """Single match case: ``pattern -> body``."""
+
+    pattern: ASTNode
+    body: ASTNode
+
+
+@dataclass(frozen=True)
+class Match:
+    """Match expression.
+
+    Example: ``match x with 1 -> "a" | else -> "b"``.
+    """
+
+    subject: ASTNode
+    cases: list[MatchCase]
+    else_case: Optional[ASTNode]
 
 
 @dataclass(frozen=True)

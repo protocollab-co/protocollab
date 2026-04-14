@@ -79,21 +79,21 @@ fields plus source and destination filter-only Wireshark fields.
 ### Load and inspect
 
 ```bash
-protocollab load examples/simple/ping_protocol.yaml
-protocollab load examples/simple/ping_protocol.yaml --output-format json
+pc load examples/simple/ping_protocol.yaml
+pc load examples/simple/ping_protocol.yaml --output-format json
 ```
 
 ### Validate against schema
 
 ```bash
-protocollab validate examples/simple/ping_protocol.yaml
-protocollab validate examples/simple/ping_protocol.yaml --strict
+pc validate examples/simple/ping_protocol.yaml
+pc validate examples/simple/ping_protocol.yaml --strict
 ```
 
 ### Generate a Python parser
 
 ```bash
-protocollab generate python examples/simple/ping_protocol.yaml --output build/
+pc generate python examples/simple/ping_protocol.yaml --output build/
 ```
 
 The generated `build/ping_protocol_parser.py` contains a dataclass with `parse()` and `serialize()` methods:
@@ -111,7 +111,7 @@ assert msg.serialize() == data          # round-trip
 ### Generate a Wireshark Lua dissector
 
 ```bash
-protocollab generate wireshark examples/simple/ping_protocol.yaml --output build/
+pc generate wireshark examples/simple/ping_protocol.yaml --output build/
 ```
 
 The generated `build/ping_protocol.lua` can be loaded in Wireshark via

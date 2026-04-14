@@ -1,4 +1,4 @@
-"""CLI entry point for `protocollab`.
+"""CLI entry point for `pc`.
 
 Usage examples::
 
@@ -7,6 +7,10 @@ Usage examples::
     pc load protocol.yaml --no-cache
     pc validate protocol.yaml
     pc validate protocol.yaml --schema custom.json --strict
+
+Module fallback::
+
+    python -m protocollab --help
 """
 
 import sys

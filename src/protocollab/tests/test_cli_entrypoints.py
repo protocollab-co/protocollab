@@ -16,5 +16,5 @@ def test_poetry_scripts_expose_pc_only() -> None:
 
 def test_setuptools_console_scripts_expose_pc_only() -> None:
     text = (_repo_root() / "setup.py").read_text(encoding="utf-8")
-    assert '"pc=protocollab.main:main"' in text
-    assert '"protocollab=protocollab.main:main"' not in text
+    assert "pc=protocollab.main:main" in text
+    assert "protocollab=protocollab.main:main" not in text

@@ -116,10 +116,19 @@ pc generate l3-server examples/simple/ping_protocol.yaml --output build/
 
 CLI command name is now `pc`.
 
-If `pc` is already used by another executable in your environment, run:
+The `scripts/check_pc_conflicts.sh` helper is repository-only and is not installed from PyPI.
+
+If you are working from this repository and `pc` is already used by another executable in your environment, run:
 
 ```bash
 scripts/check_pc_conflicts.sh
+```
+
+Equivalent manual checks:
+
+```bash
+command -v pc
+python -m protocollab --help
 ```
 
 Fallback invocation is always available:

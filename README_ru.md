@@ -116,10 +116,19 @@ pc generate l3-server examples/simple/ping_protocol.yaml --output build/
 
 Имя CLI-команды теперь `pc`.
 
-Если в окружении уже есть другая команда `pc`, выполните:
+Хелпер `scripts/check_pc_conflicts.sh` доступен только в репозитории и не устанавливается из PyPI.
+
+Если вы работаете из этого репозитория и в окружении уже есть другая команда `pc`, выполните:
 
 ```bash
 scripts/check_pc_conflicts.sh
+```
+
+Эквивалентные ручные проверки:
+
+```bash
+command -v pc
+python -m protocollab --help
 ```
 
 Резервный запуск всегда доступен:

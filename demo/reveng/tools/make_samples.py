@@ -155,7 +155,7 @@ def make_tls_sni_analysis(out_dir: Path) -> None:
     # Long anomalous SNI: sni_length=39 (> 20 → Long/Anomaly) while the
     # fixed 32-byte field stores the truncated name.  The mismatch is
     # intentional and demonstrates the anomaly-detection use-case.
-    long_sni = "axmzxmzkzqwpqwpqwpq-anomaly.exam"  # 32 chars (truncated)
+    long_sni = "axmzxmzkzqwpqwpqwpq-anomaly.exam"  # 32 chars stored in field
     long_sni_claimed_length = 39  # reported length > field size → anomaly
 
     packets = [

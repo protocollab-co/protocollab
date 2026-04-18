@@ -21,6 +21,9 @@
 # Exit code: 0 all tests passed (or skipped), 1 at least one assertion failed.
 
 set -uo pipefail
+# Note: -e is intentionally omitted.  tshark exits non-zero when a display
+# filter matches 0 frames, which would abort the script before all assertions
+# run.  Individual failures are recorded via _fail() instead.
 
 DEMO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$DEMO_DIR"

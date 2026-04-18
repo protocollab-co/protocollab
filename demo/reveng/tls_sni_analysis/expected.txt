@@ -10,7 +10,7 @@ Packet layout (36 bytes each):
 Packets in sample.pcap:
   #1  sni_length=14  sni_name="cloudflare.com"   (Medium)
   #2  sni_length=11  sni_name="netflix.com"       (Medium)
-  #3  sni_length=32  sni_name=<random 32-char>    (Long/Anomaly)
+  #3  sni_length=39  sni_name="axmzxmzkzqwpqwpqwpq-anomaly.exam" (truncated to 32 bytes in field, Long/Anomaly)
 
 Category thresholds:
   sni_length >  20  →  "Long/Anomaly"  (is_anomaly = true)

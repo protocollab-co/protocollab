@@ -1,0 +1,9 @@
+# Generated dissector files – not committed
+results/
+
+# Ignore all pcap files except the checked-in demo samples
+*.pcap
+!ip_scoped/sample.pcap
+!session_id/sample.pcap
+!tls_weak_cipher/sample.pcap
+!tls_sni_analysis/sample.pcap

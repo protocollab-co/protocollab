@@ -1,0 +1,31 @@
+Expected Wireshark filter behaviour for tls_sni_analysis
+=========================================================
+
+After loading sample.pcap with the generated dissector, the
+sni_category and is_anomaly fields classify hostnames by length.
+
+Packet layout (36 bytes each):
+  handshake_type[1] tls_version[2 BE] sni_length[1] sni_name[32 bytes, null-padded]
+
+Packets in sample.pcap:
+  #1  sni_length=14  sni_name="cloudflare.com"   (Medium)
+  #2  sni_length=11  sni_name="netflix.com"       (Medium)
+  #3  sni_length=32  sni_name=<random 32-char>    (Long/Anomaly)
+
+Category thresholds:
+  sni_length >  20  →  "Long/Anomaly"  (is_anomaly = true)
+  sni_length >  10  →  "Medium"
+  sni_length <= 10  →  "Short"
+
+Display filter                                    Expected packets
+------------------------------------------------------------------
+tls_sni_analysis.sni_category == "Medium"         #1, #2
+tls_sni_analysis.sni_category == "Long/Anomaly"   #3
+tls_sni_analysis.is_anomaly                       #3
+tls_sni_analysis.is_client_hello is not a field in this spec;
+  use tls_sni_analysis.handshake_type == 1 for ClientHello filter.
+
+Anomaly detection use-case:
+  Any packet where sni_length > 20 may indicate an unusually long
+  hostname used in DNS-over-HTTPS exfiltration or DGA traffic.
+  Use the filter: tls_sni_analysis.is_anomaly

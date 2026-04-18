@@ -25,6 +25,11 @@ instances:
 
   has_weak_cipher:
     value: cipher_suite in [0x0005, 0x0012, 0x0013, 0x002C, 0x00FF]
+    # 0x0005 = TLS_RSA_WITH_RC4_128_SHA      (RC4, broken)
+    # 0x0012 = TLS_DHE_DSS_WITH_RC4_128_SHA  (RC4, broken)
+    # 0x0013 = TLS_DHE_RSA_WITH_RC4_128_SHA  (RC4, broken)
+    # 0x002C = TLS_PSK_WITH_RC4_128_SHA      (RC4, broken)
+    # 0x00FF = TLS_FALLBACK_SCSV             (demo only: signals downgrade attack intent)
     wireshark:
       type: bool
       label: Weak Cipher

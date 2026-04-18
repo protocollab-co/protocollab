@@ -5,7 +5,8 @@
 
 Каждый кейс включает:
 - YAML-спецификацию протокола,
-- небольшой бинарный дамп (`sample.pcap`),
+- синтетический дамп (`sample.pcap`) — включён в репозиторий, работает сразу,
+- опционально: реальный публичный дамп (`real_sample.pcap` / `real_sample.pcapng`) — скачивается командой `make fetch-samples` (не включён в репозиторий),
 - описание ожидаемого поведения (`expected.txt`).
 
 ---
@@ -120,58 +121,99 @@ demo/reveng/
 ├── .gitignore
 ├── ip_scoped/
 │   ├── ip_scoped.yaml        ← спецификация протокола
-│   ├── sample.pcap           ← 5 демо-пакетов
+│   ├── sample.pcap           ← 5 синтетических пакетов (в git)
+│   ├── real_sample.pcap      ← реальный дамп (скачивается, не в git)
 │   └── expected.txt          ← описание фильтров и ожидаемый вывод
 ├── session_id/
 │   ├── session_id.yaml
-│   ├── sample.pcap           ← 4 пакета (2 двунаправленных потока)
+│   ├── sample.pcap           ← 4 пакета (2 двунаправленных потока, в git)
+│   ├── real_sample.pcap      ← реальный дамп (не в git)
 │   └── expected.txt
 ├── tls_weak_cipher/
 │   ├── tls_handshake_mini.yaml  ← справочная спецификация
 │   ├── tls_weak_cipher.yaml     ← рабочая спецификация
-│   ├── sample.pcap              ← 2 пакета: слабый и нормальный шифр
+│   ├── sample.pcap              ← 2 пакета: слабый и нормальный шифр (в git)
+│   ├── real_sample.pcapng       ← реальный TLS-дамп (не в git)
 │   └── expected.txt
 ├── tls_sni_analysis/
 │   ├── tls_handshake_mini.yaml  ← справочная спецификация
 │   ├── tls_sni_analysis.yaml    ← рабочая спецификация
-│   ├── sample.pcap              ← 3 пакета с разными SNI
+│   ├── sample.pcap              ← 3 пакета с разными SNI (в git)
+│   ├── real_sample.pcapng       ← реальный TLS-дамп (не в git)
 │   └── expected.txt
 ├── tools/
 │   ├── generate_all.sh       ← генерирует все диссекторы
-│   └── run_wireshark.sh      ← открывает Wireshark для кейса
+│   ├── run_wireshark.sh      ← открывает Wireshark для кейса
+│   ├── fetch_samples.sh      ← скачивает реальные pcap из публичных источников
+│   └── make_samples.py       ← пересоздаёт синтетические sample.pcap
 └── results/                  ← сюда пишутся .lua (не в git)
 ```
 
 ---
 
-## Самостоятельная генерация PCAP-дампов
+## Реальные примеры трафика
 
-Дампы уже включены в репозиторий. При необходимости пересоздать их
-самостоятельно используйте следующие команды Python (требуется только
-стандартная библиотека):
+Кроме синтетических `sample.pcap` (которые точно соответствуют спецификации и
+включены в репозиторий), можно скачать настоящие захваты из публичных
+источников для более реалистичного тестирования.
 
-```python
-import struct
+### Скачать одной командой
 
-def pcap_header(link_type=147):  # DLT_USER0
-    return struct.pack("<IHHiIII", 0xa1b2c3d4, 2, 4, 0, 0, 65535, link_type)
-
-def pcap_packet(ts_sec, data):
-    return struct.pack("<IIII", ts_sec, 0, len(data), len(data)) + data
-
-# ip_scoped: version(u1) + src_ip(u4 BE) + dst_ip(u4 BE) + payload_size(u2 BE)
-with open("ip_scoped/sample.pcap", "wb") as f:
-    f.write(pcap_header())
-    packets = [
-        struct.pack(">BIIH", 1, 0xC0A80101, 0x08080808, 64),  # LAN->inet
-        struct.pack(">BIIH", 1, 0x64400001, 0x08080808, 64),  # NAT->inet
-        struct.pack(">BIIH", 1, 0x08080808, 0xC0A80101, 64),  # inet->LAN
-        struct.pack(">BIIH", 1, 0xC0A80101, 0x0A000001, 64),  # LAN->LAN
-        struct.pack(">BIIH", 1, 0x08080808, 0x64400001, 64),  # inet->NAT
-    ]
-    for i, pkt in enumerate(packets):
-        f.write(pcap_packet(i + 1, pkt))
+```bash
+cd demo/reveng
+make fetch-samples
 ```
 
-Аналогичные скрипты для остальных кейсов смотрите в комментариях к
-соответствующим YAML-файлам.
+Скрипт скачивает:
+
+| Файл | Источник | Кейсы |
+|------|----------|-------|
+| `ip_scoped/real_sample.pcap` | Wireshark SampleCaptures — `ipv4frags.pcap` | ip_scoped, session_id |
+| `tls_weak_cipher/real_sample.pcapng` | Lekensteyn/wireshark-notes — `imap-ssl.pcapng` | tls_weak_cipher, tls_sni_analysis |
+
+Если автоматическая загрузка недоступна, скачайте файлы вручную:
+
+```bash
+# IPv4 дамп (ip_scoped и session_id):
+curl -L -o ip_scoped/real_sample.pcap \
+  "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=ipv4frags.pcap"
+cp ip_scoped/real_sample.pcap session_id/real_sample.pcap
+
+# TLS дамп (tls_weak_cipher и tls_sni_analysis):
+curl -L -o tls_weak_cipher/real_sample.pcapng \
+  "https://github.com/Lekensteyn/wireshark-notes/raw/master/tls/imap-ssl.pcapng"
+cp tls_weak_cipher/real_sample.pcapng tls_sni_analysis/real_sample.pcapng
+```
+
+### Открыть реальный дамп в Wireshark
+
+```bash
+# С диссектором (после make all):
+wireshark -r ip_scoped/real_sample.pcap        -X lua_script:results/ip_scoped.lua
+wireshark -r tls_weak_cipher/real_sample.pcapng -X lua_script:results/tls_weak_cipher.lua
+
+# Без диссектора (нативный Wireshark TLS-разбор):
+wireshark -r tls_weak_cipher/real_sample.pcapng
+```
+
+> **Примечание.** Синтетические `sample.pcap` разработаны специально под
+> поля YAML-спецификаций (custom DLT_USER0 frames). Реальные дампы содержат
+> настоящие Ethernet/IP/TCP-кадры: Wireshark-диссектор применяется к ним
+> как пользовательский overlay и читает первые N байт полезной нагрузки.
+> Результат полезен для изучения принципов работы, а не как продакшн-парсер.
+
+---
+
+## Воспроизведение синтетических дампов
+
+Файлы `sample.pcap` включены в репозиторий и всегда актуальны.
+При необходимости пересоздать их:
+
+```bash
+make make-samples
+# или вручную:
+python tools/make_samples.py
+```
+
+Скрипт `tools/make_samples.py` использует только стандартную библиотеку
+Python и полностью воспроизводит каждый пакет по спецификации.

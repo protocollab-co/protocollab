@@ -1,9 +1,11 @@
 # Generated dissector files – not committed
 results/
 
-# Ignore all pcap files except the checked-in demo samples
+# Ignore all pcap/pcapng files except the checked-in synthetic demo samples
 *.pcap
+*.pcapng
 !ip_scoped/sample.pcap
 !session_id/sample.pcap
 !tls_weak_cipher/sample.pcap
 !tls_sni_analysis/sample.pcap
+# real_sample.* are downloaded by tools/fetch_samples.sh and never committed

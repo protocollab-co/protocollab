@@ -1,11 +1,15 @@
 all: generate
 
-.PHONY: all generate fetch-samples make-samples clean \
+.PHONY: all generate fetch-samples make-samples test clean \
         wireshark-ip wireshark-session wireshark-tls-weak wireshark-tls-sni
 
 # Generate Lua dissectors from YAML specifications
 generate:
 	./tools/generate_all.sh
+
+# Run automated tshark tests against all generated dissectors
+test: generate
+	./tools/test_dissectors.sh
 
 # Download real public pcap files (not committed; placed as real_sample.*)
 fetch-samples:

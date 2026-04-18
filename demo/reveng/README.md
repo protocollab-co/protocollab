@@ -98,6 +98,57 @@ wireshark -r tls_sni_analysis/sample.pcap -X lua_script:results/tls_sni_analysis
 
 ---
 
+## Автоматические тесты (tshark)
+
+Скрипт `tools/test_dissectors.sh` запускает tshark против каждого
+синтетического `sample.pcap` с соответствующим Lua-диссектором и проверяет:
+
+- **значения полей** (строки, например `src_scope`, `sni_category`) — совпадают
+  с ожидаемыми для каждого пакета;
+- **счётчики фильтров** — количество пакетов, соответствующих каждому
+  display-filter из `expected.txt`, совпадает с ожидаемым;
+- **симметрию сессий** — ключ сессии одинаков для пакетов A→B и B→A.
+
+### Запуск
+
+```bash
+cd demo/reveng
+make test          # генерирует диссекторы (если нужно) и запускает тесты
+# или напрямую:
+./tools/test_dissectors.sh
+```
+
+### Вывод при успехе
+
+```
+==> ip_scoped
+  PASS  src_scope per-frame  (5 frame(s), field: ip_scoped.src_scope)
+  PASS  dst_scope per-frame  (5 frame(s), field: ip_scoped.dst_scope)
+  PASS  src_scope=="lan"  → 2  (filter: ip_scoped.src_scope == "lan"  →  2 frame(s))
+  ...
+Results:  24 passed  0 failed  0 skipped
+```
+
+### Требования
+
+| Компонент | Минимальная версия |
+|-----------|-------------------|
+| tshark | ≥ 3.0 (часть пакета Wireshark) |
+
+```bash
+# Ubuntu/Debian
+sudo apt-get install tshark
+# macOS
+brew install wireshark
+# Fedora/RHEL
+sudo dnf install wireshark-cli
+```
+
+Если tshark не установлен, скрипт сообщает об этом и завершается с кодом 0
+(тесты пропущены), не ломая CI.
+
+---
+
 ## Проверка фильтров
 
 Для каждого кейса смотрите файл `expected.txt` с конкретными
@@ -144,6 +195,7 @@ demo/reveng/
 ├── tools/
 │   ├── generate_all.sh       ← генерирует все диссекторы
 │   ├── run_wireshark.sh      ← открывает Wireshark для кейса
+│   ├── test_dissectors.sh    ← автоматические тshark-тесты
 │   ├── fetch_samples.sh      ← скачивает реальные pcap из публичных источников
 │   └── make_samples.py       ← пересоздаёт синтетические sample.pcap
 └── results/                  ← сюда пишутся .lua (не в git)

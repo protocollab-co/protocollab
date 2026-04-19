@@ -8,7 +8,8 @@ Grammar (PEG-style, highest precedence last)
     ternary     = or_expr ('if' or_expr 'else' or_expr)?
     or_expr     = and_expr ('or' and_expr)*
     and_expr    = not_expr ('and' not_expr)*
-    not_expr    = 'not' not_expr | comparison
+    not_expr    = 'not' not_expr | in_expr
+    in_expr     = comparison ('in' comparison)*
     comparison  = bitwise_or (('==' | '!=' | '<' | '>' | '<=' | '>=') bitwise_or)?
     bitwise_or  = bitwise_xor ('|' bitwise_xor)*
     bitwise_xor = bitwise_and ('^' bitwise_and)*
@@ -20,11 +21,23 @@ Grammar (PEG-style, highest precedence last)
     postfix     = primary ('.' NAME | '[' expr ']')*
     primary     = INTEGER | STRING | 'true' | 'false'
                 | NAME | '(' expr ')'
+                | list_lit | dict_lit
+                | match_expr | comprehension
+
+    list_lit      = '[' (expr (',' expr)*)? ']'
+    dict_lit      = '{' ((expr ':' expr) (',' expr ':' expr)*)? '}'
+    comprehension = ('any'|'all'|'first'|'filter'|'map')
+                                        '(' expr 'for' NAME 'in' expr ('if' expr)? ')'
+                                    | 'first' '(' expr ')'
+    match_expr    = 'match' expr 'with'
+                                        (pattern '->' expr ('|' pattern '->' expr)*)
+                                        ('|' 'else' '->' expr)?
+    pattern       = INTEGER | STRING | 'true' | 'false' | '_'
 """
 
 from __future__ import annotations
 
-from typing import List
+from typing import Callable
 
 from protocollab.expression.ast_nodes import (
     ASTNode,
@@ -112,7 +125,7 @@ _FORBIDDEN_NAMES: frozenset[str] = frozenset(
 class Parser:
     """Recursive-descent parser that consumes a token list."""
 
-    def __init__(self, tokens: List[Token], source: str = "") -> None:
+    def __init__(self, tokens: list[Token], source: str = "") -> None:
         self._tokens = tokens
         self._pos = 0
         self._source = source
@@ -245,6 +258,18 @@ class Parser:
         expr_tokens = self._tokens[start : self._pos]
         return self._parse_from_token_slice(expr_tokens)
 
+    def _parse_left_associative(
+        self,
+        parse_operand: Callable[[], ASTNode],
+        operators: dict[TokenKind, str],
+    ) -> ASTNode:
+        node = parse_operand()
+        while self._peek().kind in operators:
+            op_str = operators[self._advance().kind]
+            right = parse_operand()
+            node = BinOp(left=node, op=op_str, right=right)
+        return node
+
     # ------------------------------------------------------------------
     # Grammar rules
     # ------------------------------------------------------------------
@@ -325,52 +350,22 @@ class Parser:
         return node
 
     def _bitwise_or(self) -> ASTNode:
-        node = self._bitwise_xor()
-        while self._peek().kind in _BITWISE_OR_OPS:
-            op_str = _BITWISE_OR_OPS[self._advance().kind]
-            right = self._bitwise_xor()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._bitwise_xor, _BITWISE_OR_OPS)
 
     def _bitwise_xor(self) -> ASTNode:
-        node = self._bitwise_and()
-        while self._peek().kind in _BITWISE_XOR_OPS:
-            op_str = _BITWISE_XOR_OPS[self._advance().kind]
-            right = self._bitwise_and()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._bitwise_and, _BITWISE_XOR_OPS)
 
     def _bitwise_and(self) -> ASTNode:
-        node = self._shift()
-        while self._peek().kind in _BITWISE_AND_OPS:
-            op_str = _BITWISE_AND_OPS[self._advance().kind]
-            right = self._shift()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._shift, _BITWISE_AND_OPS)
 
     def _shift(self) -> ASTNode:
-        node = self._additive()
-        while self._peek().kind in _SHIFT_OPS:
-            op_str = _SHIFT_OPS[self._advance().kind]
-            right = self._additive()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._additive, _SHIFT_OPS)
 
     def _additive(self) -> ASTNode:
-        node = self._mult()
-        while self._peek().kind in _ADDITIVE_OPS:
-            op_str = _ADDITIVE_OPS[self._advance().kind]
-            right = self._mult()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._mult, _ADDITIVE_OPS)
 
     def _mult(self) -> ASTNode:
-        node = self._unary()
-        while self._peek().kind in _MULT_OPS:
-            op_str = _MULT_OPS[self._advance().kind]
-            right = self._unary()
-            node = BinOp(left=node, op=op_str, right=right)
-        return node
+        return self._parse_left_associative(self._unary, _MULT_OPS)
 
     def _unary(self) -> ASTNode:
         if self._match(TokenKind.MINUS):
@@ -561,7 +556,13 @@ class Parser:
         )
 
     def _parse_match(self) -> ASTNode:
-        self._expect(TokenKind.NAME)  # match
+        match_tok = self._expect(TokenKind.NAME)
+        if match_tok.value != "match":
+            raise ExpressionSyntaxError(
+                f"Expected 'match' but got {match_tok.value!r} at position {match_tok.pos}",
+                expr=self._source,
+                pos=match_tok.pos,
+            )
         subject = self._expr()
         if not self._match_name("with"):
             raise ExpressionSyntaxError(

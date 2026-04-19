@@ -30,6 +30,9 @@ if TYPE_CHECKING:
     from protocollab.type_system.registry import TypeRegistry
 
 
+_BUILTINS: frozenset[str] = frozenset({"_io", "parent", "_root", "true", "false"})
+
+
 @dataclass
 class ExprError:
     """A single expression validation error."""
@@ -206,12 +209,8 @@ def validate_expr(
     if type_registry is not None:
         names: set[str] = set()
         _collect_names(ast, names)
-        # Remove well-known special names
-        _BUILTINS = {"_io", "parent", "_root", "true", "false"}
-        for n in names - _BUILTINS:
-            # We can't know field names at static-check time without full schema,
-            # so we only flag names that look suspiciously like type names but
-            # are neither known fields nor known types.
-            pass  # extend in task 2.4 (semantic validator)
+        _ = names - _BUILTINS
+        # TODO(task 2.4): add semantic checks for unknown references once schema
+        # context is available at this layer.
 
     return errors

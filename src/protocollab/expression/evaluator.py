@@ -231,7 +231,7 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
                 return result
 
             if kind == "map":
-                result: list[Any] = []
+                result = []
                 for item in iterator:
                     local_ctx = dict(context)
                     local_ctx[var.name] = item

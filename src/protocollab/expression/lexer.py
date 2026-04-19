@@ -5,7 +5,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List
 
 
 class TokenKind(Enum):
@@ -47,8 +46,8 @@ class TokenKind(Enum):
     EOF = auto()
 
 
-# Keywords recognised by the lexer (returned as NAME tokens with .value set)
-_KEYWORDS: set[str] = {
+# Public keyword set used by parser/generators to keep reserved names in sync.
+KEYWORDS: set[str] = {
     "and",
     "or",
     "not",
@@ -145,7 +144,7 @@ class ExpressionSyntaxError(Exception):
         super().__init__(message)
 
 
-def tokenize(expr: str) -> List[Token]:
+def tokenize(expr: str) -> list[Token]:
     """Convert *expr* into a flat list of :class:`Token` objects.
 
     The list is always terminated by an :attr:`~TokenKind.EOF` sentinel.

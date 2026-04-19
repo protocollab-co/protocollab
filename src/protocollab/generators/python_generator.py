@@ -25,6 +25,44 @@ _PY_TYPE_MAP: Dict[str, tuple] = {
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "python"
 
 
+def _process_field(raw: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve a single seq-entry *raw* to a field descriptor dict.
+
+    Raises :class:`GeneratorError` for unsupported or misconfigured types.
+    Returns an empty dict when ``id`` or ``type`` are absent (caller skips it).
+    """
+    field_id = raw.get("id")
+    spec_type = raw.get("type")
+    if not field_id or not spec_type:
+        return {}
+
+    if spec_type not in _PY_TYPE_MAP:
+        raise GeneratorError(
+            f"Unsupported field type '{spec_type}' for field '{field_id}'. "
+            f"Supported types: {', '.join(sorted(_PY_TYPE_MAP))}."
+        )
+
+    fmt_char, size, py_type = _PY_TYPE_MAP[spec_type]
+
+    if spec_type == "str":
+        size = raw.get("size")
+        if size is None:
+            raise GeneratorError(
+                f"Field '{field_id}' of type 'str' requires a 'size' attribute."
+            )
+        fmt_char = f"{size}s"
+        py_type = "bytes"
+
+    return {
+        "id": field_id,
+        "spec_type": spec_type,
+        "py_type": py_type,
+        "fmt_char": fmt_char,
+        "size": size,
+        "is_u3": spec_type == "u3",
+    }
+
+
 class PythonGenerator(BaseGenerator):
     """Generates a Python dataclass parser from a protocol specification."""
 
@@ -47,40 +85,12 @@ class PythonGenerator(BaseGenerator):
         total_size = 0
 
         for raw in seq:
-            field_id = raw.get("id")
-            spec_type = raw.get("type")
-            if not field_id or not spec_type:
+            field = _process_field(raw)
+            if not field:
                 continue
-
-            if spec_type not in _PY_TYPE_MAP:
-                raise GeneratorError(
-                    f"Unsupported field type '{spec_type}' for field '{field_id}'. "
-                    f"Supported types: {', '.join(sorted(_PY_TYPE_MAP))}."
-                )
-
-            fmt_char, size, py_type = _PY_TYPE_MAP[spec_type]
-
-            if spec_type == "str":
-                size = raw.get("size")
-                if size is None:
-                    raise GeneratorError(
-                        f"Field '{field_id}' of type 'str' requires a 'size' attribute."
-                    )
-                fmt_char = f"{size}s"
-                py_type = "bytes"
-
-            fmt_chars.append(fmt_char)
-            total_size += size
-            fields.append(
-                {
-                    "id": field_id,
-                    "spec_type": spec_type,
-                    "py_type": py_type,
-                    "fmt_char": fmt_char,
-                    "size": size,
-                    "is_u3": spec_type == "u3",
-                }
-            )
+            fmt_chars.append(field["fmt_char"])
+            total_size += field["size"]
+            fields.append(field)
 
         env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), keep_trailing_newline=True)
         template = env.get_template("parser.py.j2")

@@ -63,6 +63,19 @@ def _process_field(raw: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
+def _render_output(context: Dict[str, Any], output_dir: Path, proto_id: str) -> Path:
+    """Render the Jinja2 parser template and write it to *output_dir*.
+
+    Returns the path of the written file.
+    """
+    env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), keep_trailing_newline=True)
+    template = env.get_template("parser.py.j2")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    out_path = output_dir / f"{proto_id}_parser.py"
+    out_path.write_text(template.render(**context), encoding="utf-8")
+    return out_path
+
+
 class PythonGenerator(BaseGenerator):
     """Generates a Python dataclass parser from a protocol specification."""
 
@@ -92,9 +105,6 @@ class PythonGenerator(BaseGenerator):
             total_size += field["size"]
             fields.append(field)
 
-        env = Environment(loader=FileSystemLoader(str(_TEMPLATES_DIR)), keep_trailing_newline=True)
-        template = env.get_template("parser.py.j2")
-
         context = {
             "source_file": str(spec.get("_source_file", "<unknown>")),
             "class_name": to_class_name(proto_id),
@@ -103,8 +113,4 @@ class PythonGenerator(BaseGenerator):
             "total_size": total_size,
             "fields": fields,
         }
-
-        output_dir.mkdir(parents=True, exist_ok=True)
-        out_path = output_dir / f"{proto_id}_parser.py"
-        out_path.write_text(template.render(**context), encoding="utf-8")
-        return [out_path]
+        return [_render_output(context, output_dir, proto_id)]

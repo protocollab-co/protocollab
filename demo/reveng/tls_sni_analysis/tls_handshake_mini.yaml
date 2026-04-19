@@ -1,0 +1,24 @@
+meta:
+  id: tls_handshake_mini
+  endian: be
+  title: "TLS Handshake Mini"
+  description: "Simplified, fixed-size TLS ClientHello frame used as demo reference"
+
+seq:
+  - id: handshake_type
+    type: u1
+    doc: "Handshake message type: 0x01 = ClientHello"
+  - id: tls_version
+    type: u2
+    doc: "TLS version: 0x0303 = TLS 1.2, 0x0301 = TLS 1.0"
+  - id: cipher_suite
+    type: u2
+    doc: "Offered cipher suite (first / only suite in this simplified frame)"
+
+instances:
+  is_client_hello:
+    value: handshake_type == 0x01
+    wireshark:
+      type: bool
+      filter-only: true
+      label: Is ClientHello

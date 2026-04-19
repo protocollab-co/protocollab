@@ -1,0 +1,33 @@
+meta:
+  id: tls_sni_analysis
+  endian: be
+  title: "TLS SNI Analysis"
+  description: "Simplified TLS frame with fixed-size SNI field for length-based anomaly detection"
+
+seq:
+  - id: handshake_type
+    type: u1
+    doc: "Handshake message type: 0x01 = ClientHello"
+  - id: tls_version
+    type: u2
+    doc: "TLS version: 0x0303 = TLS 1.2"
+  - id: sni_length
+    type: u1
+    doc: "Actual length of the SNI hostname (before fixed-size padding)"
+  - id: sni_name
+    type: str
+    size: 32
+    doc: "SNI hostname, null-padded to 32 bytes"
+
+instances:
+  is_anomaly:
+    value: sni_length > 20
+    wireshark:
+      type: bool
+      label: SNI Anomaly
+
+  sni_category:
+    value: '"Long/Anomaly" if sni_length > 20 else ("Medium" if sni_length > 10 else "Short")'
+    wireshark:
+      type: string
+      label: SNI Category

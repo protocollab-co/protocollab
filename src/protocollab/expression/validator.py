@@ -10,8 +10,10 @@ from protocollab.expression.ast_nodes import (
     Attribute,
     BinOp,
     Comprehension,
+    Dict,
     DictLiteral,
     InOp,
+    List,
     ListLiteral,
     Match,
     MatchCase,
@@ -59,10 +61,17 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
         case ListLiteral(elements=elements):
             for element in elements:
                 _collect_names(element, names, bound)
+        case List(elements=elements):
+            for element in elements:
+                _collect_names(element, names, bound)
         case DictLiteral(keys=keys, values=values):
             for key in keys:
                 _collect_names(key, names, bound)
             for value in values:
+                _collect_names(value, names, bound)
+        case Dict(pairs=pairs):
+            for key, value in pairs:
+                _collect_names(key, names, bound)
                 _collect_names(value, names, bound)
         case InOp(left=l, right=r):
             _collect_names(l, names, bound)
@@ -126,10 +135,17 @@ def _validate_comprehension_vars(
         case ListLiteral(elements=elements):
             for element in elements:
                 _validate_comprehension_vars(element, errors, active_vars)
+        case List(elements=elements):
+            for element in elements:
+                _validate_comprehension_vars(element, errors, active_vars)
         case DictLiteral(keys=keys, values=values):
             for key in keys:
                 _validate_comprehension_vars(key, errors, active_vars)
             for value in values:
+                _validate_comprehension_vars(value, errors, active_vars)
+        case Dict(pairs=pairs):
+            for key, value in pairs:
+                _validate_comprehension_vars(key, errors, active_vars)
                 _validate_comprehension_vars(value, errors, active_vars)
         case InOp(left=l, right=r):
             _validate_comprehension_vars(l, errors, active_vars)

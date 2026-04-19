@@ -8,6 +8,8 @@ from pathlib import Path
 import pytest
 
 from protocollab.generators import GeneratorError, LuaGenerator, PythonGenerator
+from protocollab.expression.ast_nodes import Dict, List, Literal, Name
+from protocollab.generators.lua_generator import _compile_lua_expr
 
 
 class TestPythonGeneratorOutput:
@@ -249,6 +251,14 @@ class TestLuaGeneratorContent:
         src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
         assert "local value_list_value = {1, value_type_id, 3}" in src
         assert 'local value_dict_value = {["count"]=value_type_id, ["fixed"]=7}' in src
+
+    def test_legacy_list_dict_nodes_compile_to_lua_tables(self):
+        legacy_list = List(elements=(Literal(1), Name("type_id"), Literal(3)))
+        legacy_dict = Dict(
+            pairs=((Literal("count"), Name("type_id")), (Literal("fixed"), Literal(7)))
+        )
+        assert _compile_lua_expr(legacy_list) == "{1, value_type_id, 3}"
+        assert _compile_lua_expr(legacy_dict) == '{["count"]=value_type_id, ["fixed"]=7}'
 
     def test_dict_literal_string_keys_use_bracket_syntax(self, tmp_path):
         spec = {

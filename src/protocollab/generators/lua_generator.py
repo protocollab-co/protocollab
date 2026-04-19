@@ -11,9 +11,11 @@ from protocollab.expression import (
     Attribute,
     BinOp,
     Comprehension,
+    Dict as DictNode,
     DictLiteral,
     ExpressionSyntaxError,
     InOp,
+    List as ListNode,
     ListLiteral,
     Literal,
     Match,
@@ -95,6 +97,9 @@ def _compile_lua_expr(node: Any) -> str:
     if isinstance(node, ListLiteral):
         compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
         return f"{{{compiled_elems}}}"
+    if isinstance(node, ListNode):
+        compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
+        return f"{{{compiled_elems}}}"
     if isinstance(node, DictLiteral):
         # Compile dict keys with bracket syntax to avoid Lua keyword/identifier pitfalls.
         pairs = []
@@ -105,6 +110,17 @@ def _compile_lua_expr(node: Any) -> str:
                 pairs.append(f"[{compiled_key}]={compiled_value}")
             else:
                 # Computed key: use {[key]=value}
+                compiled_key = _compile_lua_expr(key)
+                pairs.append(f"[{compiled_key}]={compiled_value}")
+        return "{" + ", ".join(pairs) + "}"
+    if isinstance(node, DictNode):
+        pairs = []
+        for key, value in node.pairs:
+            compiled_value = _compile_lua_expr(value)
+            if isinstance(key, Literal) and isinstance(key.value, str):
+                compiled_key = _lua_string_literal(key.value)
+                pairs.append(f"[{compiled_key}]={compiled_value}")
+            else:
                 compiled_key = _compile_lua_expr(key)
                 pairs.append(f"[{compiled_key}]={compiled_value}")
         return "{" + ", ".join(pairs) + "}"
@@ -266,11 +282,22 @@ def _collect_name_refs(node: Any) -> set[str]:
         for elem in node.elements:
             result |= _collect_name_refs(elem)
         return result
+    if isinstance(node, ListNode):
+        result = set()
+        for elem in node.elements:
+            result |= _collect_name_refs(elem)
+        return result
     if isinstance(node, DictLiteral):
         result = set()
         for key in node.keys:
             result |= _collect_name_refs(key)
         for value in node.values:
+            result |= _collect_name_refs(value)
+        return result
+    if isinstance(node, DictNode):
+        result = set()
+        for key, value in node.pairs:
+            result |= _collect_name_refs(key)
             result |= _collect_name_refs(value)
         return result
     if isinstance(node, InOp):

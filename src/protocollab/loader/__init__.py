@@ -71,6 +71,12 @@ def _load_with_loader(loader: ProtocolLoader, file_path: str) -> ProtocolData:
     return loader.load(file_path)
 
 
+def _select_loader(config: Optional[dict], use_cache: bool) -> ProtocolLoader:
+    if _should_use_isolated_loader(config, use_cache):
+        return _build_isolated_loader(config, use_cache)
+    return _default_loader
+
+
 def get_global_loader() -> ProtocolLoader:
     """Return the module-level global :class:`ProtocolLoader`.
 
@@ -156,8 +162,4 @@ def load_protocol(
     The global loader is **not thread-safe**.  For multi-threaded
     applications, create separate :class:`ProtocolLoader` instances.
     """
-    if _should_use_isolated_loader(config, use_cache):
-        # Create a fresh loader so the config and cache behaviour are isolated.
-        return _load_with_loader(_build_isolated_loader(config, use_cache), file_path)
-
-    return _load_with_loader(_default_loader, file_path)
+    return _load_with_loader(_select_loader(config, use_cache), file_path)

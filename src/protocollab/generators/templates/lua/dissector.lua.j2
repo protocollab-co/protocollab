@@ -19,6 +19,7 @@ local function _contains(tbl, value)
         end
     end
 
+    -- Sparse numeric tables are treated as map-like and use key lookup semantics.
     local is_array_like = (not has_non_array_key) and (array_count == max_array_index)
     if is_array_like then
         for _, v in ipairs(tbl) do

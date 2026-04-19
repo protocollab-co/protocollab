@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 from protocollab.expression.ast_nodes import (
     ASTNode,
@@ -93,7 +93,7 @@ def _iter_comprehension_contexts(
     iterable_value: Any,
     var_name: str,
     context: dict[str, Any],
-) -> Any:
+) -> Iterator[tuple[Any, dict[str, Any]]]:
     try:
         iterator = iter(iterable_value)
     except TypeError as exc:

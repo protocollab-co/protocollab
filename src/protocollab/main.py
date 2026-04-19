@@ -191,7 +191,13 @@ def _print_validation_result(file: str, result, strict: bool) -> None:
         click.echo(f"Valid: {file}")
         return
 
-    if result.is_valid:
+    if result.is_valid and result.warnings:
+        if strict:
+            click.echo(f"Validation failed: {file} ({len(result.warnings)} warning(s))", err=True)
+            for i, warning in enumerate(result.warnings, 1):
+                click.echo(f"  [W{i}] {warning.path}: {warning.message}", err=True)
+            click.echo("(--strict: treating warnings as errors)", err=True)
+            sys.exit(3)
         click.echo(f"Valid: {file} ({len(result.warnings)} warning(s))")
         for i, warning in enumerate(result.warnings, 1):
             click.echo(f"  [W{i}] {warning.path}: {warning.message}")
@@ -206,8 +212,6 @@ def _print_validation_result(file: str, result, strict: bool) -> None:
         click.echo(f"\n  WARNINGS ({len(result.warnings)}):", err=True)
         for i, warning in enumerate(result.warnings, 1):
             click.echo(f"    [W{i}] {warning.path}: {warning.message}", err=True)
-    if strict and result.warnings and result.is_valid:
-        click.echo("(--strict: treating warnings as errors)", err=True)
     sys.exit(3)
 
 

@@ -91,24 +91,11 @@ def load(
     max_file_size,
 ) -> None:
     """Load a protocol YAML file and print its resolved contents."""
-    try:
-        check_file_exists(file)
-    except FileNotFoundError as exc:
-        click.echo(f"Error: {exc}", err=True)
-        sys.exit(1)
-
-    config: dict = {}
-    if max_depth is not None:
-        config["max_struct_depth"] = max_depth
-    if max_imports is not None:
-        config["max_imports"] = max_imports
-    if max_include_depth is not None:
-        config["max_include_depth"] = max_include_depth
-    if max_file_size is not None:
-        config["max_file_size"] = max_file_size
+    _ensure_input_file_exists(file)
+    config = _build_load_config(max_depth, max_imports, max_include_depth, max_file_size)
 
     try:
-        data = load_protocol(file, config=config or None, use_cache=not no_cache)
+        data = load_protocol(file, config=config, use_cache=not no_cache)
     except FileLoadError as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(1)
@@ -142,11 +129,7 @@ def validate(file: str, schema, strict: bool) -> None:
     """Validate a protocol YAML file against the `protocollab` schema."""
     from pathlib import Path as _Path
 
-    try:
-        check_file_exists(file)
-    except FileNotFoundError as exc:
-        click.echo(f"Error: {exc}", err=True)
-        sys.exit(1)
+    _ensure_input_file_exists(file)
 
     schema_path = schema
     if schema_path is None and strict:
@@ -161,26 +144,7 @@ def validate(file: str, schema, strict: bool) -> None:
         click.echo(f"YAML error: {exc}", err=True)
         sys.exit(2)
 
-    if result.is_valid and not result.warnings:
-        click.echo(f"Valid: {file}")
-    elif result.is_valid:
-        click.echo(f"Valid: {file} ({len(result.warnings)} warning(s))")
-        for i, w in enumerate(result.warnings, 1):
-            click.echo(f"  [W{i}] {w.path}: {w.message}")
-    else:
-        click.echo(f"Validation failed: {file} ({len(result.errors)} error(s))", err=True)
-        if result.errors:
-            click.echo("\n  ERRORS:", err=True)
-            for i, err in enumerate(result.errors, 1):
-                click.echo(f"    [{i}] {err.path}: {err.message}", err=True)
-        if result.warnings:
-            click.echo(f"\n  WARNINGS ({len(result.warnings)}):", err=True)
-            for i, w in enumerate(result.warnings, 1):
-                click.echo(f"    [W{i}] {w.path}: {w.message}", err=True)
-        if strict and result.warnings and result.is_valid:
-            click.echo("(--strict: treating warnings as errors)", err=True)
-            sys.exit(3)
-        sys.exit(3)
+    _print_validation_result(file, result, strict)
 
 
 # ---------------------------------------------------------------------------
@@ -196,13 +160,60 @@ def generate_cmd() -> None:
 cli.add_command(generate_cmd, name="generate")
 
 
-def _load_generate_spec(file: str) -> dict[str, Any]:
-    """Load and return a protocol specification for generation commands."""
+def _ensure_input_file_exists(file: str) -> None:
     try:
         check_file_exists(file)
     except FileNotFoundError as exc:
         click.echo(f"Error: {exc}", err=True)
         sys.exit(1)
+
+
+def _build_load_config(
+    max_depth: int | None,
+    max_imports: int | None,
+    max_include_depth: int | None,
+    max_file_size: int | None,
+) -> dict[str, int] | None:
+    config: dict[str, int] = {}
+    if max_depth is not None:
+        config["max_struct_depth"] = max_depth
+    if max_imports is not None:
+        config["max_imports"] = max_imports
+    if max_include_depth is not None:
+        config["max_include_depth"] = max_include_depth
+    if max_file_size is not None:
+        config["max_file_size"] = max_file_size
+    return config or None
+
+
+def _print_validation_result(file: str, result, strict: bool) -> None:
+    if result.is_valid and not result.warnings:
+        click.echo(f"Valid: {file}")
+        return
+
+    if result.is_valid:
+        click.echo(f"Valid: {file} ({len(result.warnings)} warning(s))")
+        for i, warning in enumerate(result.warnings, 1):
+            click.echo(f"  [W{i}] {warning.path}: {warning.message}")
+        return
+
+    click.echo(f"Validation failed: {file} ({len(result.errors)} error(s))", err=True)
+    if result.errors:
+        click.echo("\n  ERRORS:", err=True)
+        for i, err in enumerate(result.errors, 1):
+            click.echo(f"    [{i}] {err.path}: {err.message}", err=True)
+    if result.warnings:
+        click.echo(f"\n  WARNINGS ({len(result.warnings)}):", err=True)
+        for i, warning in enumerate(result.warnings, 1):
+            click.echo(f"    [W{i}] {warning.path}: {warning.message}", err=True)
+    if strict and result.warnings and result.is_valid:
+        click.echo("(--strict: treating warnings as errors)", err=True)
+    sys.exit(3)
+
+
+def _load_generate_spec(file: str) -> dict[str, Any]:
+    """Load and return a protocol specification for generation commands."""
+    _ensure_input_file_exists(file)
 
     try:
         return load_protocol(file)
@@ -234,20 +245,16 @@ def _run_generate(file: str, target: str, output: str) -> None:
     _generate_targets(spec, (target,), output)
 
 
-@generate_cmd.command(name="python")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_python(file: str, output: str) -> None:
-    """Generate a Python dataclass parser."""
-    _run_generate(file, target="python", output=output)
+def _register_generate_command(name: str, target: str, help_text: str) -> None:
+    @generate_cmd.command(name=name, help=help_text)
+    @click.argument("file", type=click.Path())
+    @click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
+    def _command(file: str, output: str) -> None:
+        _run_generate(file, target=target, output=output)
 
 
-@generate_cmd.command(name="wireshark")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_wireshark(file: str, output: str) -> None:
-    """Generate a Wireshark Lua dissector."""
-    _run_generate(file, target="wireshark", output=output)
+_register_generate_command("python", "python", "Generate a Python dataclass parser.")
+_register_generate_command("wireshark", "wireshark", "Generate a Wireshark Lua dissector.")
 
 
 @generate_cmd.command(name="cpp")
@@ -267,52 +274,16 @@ def generate_cpp(file: str, output: str) -> None:
     _run_generate(file, target="cpp", output=output)
 
 
-@generate_cmd.command("mock-client")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_mock_client(file: str, output: str) -> None:
-    """Generate a mock client and its Python parser."""
-    _run_generate(file, target="mock-client", output=output)
-
-
-@generate_cmd.command("mock-server")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_mock_server(file: str, output: str) -> None:
-    """Generate a mock server and its Python parser."""
-    _run_generate(file, target="mock-server", output=output)
-
-
-@generate_cmd.command("l2-client")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_l2_client(file: str, output: str) -> None:
-    """Generate a Scapy L2 client and its Python parser."""
-    _run_generate(file, target="l2-client", output=output)
-
-
-@generate_cmd.command("l2-server")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_l2_server(file: str, output: str) -> None:
-    """Generate a Scapy L2 server and its Python parser."""
-    _run_generate(file, target="l2-server", output=output)
-
-
-@generate_cmd.command("l3-client")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_l3_client(file: str, output: str) -> None:
-    """Generate a TCP L3 socket client and its Python parser."""
-    _run_generate(file, target="l3-client", output=output)
-
-
-@generate_cmd.command("l3-server")
-@click.argument("file", type=click.Path())
-@click.option("--output", "-o", type=click.Path(), default="./build", show_default=True)
-def generate_l3_server(file: str, output: str) -> None:
-    """Generate a TCP L3 socket server and its Python parser."""
-    _run_generate(file, target="l3-server", output=output)
+_register_generate_command("mock-client", "mock-client", "Generate a mock client and its Python parser.")
+_register_generate_command("mock-server", "mock-server", "Generate a mock server and its Python parser.")
+_register_generate_command("l2-client", "l2-client", "Generate a Scapy L2 client and its Python parser.")
+_register_generate_command("l2-server", "l2-server", "Generate a Scapy L2 server and its Python parser.")
+_register_generate_command(
+    "l3-client", "l3-client", "Generate a TCP L3 socket client and its Python parser."
+)
+_register_generate_command(
+    "l3-server", "l3-server", "Generate a TCP L3 socket server and its Python parser."
+)
 
 
 # ---------------------------------------------------------------------------

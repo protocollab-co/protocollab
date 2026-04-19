@@ -254,7 +254,9 @@ class TestLuaGeneratorContent:
 
     def test_legacy_list_dict_nodes_compile_to_lua_tables(self):
         legacy_list = List(elements=(Literal(1), Name("type_id"), Literal(3)))
-        legacy_dict = Dict(pairs=((Literal("count"), Name("type_id")), (Literal("fixed"), Literal(7))))
+        legacy_dict = Dict(
+            pairs=((Literal("count"), Name("type_id")), (Literal("fixed"), Literal(7)))
+        )
         assert _compile_lua_expr(legacy_list) == "{1, value_type_id, 3}"
         assert _compile_lua_expr(legacy_dict) == '{["count"]=value_type_id, ["fixed"]=7}'
 

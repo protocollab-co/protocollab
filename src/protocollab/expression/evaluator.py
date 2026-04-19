@@ -229,10 +229,10 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
                 raise ExpressionEvalError(f"Undefined field {n!r}. Available: {sorted(context)}")
             return context[n]
 
-        case Attribute(obj=obj_node, attr=attr):
+        case Attribute():
             return _evaluate_attribute(node, context)
 
-        case Subscript(obj=obj_node, index=idx_node):
+        case Subscript():
             return _evaluate_subscript(node, context)
 
         case ListLiteral(elements=elements):
@@ -265,7 +265,7 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
         case UnaryOp(op="not", operand=operand):
             return not evaluate(operand, context)
 
-        case BinOp(left=left, op=op, right=right):
+        case BinOp():
             return _evaluate_binop(node, context)
 
         case Ternary(condition=cond, value_if_true=vt, value_if_false=vf):
@@ -273,10 +273,10 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
                 return evaluate(vt, context)
             return evaluate(vf, context)
 
-        case Comprehension(kind=kind, expr=expr, var=var, iterable=iterable, condition=condition):
+        case Comprehension():
             return _evaluate_comprehension(node, context)
 
-        case Match(subject=subject, cases=cases, else_case=else_case):
+        case Match():
             return _evaluate_match(node, context)
 
         case _:

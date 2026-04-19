@@ -165,7 +165,7 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
         case InOp(left=l, right=r):
             _collect_names(l, names, bound)
             _collect_names(r, names, bound)
-        case Comprehension(expr=expr, var=var, iterable=iterable, condition=condition):
+        case Comprehension():
             _collect_names_from_comprehension(node, names, bound)
         case UnaryOp(operand=op):
             _collect_names(op, names, bound)
@@ -176,7 +176,7 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
             _collect_names(c, names, bound)
             _collect_names(vt, names, bound)
             _collect_names(vf, names, bound)
-        case Match(subject=subject, cases=cases, else_case=else_case):
+        case Match():
             _collect_names_from_match(node, names, bound)
 
 
@@ -194,7 +194,7 @@ def _validate_comprehension_vars(
     active_vars = set() if active_vars is None else set(active_vars)
 
     match node:
-        case Comprehension(expr=expr, var=var, iterable=iterable, condition=condition):
+        case Comprehension():
             _validate_comprehension_node(node, errors, active_vars)
         case Attribute(obj=obj):
             _validate_comprehension_vars(obj, errors, active_vars)
@@ -222,7 +222,7 @@ def _validate_comprehension_vars(
             _validate_comprehension_vars(c, errors, active_vars)
             _validate_comprehension_vars(vt, errors, active_vars)
             _validate_comprehension_vars(vf, errors, active_vars)
-        case Match(subject=subject, cases=cases, else_case=else_case):
+        case Match():
             _validate_match_node(node, errors, active_vars)
 
 

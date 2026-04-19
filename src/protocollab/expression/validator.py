@@ -80,6 +80,60 @@ def _validate_pairs(
         _validate_comprehension_vars(value, errors, active_vars)
 
 
+def _collect_names_from_comprehension(
+    node: Comprehension,
+    names: set[str],
+    bound: set[str],
+) -> None:
+    _collect_names(node.iterable, names, bound)
+    local_bound = set(bound)
+    local_bound.add(node.var.name)
+    _collect_names(node.expr, names, local_bound)
+    if node.condition is not None:
+        _collect_names(node.condition, names, local_bound)
+
+
+def _collect_names_from_match(node: Match, names: set[str], bound: set[str]) -> None:
+    _collect_names(node.subject, names, bound)
+    for case in node.cases:
+        _collect_match_case_names(case, names, bound)
+    if node.else_case is not None:
+        _collect_names(node.else_case, names, bound)
+
+
+def _validate_comprehension_node(
+    node: Comprehension,
+    errors: list[ExprError],
+    active_vars: set[str],
+) -> None:
+    if node.var.name in active_vars:
+        errors.append(
+            ExprError(message=f"Comprehension variable '{node.var.name}' conflicts with outer scope")
+        )
+    _validate_comprehension_vars(node.iterable, errors, active_vars)
+    local = set(active_vars)
+    local.add(node.var.name)
+    _validate_comprehension_vars(node.expr, errors, local)
+    if node.condition is not None:
+        _validate_comprehension_vars(node.condition, errors, local)
+
+
+def _validate_match_node(node: Match, errors: list[ExprError], active_vars: set[str]) -> None:
+    _validate_comprehension_vars(node.subject, errors, active_vars)
+    for case in node.cases:
+        _validate_comprehension_vars(case.pattern, errors, active_vars)
+        _validate_comprehension_vars(case.body, errors, active_vars)
+    if node.else_case is not None:
+        _validate_comprehension_vars(node.else_case, errors, active_vars)
+
+
+def _parse_expr_for_validation(expr_str: str) -> tuple[ASTNode | None, list[ExprError]]:
+    try:
+        return parse_expr(expr_str), []
+    except ExpressionSyntaxError as exc:
+        return None, [ExprError(message=str(exc), pos=exc.pos)]
+
+
 def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None) -> None:
     """Recursively collect all free Name references in *node*."""
     bound = set() if bound is None else bound
@@ -108,12 +162,7 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
             _collect_names(l, names, bound)
             _collect_names(r, names, bound)
         case Comprehension(expr=expr, var=var, iterable=iterable, condition=condition):
-            _collect_names(iterable, names, bound)
-            local_bound = set(bound)
-            local_bound.add(var.name)
-            _collect_names(expr, names, local_bound)
-            if condition is not None:
-                _collect_names(condition, names, local_bound)
+            _collect_names_from_comprehension(node, names, bound)
         case UnaryOp(operand=op):
             _collect_names(op, names, bound)
         case BinOp(left=l, right=r):
@@ -124,11 +173,7 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
             _collect_names(vt, names, bound)
             _collect_names(vf, names, bound)
         case Match(subject=subject, cases=cases, else_case=else_case):
-            _collect_names(subject, names, bound)
-            for case in cases:
-                _collect_match_case_names(case, names, bound)
-            if else_case is not None:
-                _collect_names(else_case, names, bound)
+            _collect_names_from_match(node, names, bound)
 
 
 def _collect_match_case_names(case: MatchCase, names: set[str], bound: set[str]) -> None:
@@ -146,18 +191,7 @@ def _validate_comprehension_vars(
 
     match node:
         case Comprehension(expr=expr, var=var, iterable=iterable, condition=condition):
-            if var.name in active_vars:
-                errors.append(
-                    ExprError(
-                        message=f"Comprehension variable '{var.name}' conflicts with outer scope"
-                    )
-                )
-            _validate_comprehension_vars(iterable, errors, active_vars)
-            local = set(active_vars)
-            local.add(var.name)
-            _validate_comprehension_vars(expr, errors, local)
-            if condition is not None:
-                _validate_comprehension_vars(condition, errors, local)
+            _validate_comprehension_node(node, errors, active_vars)
         case Attribute(obj=obj):
             _validate_comprehension_vars(obj, errors, active_vars)
         case Subscript(obj=obj, index=idx):
@@ -185,12 +219,7 @@ def _validate_comprehension_vars(
             _validate_comprehension_vars(vt, errors, active_vars)
             _validate_comprehension_vars(vf, errors, active_vars)
         case Match(subject=subject, cases=cases, else_case=else_case):
-            _validate_comprehension_vars(subject, errors, active_vars)
-            for case in cases:
-                _validate_comprehension_vars(case.pattern, errors, active_vars)
-                _validate_comprehension_vars(case.body, errors, active_vars)
-            if else_case is not None:
-                _validate_comprehension_vars(else_case, errors, active_vars)
+            _validate_match_node(node, errors, active_vars)
 
 
 def validate_expr(
@@ -217,13 +246,9 @@ def validate_expr(
     list[ExprError]
         Empty list means the expression is valid.
     """
-    errors: list[ExprError] = []
-
-    try:
-        ast = parse_expr(expr_str)
-    except ExpressionSyntaxError as exc:
-        errors.append(ExprError(message=str(exc), pos=exc.pos))
-        return errors  # can't do further checks without a valid AST
+    ast, errors = _parse_expr_for_validation(expr_str)
+    if ast is None:
+        return errors
 
     # Collect free names and perform optional registry checks
     _validate_comprehension_vars(ast, errors)

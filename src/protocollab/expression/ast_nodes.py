@@ -13,6 +13,8 @@ ASTNode = Union[
     "Name",
     "Attribute",
     "Subscript",
+    "List",
+    "Dict",
     "ListLiteral",
     "DictLiteral",
     "InOp",
@@ -53,6 +55,26 @@ class Name:
 @dataclass(frozen=True)
 class Wildcard:
     """Wildcard pattern for match cases: ``_``."""
+
+
+@dataclass(frozen=True)
+class List:
+    """Legacy list-literal node.
+
+    The parser emits :class:`ListLiteral` in current releases.
+    """
+
+    elements: tuple[ASTNode, ...]
+
+
+@dataclass(frozen=True)
+class Dict:
+    """Legacy dict-literal node represented as key/value pairs.
+
+    The parser emits :class:`DictLiteral` in current releases.
+    """
+
+    pairs: tuple[tuple[ASTNode, ASTNode], ...]
 
 
 # ---------------------------------------------------------------------------

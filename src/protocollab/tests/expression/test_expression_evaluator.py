@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from protocollab.expression import ExpressionEvalError, evaluate, parse_expr
+from protocollab.expression.ast_nodes import Dict, List, Literal, Name
 
 
 class TestEvaluate:
@@ -31,6 +32,12 @@ class TestEvaluate:
         assert evaluate(parse_expr("[1, 2, x]"), {"x": 3}) == [1, 2, 3]
         assert evaluate(parse_expr('{"a": x}'), {"x": 10}) == {"a": 10}
         assert evaluate(parse_expr("x in [1, 2, 3]"), {"x": 2}) is True
+
+    def test_legacy_list_dict_nodes(self) -> None:
+        legacy_list = List(elements=(Literal(1), Name("x"), Literal(3)))
+        legacy_dict = Dict(pairs=((Literal("count"), Name("x")), (Literal("fixed"), Literal(7))))
+        assert evaluate(legacy_list, {"x": 2}) == [1, 2, 3]
+        assert evaluate(legacy_dict, {"x": 2}) == {"count": 2, "fixed": 7}
 
     def test_arithmetic_and_bitwise(self) -> None:
         assert evaluate(parse_expr("3 + 4"), {}) == 7

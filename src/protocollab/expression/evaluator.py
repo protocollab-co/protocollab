@@ -10,8 +10,10 @@ from protocollab.expression.ast_nodes import (
     Attribute,
     BinOp,
     Comprehension,
+    Dict,
     DictLiteral,
     InOp,
+    List,
     ListLiteral,
     Literal,
     Match,
@@ -120,9 +122,23 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
         case ListLiteral(elements=elements):
             return [evaluate(el, context) for el in elements]
 
+        case List(elements=elements):
+            return [evaluate(el, context) for el in elements]
+
         case DictLiteral(keys=keys, values=values):
             out: dict[Any, Any] = {}
             for key_node, value_node in zip(keys, values):
+                key = evaluate(key_node, context)
+                try:
+                    hash(key)
+                except TypeError as exc:
+                    raise ExpressionEvalError(f"Unhashable dict key {key!r}: {exc}")
+                out[key] = evaluate(value_node, context)
+            return out
+
+        case Dict(pairs=pairs):
+            out: dict[Any, Any] = {}
+            for key_node, value_node in pairs:
                 key = evaluate(key_node, context)
                 try:
                     hash(key)

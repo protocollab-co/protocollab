@@ -149,6 +149,52 @@ def _evaluate_comprehension(node: Comprehension, context: dict[str, Any]) -> Any
     raise ExpressionEvalError(f"Unsupported comprehension kind {node.kind!r}")
 
 
+def _evaluate_attribute(node: Attribute, context: dict[str, Any]) -> Any:
+    obj_val = evaluate(node.obj, context)
+    if isinstance(obj_val, dict):
+        if node.attr not in obj_val:
+            raise ExpressionEvalError(f"Attribute {node.attr!r} not found in {obj_val!r}")
+        return obj_val[node.attr]
+    try:
+        return getattr(obj_val, node.attr)
+    except AttributeError:
+        raise ExpressionEvalError(f"Object {obj_val!r} has no attribute {node.attr!r}")
+
+
+def _evaluate_subscript(node: Subscript, context: dict[str, Any]) -> Any:
+    obj_val = evaluate(node.obj, context)
+    idx_val = evaluate(node.index, context)
+    try:
+        return obj_val[idx_val]
+    except (IndexError, KeyError, TypeError) as exc:
+        raise ExpressionEvalError(str(exc))
+
+
+def _evaluate_binop(node: BinOp, context: dict[str, Any]) -> Any:
+    fn = _BINOP_TABLE.get(node.op)
+    if fn is None:
+        raise ExpressionEvalError(f"Unknown operator {node.op!r}")
+
+    lval = evaluate(node.left, context)
+    rval = evaluate(node.right, context)
+    try:
+        return fn(lval, rval)
+    except ZeroDivisionError:
+        raise ExpressionEvalError("Division by zero")
+    except TypeError as exc:
+        raise ExpressionEvalError(str(exc))
+
+
+def _evaluate_match(node: Match, context: dict[str, Any]) -> Any:
+    subject_value = evaluate(node.subject, context)
+    for case in node.cases:
+        if _match_case(case, subject_value, context):
+            return evaluate(case.body, context)
+    if node.else_case is not None:
+        return evaluate(node.else_case, context)
+    return None
+
+
 def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
     """Recursively evaluate *node* in the given *context*.
 
@@ -182,23 +228,10 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
             return context[n]
 
         case Attribute(obj=obj_node, attr=attr):
-            obj_val = evaluate(obj_node, context)
-            if isinstance(obj_val, dict):
-                if attr not in obj_val:
-                    raise ExpressionEvalError(f"Attribute {attr!r} not found in {obj_val!r}")
-                return obj_val[attr]
-            try:
-                return getattr(obj_val, attr)
-            except AttributeError:
-                raise ExpressionEvalError(f"Object {obj_val!r} has no attribute {attr!r}")
+            return _evaluate_attribute(node, context)
 
         case Subscript(obj=obj_node, index=idx_node):
-            obj_val = evaluate(obj_node, context)
-            idx_val = evaluate(idx_node, context)
-            try:
-                return obj_val[idx_val]
-            except (IndexError, KeyError, TypeError) as exc:
-                raise ExpressionEvalError(str(exc))
+            return _evaluate_subscript(node, context)
 
         case ListLiteral(elements=elements):
             return _evaluate_sequence(elements, context)
@@ -231,17 +264,7 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
             return not evaluate(operand, context)
 
         case BinOp(left=left, op=op, right=right):
-            fn = _BINOP_TABLE.get(op)
-            if fn is None:
-                raise ExpressionEvalError(f"Unknown operator {op!r}")
-            lval = evaluate(left, context)
-            rval = evaluate(right, context)
-            try:
-                return fn(lval, rval)
-            except ZeroDivisionError:
-                raise ExpressionEvalError("Division by zero")
-            except TypeError as exc:
-                raise ExpressionEvalError(str(exc))
+            return _evaluate_binop(node, context)
 
         case Ternary(condition=cond, value_if_true=vt, value_if_false=vf):
             if evaluate(cond, context):
@@ -252,13 +275,7 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
             return _evaluate_comprehension(node, context)
 
         case Match(subject=subject, cases=cases, else_case=else_case):
-            subject_value = evaluate(subject, context)
-            for case in cases:
-                if _match_case(case, subject_value, context):
-                    return evaluate(case.body, context)
-            if else_case is not None:
-                return evaluate(else_case, context)
-            return None
+            return _evaluate_match(node, context)
 
         case _:
             raise ExpressionEvalError(f"Unknown AST node type: {type(node)!r}")

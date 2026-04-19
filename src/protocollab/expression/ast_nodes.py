@@ -11,6 +11,9 @@ ASTNodeSequence = tuple["ASTNode", ...]
 ASTNodeList = list["ASTNode"]
 ASTNodePair = tuple["ASTNode", "ASTNode"]
 ASTNodePairs = tuple[ASTNodePair, ...]
+ComprehensionKind = str
+UnaryOperator = str
+BinaryOperator = str
 
 # ---------------------------------------------------------------------------
 # Type alias for any AST node
@@ -151,7 +154,7 @@ class Comprehension:
     Example: ``any(x > 0 for x in values if x != 3)``.
     """
 
-    kind: str
+    kind: ComprehensionKind
     expr: ASTNode
     var: Name
     iterable: ASTNode
@@ -190,7 +193,7 @@ class UnaryOp:
         The operand expression.
     """
 
-    op: str  # "-" | "not"
+    op: UnaryOperator  # "-" | "not"
     operand: ASTNode
 
 
@@ -210,7 +213,7 @@ class BinOp:
     """
 
     left: ASTNode
-    op: str
+    op: BinaryOperator
     right: ASTNode
 
 

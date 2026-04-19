@@ -141,7 +141,7 @@ def make_tls_sni_analysis(out_dir: Path) -> None:
     3 packets with different SNI lengths:
       #1  sni_length=14  sni_name="cloudflare.com"   → Medium  (>10, ≤20)
       #2  sni_length=11  sni_name="netflix.com"       → Medium
-      #3  sni_length=32  sni_name=<random 32-char>    → Long/Anomaly (>20)
+            #3  sni_length=39  sni_name=<random 32-char>    → Long/Anomaly (>20)
     """
     CLIENTHELLO = 0x01
     TLS12 = 0x0303

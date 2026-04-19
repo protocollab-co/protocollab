@@ -61,15 +61,15 @@ try_download() {
 echo ""
 echo "==> Case: ip_scoped"
 try_download \
-    "ipv4frags.pcap (Wireshark SampleCaptures)" \
-    "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=ipv4frags.pcap" \
+    "ipv4frags.pcap (Wireshark GitHub mirror)" \
+    "https://github.com/wireshark/wireshark/raw/master/test/captures/ipv4frags.pcap" \
     "ip_scoped/real_sample.pcap"
 
-# Fallback: capture from a well-known Wireshark samples mirror
+# Fallback: legacy wiki URL (kept as a best-effort backup)
 if [ ! -f "ip_scoped/real_sample.pcap" ]; then
     try_download \
-        "ipv4frags.pcap (alternate mirror)" \
-        "https://github.com/wireshark/wireshark/raw/master/test/captures/ipv4frags.pcap" \
+        "ipv4frags.pcap (legacy wiki URL)" \
+        "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=ipv4frags.pcap" \
         "ip_scoped/real_sample.pcap"
 fi
 

@@ -220,7 +220,7 @@ make fetch-samples
 
 | Файл | Источник | Кейсы |
 |------|----------|-------|
-| `ip_scoped/real_sample.pcap` | Wireshark SampleCaptures — `ipv4frags.pcap` | ip_scoped, session_id |
+| `ip_scoped/real_sample.pcap` | Wireshark test captures (GitHub mirror) — `ipv4frags.pcap` | ip_scoped, session_id |
 | `tls_weak_cipher/real_sample.pcapng` | Lekensteyn/wireshark-notes — `imap-ssl.pcapng` | tls_weak_cipher, tls_sni_analysis |
 
 Если автоматическая загрузка недоступна, скачайте файлы вручную:
@@ -228,7 +228,7 @@ make fetch-samples
 ```bash
 # IPv4 дамп (ip_scoped и session_id):
 curl -L -o ip_scoped/real_sample.pcap \
-  "https://wiki.wireshark.org/SampleCaptures?action=AttachFile&do=get&target=ipv4frags.pcap"
+  "https://github.com/wireshark/wireshark/raw/master/test/captures/ipv4frags.pcap"
 cp ip_scoped/real_sample.pcap session_id/real_sample.pcap
 
 # TLS дамп (tls_weak_cipher и tls_sni_analysis):
@@ -269,3 +269,11 @@ python tools/make_samples.py
 
 Скрипт `tools/make_samples.py` использует только стандартную библиотеку
 Python и полностью воспроизводит каждый пакет по спецификации.
+
+Поскольку `sample.pcap` — бинарные файлы, их диффы в PR обычно нечитаемы.
+Для проверки воспроизводимости используйте:
+
+```bash
+make make-samples
+git diff --stat
+```

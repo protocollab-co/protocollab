@@ -118,7 +118,8 @@ assert_count() {
 
     local count
     count=$(tshark -r "$pcap" -X "lua_script:${lua}" -Y "$filter" 2>/dev/null \
-            | wc -l | tr -d ' ')
+            | wc -l)
+    count=${count// /}
 
     if [ "$count" -eq "$expected" ]; then
         _pass "${label}  (filter: ${filter}  →  ${count} frame(s))"
@@ -184,6 +185,10 @@ assert_values "session_with_service per-frame" "$PCAP" "$LUA" \
     "session_demo.session_with_service" \
     "1233" "1233" "83" "83"
 
+assert_values "session_key per-frame" "$PCAP" "$LUA" \
+    "session_demo.session_key" \
+    "3" "3" "3" "3"
+
 assert_count 'session_with_service=="1233" → 2' "$PCAP" "$LUA" \
     'session_demo.session_with_service == "1233"' 2
 
@@ -231,7 +236,8 @@ PCAP="tls_weak_cipher/sample.pcap"
 LUA="results/tls_weak_cipher.lua"
 
 # Total decoded frames
-TOTAL=$(tshark -r "$PCAP" -X "lua_script:${LUA}" 2>/dev/null | wc -l | tr -d ' ')
+TOTAL=$(tshark -r "$PCAP" -X "lua_script:${LUA}" 2>/dev/null | wc -l)
+TOTAL=${TOTAL// /}
 if [ "$TOTAL" -eq 2 ]; then
     _pass "total decoded frames = 2"
 else

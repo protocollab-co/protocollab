@@ -1,8 +1,11 @@
+
 # ADR 003: Extract YAML Merge into a Separate Submodule
+
+> **Superseded by [ADR 004](004_YAML_Transformation_Library.md)**
 
 ## Status
 
-Proposed
+Superseded by [ADR 004](004_YAML_Transformation_Library.md)
 
 ## Date
 

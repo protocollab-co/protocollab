@@ -12,6 +12,7 @@ Write a single `.yaml` spec and generate Python parsers, Wireshark dissectors, m
 [![Coverage](https://img.shields.io/badge/coverage-100%25%20critical__modules-brightgreen)](#project-status)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#installation)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![protocollab-octapi - Lua generator Hackathon demo](https://img.shields.io/badge/protocollab--octapi-demo-blue?logo=github)](https://github.com/protocollab-co/protocollab-octapi)
 
 ---
 
@@ -49,6 +50,11 @@ Community-driven protocol specifications live in [protocollab-specs](https://git
 The `protocollab-specs` repository is the central, curated collection of YAML protocol definitions compatible with `protocollab`. Every spec can be validated, versioned, and used to generate parsers, Wireshark dissectors, and test suites.
 
 Use `protocollab` when you want the framework and generators. Use `protocollab-specs` when you want reusable specifications maintained as a community catalog.
+
+## Related Projects
+
+**protocollab-octapi** – a hackathon MVP that generates Lua code for MWS Octapi using `protocollab` components.  
+See: [github.com/protocollab-co/protocollab-octapi](https://github.com/protocollab-co/protocollab-octapi)
 
 ---
 

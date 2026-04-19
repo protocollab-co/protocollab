@@ -46,6 +46,40 @@ class ExprError:
         return self.message
 
 
+def _collect_name_nodes(nodes: list[ASTNode] | tuple[ASTNode, ...], names: set[str], bound: set[str]) -> None:
+    for child in nodes:
+        _collect_names(child, names, bound)
+
+
+def _collect_name_pairs(
+    pairs: tuple[tuple[ASTNode, ASTNode], ...],
+    names: set[str],
+    bound: set[str],
+) -> None:
+    for key, value in pairs:
+        _collect_names(key, names, bound)
+        _collect_names(value, names, bound)
+
+
+def _validate_nodes(
+    nodes: list[ASTNode] | tuple[ASTNode, ...],
+    errors: list[ExprError],
+    active_vars: set[str],
+) -> None:
+    for child in nodes:
+        _validate_comprehension_vars(child, errors, active_vars)
+
+
+def _validate_pairs(
+    pairs: tuple[tuple[ASTNode, ASTNode], ...],
+    errors: list[ExprError],
+    active_vars: set[str],
+) -> None:
+    for key, value in pairs:
+        _validate_comprehension_vars(key, errors, active_vars)
+        _validate_comprehension_vars(value, errors, active_vars)
+
+
 def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None) -> None:
     """Recursively collect all free Name references in *node*."""
     bound = set() if bound is None else bound
@@ -62,20 +96,14 @@ def _collect_names(node: ASTNode, names: set[str], bound: set[str] | None = None
             _collect_names(obj, names, bound)
             _collect_names(idx, names, bound)
         case ListLiteral(elements=elements):
-            for element in elements:
-                _collect_names(element, names, bound)
+            _collect_name_nodes(elements, names, bound)
         case List(elements=elements):
-            for element in elements:
-                _collect_names(element, names, bound)
+            _collect_name_nodes(elements, names, bound)
         case DictLiteral(keys=keys, values=values):
-            for key in keys:
-                _collect_names(key, names, bound)
-            for value in values:
-                _collect_names(value, names, bound)
+            _collect_name_nodes(keys, names, bound)
+            _collect_name_nodes(values, names, bound)
         case Dict(pairs=pairs):
-            for key, value in pairs:
-                _collect_names(key, names, bound)
-                _collect_names(value, names, bound)
+            _collect_name_pairs(pairs, names, bound)
         case InOp(left=l, right=r):
             _collect_names(l, names, bound)
             _collect_names(r, names, bound)
@@ -136,20 +164,14 @@ def _validate_comprehension_vars(
             _validate_comprehension_vars(obj, errors, active_vars)
             _validate_comprehension_vars(idx, errors, active_vars)
         case ListLiteral(elements=elements):
-            for element in elements:
-                _validate_comprehension_vars(element, errors, active_vars)
+            _validate_nodes(elements, errors, active_vars)
         case List(elements=elements):
-            for element in elements:
-                _validate_comprehension_vars(element, errors, active_vars)
+            _validate_nodes(elements, errors, active_vars)
         case DictLiteral(keys=keys, values=values):
-            for key in keys:
-                _validate_comprehension_vars(key, errors, active_vars)
-            for value in values:
-                _validate_comprehension_vars(value, errors, active_vars)
+            _validate_nodes(keys, errors, active_vars)
+            _validate_nodes(values, errors, active_vars)
         case Dict(pairs=pairs):
-            for key, value in pairs:
-                _validate_comprehension_vars(key, errors, active_vars)
-                _validate_comprehension_vars(value, errors, active_vars)
+            _validate_pairs(pairs, errors, active_vars)
         case InOp(left=l, right=r):
             _validate_comprehension_vars(l, errors, active_vars)
             _validate_comprehension_vars(r, errors, active_vars)

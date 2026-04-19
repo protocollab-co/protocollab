@@ -274,10 +274,18 @@ def generate_cpp(file: str, output: str) -> None:
     _run_generate(file, target="cpp", output=output)
 
 
-_register_generate_command("mock-client", "mock-client", "Generate a mock client and its Python parser.")
-_register_generate_command("mock-server", "mock-server", "Generate a mock server and its Python parser.")
-_register_generate_command("l2-client", "l2-client", "Generate a Scapy L2 client and its Python parser.")
-_register_generate_command("l2-server", "l2-server", "Generate a Scapy L2 server and its Python parser.")
+_register_generate_command(
+    "mock-client", "mock-client", "Generate a mock client and its Python parser."
+)
+_register_generate_command(
+    "mock-server", "mock-server", "Generate a mock server and its Python parser."
+)
+_register_generate_command(
+    "l2-client", "l2-client", "Generate a Scapy L2 client and its Python parser."
+)
+_register_generate_command(
+    "l2-server", "l2-server", "Generate a Scapy L2 server and its Python parser."
+)
 _register_generate_command(
     "l3-client", "l3-client", "Generate a TCP L3 socket client and its Python parser."
 )

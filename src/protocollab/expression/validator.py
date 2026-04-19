@@ -46,7 +46,9 @@ class ExprError:
         return self.message
 
 
-def _collect_name_nodes(nodes: list[ASTNode] | tuple[ASTNode, ...], names: set[str], bound: set[str]) -> None:
+def _collect_name_nodes(
+    nodes: list[ASTNode] | tuple[ASTNode, ...], names: set[str], bound: set[str]
+) -> None:
     for child in nodes:
         _collect_names(child, names, bound)
 
@@ -108,7 +110,9 @@ def _validate_comprehension_node(
 ) -> None:
     if node.var.name in active_vars:
         errors.append(
-            ExprError(message=f"Comprehension variable '{node.var.name}' conflicts with outer scope")
+            ExprError(
+                message=f"Comprehension variable '{node.var.name}' conflicts with outer scope"
+            )
         )
     _validate_comprehension_vars(node.iterable, errors, active_vars)
     local = set(active_vars)

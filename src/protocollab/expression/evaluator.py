@@ -68,7 +68,9 @@ _BINOP_TABLE: dict[str, Callable[[Any, Any], Any]] = {
 }
 
 
-def _evaluate_sequence(elements: list[ASTNode] | tuple[ASTNode, ...], context: dict[str, Any]) -> list[Any]:
+def _evaluate_sequence(
+    elements: list[ASTNode] | tuple[ASTNode, ...], context: dict[str, Any]
+) -> list[Any]:
     return [evaluate(element, context) for element in elements]
 
 

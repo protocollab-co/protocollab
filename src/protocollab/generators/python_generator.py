@@ -47,9 +47,7 @@ def _process_field(raw: Dict[str, Any]) -> Dict[str, Any]:
     if spec_type == "str":
         size = raw.get("size")
         if size is None:
-            raise GeneratorError(
-                f"Field '{field_id}' of type 'str' requires a 'size' attribute."
-            )
+            raise GeneratorError(f"Field '{field_id}' of type 'str' requires a 'size' attribute.")
         fmt_char = f"{size}s"
         py_type = "bytes"
 

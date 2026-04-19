@@ -38,6 +38,7 @@ PRIMITIVE_TYPES: dict[str, PrimitiveType] = {
     # Unsigned integers
     "u1": PrimitiveType("u1", size_bytes=1, struct_format="B", lua_field_type="uint8"),
     "u2": PrimitiveType("u2", size_bytes=2, struct_format="H", lua_field_type="uint16"),
+    # No native struct code for uint24; generators handle u3 as a special case.
     "u3": PrimitiveType("u3", size_bytes=3, struct_format=None, lua_field_type="uint24"),
     "u4": PrimitiveType("u4", size_bytes=4, struct_format="I", lua_field_type="uint32"),
     "u8": PrimitiveType("u8", size_bytes=8, struct_format="Q", lua_field_type="uint64"),

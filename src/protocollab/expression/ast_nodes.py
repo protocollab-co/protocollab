@@ -5,6 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional, Union
 
+LiteralValue = Any
+OptionalASTNode = Optional["ASTNode"]
+ASTNodeSequence = tuple["ASTNode", ...]
+ASTNodeList = list["ASTNode"]
+ASTNodePair = tuple["ASTNode", "ASTNode"]
+ASTNodePairs = tuple[ASTNodePair, ...]
+ComprehensionKind = str
+UnaryOperator = str
+BinaryOperator = str
+
 # ---------------------------------------------------------------------------
 # Type alias for any AST node
 # ---------------------------------------------------------------------------
@@ -39,7 +49,7 @@ class Literal:
     Examples: ``42``, ``"hello"``, ``true``, ``false``, ``0xFF``.
     """
 
-    value: Any  # int | str | bool
+    value: LiteralValue  # int | str | bool
 
 
 @dataclass(frozen=True)
@@ -64,7 +74,7 @@ class List:
     The parser emits :class:`ListLiteral` in current releases.
     """
 
-    elements: tuple[ASTNode, ...]
+    elements: ASTNodeSequence
 
 
 @dataclass(frozen=True)
@@ -74,7 +84,7 @@ class Dict:
     The parser emits :class:`DictLiteral` in current releases.
     """
 
-    pairs: tuple[tuple[ASTNode, ASTNode], ...]
+    pairs: ASTNodePairs
 
 
 # ---------------------------------------------------------------------------
@@ -118,15 +128,15 @@ class Subscript:
 class ListLiteral:
     """List literal expression: ``[1, 2, x]``."""
 
-    elements: list[ASTNode]
+    elements: ASTNodeList
 
 
 @dataclass(frozen=True)
 class DictLiteral:
     """Dict literal expression: ``{"key": value}``."""
 
-    keys: list[ASTNode]
-    values: list[ASTNode]
+    keys: ASTNodeList
+    values: ASTNodeList
 
 
 @dataclass(frozen=True)
@@ -144,11 +154,11 @@ class Comprehension:
     Example: ``any(x > 0 for x in values if x != 3)``.
     """
 
-    kind: str
+    kind: ComprehensionKind
     expr: ASTNode
     var: Name
     iterable: ASTNode
-    condition: Optional[ASTNode]
+    condition: OptionalASTNode
 
 
 @dataclass(frozen=True)
@@ -168,7 +178,7 @@ class Match:
 
     subject: ASTNode
     cases: list[MatchCase]
-    else_case: Optional[ASTNode]
+    else_case: OptionalASTNode
 
 
 @dataclass(frozen=True)
@@ -183,7 +193,7 @@ class UnaryOp:
         The operand expression.
     """
 
-    op: str  # "-" | "not"
+    op: UnaryOperator  # "-" | "not"
     operand: ASTNode
 
 
@@ -203,7 +213,7 @@ class BinOp:
     """
 
     left: ASTNode
-    op: str
+    op: BinaryOperator
     right: ASTNode
 
 

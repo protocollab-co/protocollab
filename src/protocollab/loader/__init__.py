@@ -51,6 +51,32 @@ __all__ = [
 _default_loader = ProtocolLoader()
 
 
+def _build_loader(
+    cache: Optional[BaseCache] = None,
+    config: Optional[dict] = None,
+) -> ProtocolLoader:
+    return ProtocolLoader(cache=cache, config=config)
+
+
+def _should_use_isolated_loader(config: Optional[dict], use_cache: bool) -> bool:
+    return bool(config) or not use_cache
+
+
+def _build_isolated_loader(config: Optional[dict], use_cache: bool) -> ProtocolLoader:
+    cache = MemoryCache() if use_cache else None
+    return _build_loader(cache=cache, config=config)
+
+
+def _load_with_loader(loader: ProtocolLoader, file_path: str) -> ProtocolData:
+    return loader.load(file_path)
+
+
+def _select_loader(config: Optional[dict], use_cache: bool) -> ProtocolLoader:
+    if _should_use_isolated_loader(config, use_cache):
+        return _build_isolated_loader(config, use_cache)
+    return _default_loader
+
+
 def get_global_loader() -> ProtocolLoader:
     """Return the module-level global :class:`ProtocolLoader`.
 
@@ -91,7 +117,7 @@ def configure_global(
         other threads are using :func:`load_protocol`.
     """
     global _default_loader
-    _default_loader = ProtocolLoader(
+    _default_loader = _build_loader(
         cache=MemoryCache(max_size=max_cache_size),
         config=config,
     )
@@ -136,12 +162,4 @@ def load_protocol(
     The global loader is **not thread-safe**.  For multi-threaded
     applications, create separate :class:`ProtocolLoader` instances.
     """
-    if config or not use_cache:
-        # Create a fresh loader so the config and cache behaviour are isolated.
-        loader = ProtocolLoader(
-            cache=MemoryCache() if use_cache else None,
-            config=config,
-        )
-        return loader.load(file_path)
-
-    return _default_loader.load(file_path)
+    return _load_with_loader(_select_loader(config, use_cache), file_path)

@@ -46,7 +46,7 @@ _LUA_TYPE_MAP: Dict[str, tuple] = {
 _TEMPLATES_DIR = Path(__file__).parent / "templates" / "lua"
 _INSTANCE_ID_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 # Keep expression-reserved names in sync with lexer keywords.
-_EXPR_RESERVED_NAMES = set(getattr(expression_lexer, "_KEYWORDS", set()))
+_EXPR_RESERVED_NAMES = set(expression_lexer.KEYWORDS)
 _LUA_KEYWORDS = {
     "and",
     "break",
@@ -85,6 +85,114 @@ def _lua_literal(value: Any) -> str:
     return repr(value)
 
 
+def _compile_lua_list(elements: list[Any] | tuple[Any, ...]) -> str:
+    compiled_elems = ", ".join(_compile_lua_expr(element) for element in elements)
+    return f"{{{compiled_elems}}}"
+
+
+def _compile_lua_dict_pairs(pairs: list[tuple[Any, Any]] | tuple[tuple[Any, Any], ...]) -> str:
+    compiled_pairs: list[str] = []
+    for key, value in pairs:
+        compiled_value = _compile_lua_expr(value)
+        if isinstance(key, Literal) and isinstance(key.value, str):
+            compiled_key = _lua_string_literal(key.value)
+        else:
+            compiled_key = _compile_lua_expr(key)
+        compiled_pairs.append(f"[{compiled_key}]={compiled_value}")
+    return "{" + ", ".join(compiled_pairs) + "}"
+
+
+def _compile_lua_comprehension(node: Comprehension) -> str:
+    var_name = f"value_{node.var.name}"
+    iterable = _compile_lua_expr(node.iterable)
+    expr = _compile_lua_expr(node.expr)
+    condition = _compile_lua_expr(node.condition) if node.condition else "true"
+    kind = node.kind
+
+    if kind == "any":
+        return (
+            f"(function() for _, {var_name} in ipairs({iterable}) do "
+            f"if ({condition}) and ({expr}) then return true end end; "
+            f"return false end)()"
+        )
+    if kind == "all":
+        return (
+            f"(function() for _, {var_name} in ipairs({iterable}) do "
+            f"if ({condition}) and not ({expr}) then return false end end; "
+            f"return true end)()"
+        )
+    if kind == "first":
+        return (
+            f"(function() for _, {var_name} in ipairs({iterable}) do "
+            f"if ({condition}) then return ({expr}) end end; "
+            f"return nil end)()"
+        )
+    if kind == "filter":
+        return (
+            f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
+            f"if ({condition}) and ({expr}) then table.insert(result, {var_name}) end end; "
+            f"return result end)()"
+        )
+    if kind == "map":
+        return (
+            f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
+            f"if ({condition}) then table.insert(result, ({expr})) end end; "
+            f"return result end)()"
+        )
+
+    raise GeneratorError(f"Unsupported comprehension kind {kind!r} in Lua expression.")
+
+
+def _compile_lua_match(node: Match) -> str:
+    subject = _compile_lua_expr(node.subject)
+
+    conditions: list[tuple[str, str]] = []
+    default_body: str | None = None
+    for index, case in enumerate(node.cases):
+        pattern = case.pattern
+        body = _compile_lua_expr(case.body)
+
+        if isinstance(pattern, Wildcard):
+            if default_body is not None:
+                raise GeneratorError("Match expression defines multiple default branches.")
+            if index != len(node.cases) - 1:
+                raise GeneratorError("Wildcard '_' pattern must be the last match case.")
+            if node.else_case is not None:
+                raise GeneratorError(
+                    "Match expression cannot define both wildcard '_' and else branch."
+                )
+            default_body = body
+        elif isinstance(pattern, Literal):
+            compiled_pattern = _lua_literal(pattern.value)
+            conditions.append((f"({subject}) == ({compiled_pattern})", body))
+        else:
+            compiled_pattern = _compile_lua_expr(pattern)
+            conditions.append((f"({subject}) == ({compiled_pattern})", body))
+
+    if node.else_case is not None:
+        if default_body is not None:
+            raise GeneratorError("Match expression defines multiple default branches.")
+        default_body = _compile_lua_expr(node.else_case)
+
+    if not conditions and default_body is None:
+        raise GeneratorError("Match expression has no cases.")
+
+    lua_code = "(function() "
+    for idx, (cond, body) in enumerate(conditions):
+        if idx == 0:
+            lua_code += f"if {cond} then return ({body}) "
+        else:
+            lua_code += f"elseif {cond} then return ({body}) "
+    if default_body is not None:
+        if conditions:
+            lua_code += f"else return ({default_body}) end end)()"
+        else:
+            lua_code += f"return ({default_body}) end)()"
+    else:
+        lua_code += "else return nil end end)()"
+    return lua_code
+
+
 def _compile_lua_expr(node: Any) -> str:
     if isinstance(node, Literal):
         return _lua_literal(node.value)
@@ -95,35 +203,13 @@ def _compile_lua_expr(node: Any) -> str:
     if isinstance(node, Subscript):
         return f"({_compile_lua_expr(node.obj)})[{_compile_lua_expr(node.index)}]"
     if isinstance(node, ListLiteral):
-        compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
-        return f"{{{compiled_elems}}}"
+        return _compile_lua_list(node.elements)
     if isinstance(node, ListNode):
-        compiled_elems = ", ".join(_compile_lua_expr(e) for e in node.elements)
-        return f"{{{compiled_elems}}}"
+        return _compile_lua_list(node.elements)
     if isinstance(node, DictLiteral):
-        # Compile dict keys with bracket syntax to avoid Lua keyword/identifier pitfalls.
-        pairs = []
-        for key, value in zip(node.keys, node.values):
-            compiled_value = _compile_lua_expr(value)
-            if isinstance(key, Literal) and isinstance(key.value, str):
-                compiled_key = _lua_string_literal(key.value)
-                pairs.append(f"[{compiled_key}]={compiled_value}")
-            else:
-                # Computed key: use {[key]=value}
-                compiled_key = _compile_lua_expr(key)
-                pairs.append(f"[{compiled_key}]={compiled_value}")
-        return "{" + ", ".join(pairs) + "}"
+        return _compile_lua_dict_pairs(list(zip(node.keys, node.values)))
     if isinstance(node, DictNode):
-        pairs = []
-        for key, value in node.pairs:
-            compiled_value = _compile_lua_expr(value)
-            if isinstance(key, Literal) and isinstance(key.value, str):
-                compiled_key = _lua_string_literal(key.value)
-                pairs.append(f"[{compiled_key}]={compiled_value}")
-            else:
-                compiled_key = _compile_lua_expr(key)
-                pairs.append(f"[{compiled_key}]={compiled_value}")
-        return "{" + ", ".join(pairs) + "}"
+        return _compile_lua_dict_pairs(node.pairs)
     if isinstance(node, InOp):
         # x in values → check membership (via table.contains helper or loop)
         # For now, generate a helper function call
@@ -131,99 +217,9 @@ def _compile_lua_expr(node: Any) -> str:
         right = _compile_lua_expr(node.right)
         return f"(_contains({right}, {left}))"
     if isinstance(node, Comprehension):
-        # Comprehensions: any(x > 0 for x in values), all(...), first(...), filter(...), map(...)
-        var_name = f"value_{node.var.name}"
-        iterable = _compile_lua_expr(node.iterable)
-        expr = _compile_lua_expr(node.expr)
-        condition = _compile_lua_expr(node.condition) if node.condition else "true"
-        kind = node.kind
-
-        if kind == "any":
-            return (
-                f"(function() for _, {var_name} in ipairs({iterable}) do "
-                f"if ({condition}) and ({expr}) then return true end end; "
-                f"return false end)()"
-            )
-        elif kind == "all":
-            return (
-                f"(function() for _, {var_name} in ipairs({iterable}) do "
-                f"if ({condition}) and not ({expr}) then return false end end; "
-                f"return true end)()"
-            )
-        elif kind == "first":
-            return (
-                f"(function() for _, {var_name} in ipairs({iterable}) do "
-                f"if ({condition}) then return ({expr}) end end; "
-                f"return nil end)()"
-            )
-        elif kind == "filter":
-            return (
-                f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
-                f"if ({condition}) and ({expr}) then table.insert(result, {var_name}) end end; "
-                f"return result end)()"
-            )
-        elif kind == "map":
-            return (
-                f"(function() local result = {{}}; for _, {var_name} in ipairs({iterable}) do "
-                f"if ({condition}) then table.insert(result, ({expr})) end end; "
-                f"return result end)()"
-            )
-        else:
-            raise GeneratorError(f"Unsupported comprehension kind {kind!r} in Lua expression.")
+        return _compile_lua_comprehension(node)
     if isinstance(node, Match):
-        # Match expressions: match x with 1 -> "a" | 2 -> "b" | else -> "c"
-        subject = _compile_lua_expr(node.subject)
-
-        # Build if/elseif/else chain and ensure a single default branch.
-        conditions = []
-        default_body = None
-        for index, case in enumerate(node.cases):
-            pattern = case.pattern
-            body = _compile_lua_expr(case.body)
-
-            if isinstance(pattern, Wildcard):
-                if default_body is not None:
-                    raise GeneratorError("Match expression defines multiple default branches.")
-                if index != len(node.cases) - 1:
-                    raise GeneratorError("Wildcard '_' pattern must be the last match case.")
-                if node.else_case is not None:
-                    raise GeneratorError(
-                        "Match expression cannot define both wildcard '_' and else branch."
-                    )
-                default_body = body
-            elif isinstance(pattern, Literal):
-                # Literal pattern: subject == pattern
-                compiled_pattern = _lua_literal(pattern.value)
-                conditions.append((f"({subject}) == ({compiled_pattern})", body))
-            else:
-                # Complex pattern: compile it and check equality
-                compiled_pattern = _compile_lua_expr(pattern)
-                conditions.append((f"({subject}) == ({compiled_pattern})", body))
-
-        # Add else case if present
-        if node.else_case:
-            if default_body is not None:
-                raise GeneratorError("Match expression defines multiple default branches.")
-            default_body = _compile_lua_expr(node.else_case)
-
-        if not conditions and default_body is None:
-            raise GeneratorError("Match expression has no cases.")
-
-        # Build the if/elseif/else chain as an IIFE
-        lua_code = "(function() "
-        for i, (cond, body) in enumerate(conditions):
-            if i == 0:
-                lua_code += f"if {cond} then return ({body}) "
-            else:
-                lua_code += f"elseif {cond} then return ({body}) "
-        if default_body is not None:
-            if conditions:
-                lua_code += f"else return ({default_body}) end end)()"
-            else:
-                lua_code += f"return ({default_body}) end)()"
-        else:
-            lua_code += "else return nil end end)()"
-        return lua_code
+        return _compile_lua_match(node)
     if isinstance(node, Wildcard):
         # Wildcard outside of match context: not directly compilable
         raise GeneratorError("Wildcard '_' can only appear in match patterns.")
@@ -379,7 +375,8 @@ def _order_instances(instances: list[dict[str, Any]], field_ids: set[str]) -> li
         for instance in ready:
             ordered.append(instance)
             emitted_ids.add(instance["id"])
-            remaining.remove(instance)
+        ready_ids = {instance["id"] for instance in ready}
+        remaining = [instance for instance in remaining if instance["id"] not in ready_ids]
 
     return ordered
 

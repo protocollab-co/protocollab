@@ -297,6 +297,25 @@ class TestLuaGeneratorContent:
         assert 'if (value_type_id) == (1) then return ("one")' in src
         assert 'else return ("other")' in src
 
+    def test_filter_comprehension_uses_condition_and_expr(self, tmp_path):
+        spec = {
+            "meta": {"id": "expr_proto", "endian": "le"},
+            "seq": [{"id": "type_id", "type": "u1"}],
+            "instances": {
+                "filtered": {
+                    "value": "filter(x > 1 for x in [0, type_id, 3] if x != 3)",
+                    "wireshark": {"type": "string", "label": "Filtered"},
+                }
+            },
+        }
+        src = LuaGenerator().generate(spec, tmp_path)[0].read_text()
+        assert "for _, value_x in ipairs({0, value_type_id, 3}) do" in src
+        assert "if" in src
+        assert "(value_x) ~= (3)" in src
+        assert "(value_x) > (1)" in src
+        assert " and " in src
+        assert "table.insert(result, value_x)" in src
+
     def test_match_wildcard_and_else_together_raises(self, tmp_path):
         spec = {
             "meta": {"id": "expr_proto", "endian": "le"},

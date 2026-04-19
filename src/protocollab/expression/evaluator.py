@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable
+from typing import Any, Callable, Iterator
 
 from protocollab.expression.ast_nodes import (
     ASTNode,
@@ -68,6 +68,135 @@ _BINOP_TABLE: dict[str, Callable[[Any, Any], Any]] = {
 }
 
 
+def _evaluate_sequence(
+    elements: list[ASTNode] | tuple[ASTNode, ...], context: dict[str, Any]
+) -> list[Any]:
+    return [evaluate(element, context) for element in elements]
+
+
+def _evaluate_dict_pairs(
+    pairs: list[tuple[ASTNode, ASTNode]] | tuple[tuple[ASTNode, ASTNode], ...],
+    context: dict[str, Any],
+) -> dict[Any, Any]:
+    out: dict[Any, Any] = {}
+    for key_node, value_node in pairs:
+        key = evaluate(key_node, context)
+        try:
+            hash(key)
+        except TypeError as exc:
+            raise ExpressionEvalError(f"Unhashable dict key {key!r}: {exc}")
+        out[key] = evaluate(value_node, context)
+    return out
+
+
+def _iter_comprehension_contexts(
+    iterable_value: Any,
+    var_name: str,
+    context: dict[str, Any],
+) -> Iterator[tuple[Any, dict[str, Any]]]:
+    try:
+        iterator = iter(iterable_value)
+    except TypeError as exc:
+        raise ExpressionEvalError(f"Object is not iterable: {iterable_value!r} ({exc})")
+
+    for item in iterator:
+        local_ctx = dict(context)
+        local_ctx[var_name] = item
+        yield item, local_ctx
+
+
+def _evaluate_comprehension(node: Comprehension, context: dict[str, Any]) -> Any:
+    iterable_value = evaluate(node.iterable, context)
+
+    if node.kind == "any":
+        for _, local_ctx in _iter_comprehension_contexts(iterable_value, node.var.name, context):
+            if node.condition is not None and not evaluate(node.condition, local_ctx):
+                continue
+            if evaluate(node.expr, local_ctx):
+                return True
+        return False
+
+    if node.kind == "all":
+        for _, local_ctx in _iter_comprehension_contexts(iterable_value, node.var.name, context):
+            if node.condition is not None and not evaluate(node.condition, local_ctx):
+                continue
+            if not evaluate(node.expr, local_ctx):
+                return False
+        return True
+
+    if node.kind == "first":
+        for _, local_ctx in _iter_comprehension_contexts(iterable_value, node.var.name, context):
+            if node.condition is not None and not evaluate(node.condition, local_ctx):
+                continue
+            return evaluate(node.expr, local_ctx)
+        return None
+
+    if node.kind == "filter":
+        result: list[Any] = []
+        for item, local_ctx in _iter_comprehension_contexts(iterable_value, node.var.name, context):
+            if node.condition is not None and not evaluate(node.condition, local_ctx):
+                continue
+            if evaluate(node.expr, local_ctx):
+                result.append(item)
+        return result
+
+    if node.kind == "map":
+        result = []
+        for _, local_ctx in _iter_comprehension_contexts(iterable_value, node.var.name, context):
+            if node.condition is not None and not evaluate(node.condition, local_ctx):
+                continue
+            result.append(evaluate(node.expr, local_ctx))
+        return result
+
+    raise ExpressionEvalError(f"Unsupported comprehension kind {node.kind!r}")
+
+
+def _evaluate_attribute(node: Attribute, context: dict[str, Any]) -> Any:
+    obj_val = evaluate(node.obj, context)
+    if isinstance(obj_val, dict):
+        if node.attr not in obj_val:
+            raise ExpressionEvalError(f"Attribute {node.attr!r} not found in {obj_val!r}")
+        return obj_val[node.attr]
+    try:
+        return getattr(obj_val, node.attr)
+    except AttributeError:
+        raise ExpressionEvalError(f"Object {obj_val!r} has no attribute {node.attr!r}")
+
+
+def _evaluate_subscript(node: Subscript, context: dict[str, Any]) -> Any:
+    obj_val = evaluate(node.obj, context)
+    idx_val = evaluate(node.index, context)
+    try:
+        return obj_val[idx_val]
+    except (IndexError, KeyError, TypeError) as exc:
+        raise ExpressionEvalError(str(exc))
+
+
+def _evaluate_binop(node: BinOp, context: dict[str, Any]) -> Any:
+    fn = _BINOP_TABLE.get(node.op)
+    if fn is None:
+        raise ExpressionEvalError(f"Unknown operator {node.op!r}")
+
+    lval = evaluate(node.left, context)
+    rval = evaluate(node.right, context)
+    try:
+        return fn(lval, rval)
+    except ZeroDivisionError:
+        raise ExpressionEvalError("Division by zero")
+    except TypeError as exc:
+        raise ExpressionEvalError(str(exc))
+
+
+def _evaluate_match(node: Match, context: dict[str, Any]) -> Any:
+    subject_value = evaluate(node.subject, context)
+    for case in node.cases:
+        if _match_case(case, subject_value, context):
+            return evaluate(case.body, context)
+    if node.else_case is not None:
+        return evaluate(node.else_case, context)
+    return None
+
+
 def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
     """Recursively evaluate *node* in the given *context*.
 
@@ -100,52 +229,23 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
                 raise ExpressionEvalError(f"Undefined field {n!r}. Available: {sorted(context)}")
             return context[n]
 
-        case Attribute(obj=obj_node, attr=attr):
-            obj_val = evaluate(obj_node, context)
-            if isinstance(obj_val, dict):
-                if attr not in obj_val:
-                    raise ExpressionEvalError(f"Attribute {attr!r} not found in {obj_val!r}")
-                return obj_val[attr]
-            try:
-                return getattr(obj_val, attr)
-            except AttributeError:
-                raise ExpressionEvalError(f"Object {obj_val!r} has no attribute {attr!r}")
+        case Attribute():
+            return _evaluate_attribute(node, context)
 
-        case Subscript(obj=obj_node, index=idx_node):
-            obj_val = evaluate(obj_node, context)
-            idx_val = evaluate(idx_node, context)
-            try:
-                return obj_val[idx_val]
-            except (IndexError, KeyError, TypeError) as exc:
-                raise ExpressionEvalError(str(exc))
+        case Subscript():
+            return _evaluate_subscript(node, context)
 
         case ListLiteral(elements=elements):
-            return [evaluate(el, context) for el in elements]
+            return _evaluate_sequence(elements, context)
 
         case List(elements=elements):
-            return [evaluate(el, context) for el in elements]
+            return _evaluate_sequence(elements, context)
 
         case DictLiteral(keys=keys, values=values):
-            out: dict[Any, Any] = {}
-            for key_node, value_node in zip(keys, values):
-                key = evaluate(key_node, context)
-                try:
-                    hash(key)
-                except TypeError as exc:
-                    raise ExpressionEvalError(f"Unhashable dict key {key!r}: {exc}")
-                out[key] = evaluate(value_node, context)
-            return out
+            return _evaluate_dict_pairs(list(zip(keys, values)), context)
 
         case Dict(pairs=pairs):
-            out: dict[Any, Any] = {}
-            for key_node, value_node in pairs:
-                key = evaluate(key_node, context)
-                try:
-                    hash(key)
-                except TypeError as exc:
-                    raise ExpressionEvalError(f"Unhashable dict key {key!r}: {exc}")
-                out[key] = evaluate(value_node, context)
-            return out
+            return _evaluate_dict_pairs(pairs, context)
 
         case InOp(left=left, right=right):
             left_val = evaluate(left, context)
@@ -165,91 +265,19 @@ def evaluate(node: ASTNode, context: dict[str, Any]) -> Any:
         case UnaryOp(op="not", operand=operand):
             return not evaluate(operand, context)
 
-        case BinOp(left=left, op=op, right=right):
-            fn = _BINOP_TABLE.get(op)
-            if fn is None:
-                raise ExpressionEvalError(f"Unknown operator {op!r}")
-            lval = evaluate(left, context)
-            rval = evaluate(right, context)
-            try:
-                return fn(lval, rval)
-            except ZeroDivisionError:
-                raise ExpressionEvalError("Division by zero")
-            except TypeError as exc:
-                raise ExpressionEvalError(str(exc))
+        case BinOp():
+            return _evaluate_binop(node, context)
 
         case Ternary(condition=cond, value_if_true=vt, value_if_false=vf):
             if evaluate(cond, context):
                 return evaluate(vt, context)
             return evaluate(vf, context)
 
-        case Comprehension(kind=kind, expr=expr, var=var, iterable=iterable, condition=condition):
-            iterable_value = evaluate(iterable, context)
-            try:
-                iterator = iter(iterable_value)
-            except TypeError as exc:
-                raise ExpressionEvalError(f"Object is not iterable: {iterable_value!r} ({exc})")
+        case Comprehension():
+            return _evaluate_comprehension(node, context)
 
-            if kind == "any":
-                for item in iterator:
-                    local_ctx = dict(context)
-                    local_ctx[var.name] = item
-                    if condition is not None and not evaluate(condition, local_ctx):
-                        continue
-                    if evaluate(expr, local_ctx):
-                        return True
-                return False
-
-            if kind == "all":
-                for item in iterator:
-                    local_ctx = dict(context)
-                    local_ctx[var.name] = item
-                    if condition is not None and not evaluate(condition, local_ctx):
-                        continue
-                    if not evaluate(expr, local_ctx):
-                        return False
-                return True
-
-            if kind == "first":
-                for item in iterator:
-                    local_ctx = dict(context)
-                    local_ctx[var.name] = item
-                    if condition is not None and not evaluate(condition, local_ctx):
-                        continue
-                    return evaluate(expr, local_ctx)
-                return None
-
-            if kind == "filter":
-                result: list[Any] = []
-                for item in iterator:
-                    local_ctx = dict(context)
-                    local_ctx[var.name] = item
-                    if condition is not None and not evaluate(condition, local_ctx):
-                        continue
-                    if evaluate(expr, local_ctx):
-                        result.append(item)
-                return result
-
-            if kind == "map":
-                result: list[Any] = []
-                for item in iterator:
-                    local_ctx = dict(context)
-                    local_ctx[var.name] = item
-                    if condition is not None and not evaluate(condition, local_ctx):
-                        continue
-                    result.append(evaluate(expr, local_ctx))
-                return result
-
-            raise ExpressionEvalError(f"Unsupported comprehension kind {kind!r}")
-
-        case Match(subject=subject, cases=cases, else_case=else_case):
-            subject_value = evaluate(subject, context)
-            for case in cases:
-                if _match_case(case, subject_value, context):
-                    return evaluate(case.body, context)
-            if else_case is not None:
-                return evaluate(else_case, context)
-            return None
+        case Match():
+            return _evaluate_match(node, context)
 
         case _:
             raise ExpressionEvalError(f"Unknown AST node type: {type(node)!r}")

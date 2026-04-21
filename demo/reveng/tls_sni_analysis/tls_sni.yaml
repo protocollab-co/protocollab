@@ -1,0 +1,16 @@
+meta:
+  id: tls_sni
+imports:
+  - tls_handshake_mini
+instances:
+  sni_name: tls_handshake_mini.sni_name
+  sni_length: len(sni_name)
+  sni_category:
+    value: |
+      match sni_name with
+        "*.cloudflare.com" -> "CDN"
+        "*.netflix.com" -> "Streaming"
+        else -> "Other"
+    wireshark:
+      type: string
+      label: "SNI Category"

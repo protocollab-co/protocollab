@@ -1,0 +1,17 @@
+meta:
+  id: session_demo
+  endian: be
+seq:
+  - id: src_ip
+    type: u4
+  - id: dst_ip
+    type: u4
+  - id: service_port
+    type: u2
+instances:
+  session_id_int: '((src_ip < dst_ip ? src_ip : dst_ip) << 32) | (src_ip < dst_ip ? dst_ip : src_ip)'
+  session_with_service:
+    value: '(session_id_int << 16) | service_port'
+    wireshark:
+      type: uint64
+      label: "Session with Service"

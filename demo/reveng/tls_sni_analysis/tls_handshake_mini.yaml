@@ -1,0 +1,50 @@
+meta:
+  id: tls_handshake_mini
+  endian: be
+seq:
+  - id: handshake_type
+    type: u1
+  - id: handshake_length_raw
+    type: u4
+  - id: tls_version
+    type: u2
+  - id: random
+    type: str
+    size: 32
+  - id: session_id_length
+    type: u1
+  - id: session_id
+    type: str
+    size: session_id_length
+    if: session_id_length > 0
+  - id: cipher_suites_length
+    type: u2
+  - id: ciphersuites
+    type: u2
+    repeat: cipher_suites_length / 2
+  - id: compression_methods_length
+    type: u1
+  - id: compression_methods
+    type: u1
+    repeat: compression_methods_length
+  - id: extensions_length
+    type: u2
+  - id: first_extension_type
+    type: u2
+  - id: first_extension_length
+    type: u2
+  - id: sni_list_length
+    type: u2
+    if: first_extension_type == 0x0000
+  - id: sni_entry_type
+    type: u1
+    if: first_extension_type == 0x0000
+  - id: sni_entry_length
+    type: u2
+    if: first_extension_type == 0x0000
+  - id: sni_name
+    type: str
+    size: sni_entry_length
+    if: first_extension_type == 0x0000
+instances:
+  handshake_length: handshake_length_raw & 0xFFFFFF

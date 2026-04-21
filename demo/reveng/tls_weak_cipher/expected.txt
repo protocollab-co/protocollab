@@ -1,0 +1,2 @@
+Ожидается, что has_weak_cipher == True для некоторых пакетов (если в дампе есть слабые шифры).
+Фильтр: tls_weak.has_weak_cipher == true

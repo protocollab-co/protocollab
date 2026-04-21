@@ -1,0 +1,4 @@
+Ожидаемые фильтры:
+- ip_scoped.src_scope == "lan"   -> пакеты с src_ip из 192.168.1.1 (или 10.x.x.x)
+- ip_scoped.src_scope == "inet"  -> публичные IP (8.8.8.8 и т.д.)
+- ip_scoped.dst_scope == "lan"   -> пакеты назначения в локальную сеть

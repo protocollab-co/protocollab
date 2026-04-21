@@ -1,24 +1,50 @@
 meta:
   id: tls_handshake_mini
   endian: be
-  title: "TLS Handshake Mini"
-  description: "Simplified, fixed-size TLS ClientHello frame used as demo reference"
-
 seq:
   - id: handshake_type
     type: u1
-    doc: "Handshake message type: 0x01 = ClientHello"
+  - id: handshake_length_raw
+    type: u4
   - id: tls_version
     type: u2
-    doc: "TLS version: 0x0303 = TLS 1.2, 0x0301 = TLS 1.0"
-  - id: cipher_suite
+  - id: random
+    type: str
+    size: 32
+  - id: session_id_length
+    type: u1
+  - id: session_id
+    type: str
+    size: session_id_length
+    if: session_id_length > 0
+  - id: cipher_suites_length
     type: u2
-    doc: "Offered cipher suite (first / only suite in this simplified frame)"
-
+  - id: ciphersuites
+    type: u2
+    repeat: cipher_suites_length / 2
+  - id: compression_methods_length
+    type: u1
+  - id: compression_methods
+    type: u1
+    repeat: compression_methods_length
+  - id: extensions_length
+    type: u2
+  - id: first_extension_type
+    type: u2
+  - id: first_extension_length
+    type: u2
+  - id: sni_list_length
+    type: u2
+    if: first_extension_type == 0x0000
+  - id: sni_entry_type
+    type: u1
+    if: first_extension_type == 0x0000
+  - id: sni_entry_length
+    type: u2
+    if: first_extension_type == 0x0000
+  - id: sni_name
+    type: str
+    size: sni_entry_length
+    if: first_extension_type == 0x0000
 instances:
-  is_client_hello:
-    value: handshake_type == 0x01
-    wireshark:
-      type: bool
-      filter-only: true
-      label: Is ClientHello
+  handshake_length: handshake_length_raw & 0xFFFFFF

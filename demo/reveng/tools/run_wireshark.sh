@@ -1,50 +1,23 @@
-#!/usr/bin/env bash
-# run_wireshark.sh – open Wireshark for a specific demo case.
-#
-# Usage:  ./tools/run_wireshark.sh <case_name>
-#
-# <case_name> is one of:
-#   ip_scoped
-#   session_id
-#   tls_weak_cipher
-#   tls_sni_analysis
-#
-# Prerequisites:
-#   • Run generate_all.sh first so that results/<case>.lua exists.
-#   • Wireshark must be in PATH.
-
-set -euo pipefail
-
-DEMO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-cd "$DEMO_DIR"
-
-CASE="${1:-}"
-
-if [ -z "$CASE" ]; then
-    echo "Usage: $0 {ip_scoped|session_id|tls_weak_cipher|tls_sni_analysis}" >&2
+#!/bin/bash
+case="$1"
+if [ -z "$case" ]; then
+    echo "Usage: $0 {ip_scoped|session_id|tls_weak_cipher|tls_sni_analysis}"
     exit 1
 fi
-
-PCAP="${CASE}/sample.pcap"
-LUA="results/${CASE}.lua"
-
-if [ ! -f "$PCAP" ]; then
-    echo "ERROR: PCAP file not found: $PCAP" >&2
+case_dir="$case"
+case "$case" in
+    ip_scoped) lua_script="results/ip_scoped.lua" ;;
+    session_id) lua_script="results/session_demo.lua" ;;
+    tls_weak_cipher) lua_script="results/tls_weak_cipher.lua" ;;
+    tls_sni_analysis) lua_script="results/tls_sni_analysis.lua" ;;
+    *)
+        echo "Usage: $0 {ip_scoped|session_id|tls_weak_cipher|tls_sni_analysis}"
+        exit 1
+        ;;
+esac
+if [ ! -f "$lua_script" ]; then
+    echo "Dissector not found. Run ./tools/generate_all.sh first."
     exit 1
 fi
-
-if [ ! -f "$LUA" ]; then
-    echo "ERROR: Lua dissector not found: $LUA" >&2
-    echo "       Run ./tools/generate_all.sh first." >&2
-    exit 1
-fi
-
-echo "==> Opening Wireshark for case '${CASE}' …"
-echo "    PCAP : ${PCAP}"
-echo "    Lua  : ${LUA}"
-echo ""
-echo "    TIP: In Wireshark, right-click a packet → Decode As… and select"
-echo "    the '${CASE}' dissector if frames are not decoded automatically."
-echo ""
-
-wireshark -r "$PCAP" -X "lua_script:${LUA}"
+proto_name=$(basename "$lua_script" .lua)
+wireshark -o "uat:user_dlts:\"User 0 (DLT=147)\",\"${proto_name}\",\"0\",\"\",\"0\",\"\"" -r "$case_dir/sample.pcap" -X lua_script:"$lua_script"

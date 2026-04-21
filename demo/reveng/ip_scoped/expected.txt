@@ -1,28 +1,4 @@
-Expected Wireshark filter behaviour for ip_scoped
-===================================================
-
-After loading sample.pcap with the generated dissector, the following
-Wireshark display filters should select the indicated packets.
-
-Packet layout (11 bytes each):
-  version[1] src_ip[4 BE] dst_ip[4 BE] payload_size[2 BE]
-
-Packets in sample.pcap:
-  #1  src=192.168.1.1  dst=8.8.8.8       (LAN -> inet)
-  #2  src=100.64.0.1   dst=8.8.8.8       (NAT -> inet)
-  #3  src=8.8.8.8      dst=192.168.1.1   (inet -> LAN)
-  #4  src=192.168.1.1  dst=10.0.0.1      (LAN -> LAN)
-  #5  src=8.8.8.8      dst=100.64.0.1    (inet -> NAT)
-
-Display filter                               Expected packets
----------------------------------------------------------------------
-ip_scoped.src_scope == "lan"                 #1, #4
-ip_scoped.src_scope == "nat"                 #2
-ip_scoped.src_scope == "inet"                #3, #5
-ip_scoped.dst_scope == "lan"                 #3, #4
-ip_scoped.dst_scope == "nat"                 #5
-ip_scoped.dst_scope == "inet"                #1, #2
-ip_scoped.src_lan                            #1, #4   (bool, filter-only)
-ip_scoped.src_nat                            #2       (bool, filter-only)
-ip_scoped.dst_lan                            #3, #4   (bool, filter-only)
-ip_scoped.dst_nat                            #5       (bool, filter-only)
+Ожидаемые фильтры:
+- ip_scoped.src_scope == "lan"   -> пакеты с src_ip из 192.168.1.1 (или 10.x.x.x)
+- ip_scoped.src_scope == "inet"  -> публичные IP (8.8.8.8 и т.д.)
+- ip_scoped.dst_scope == "lan"   -> пакеты назначения в локальную сеть

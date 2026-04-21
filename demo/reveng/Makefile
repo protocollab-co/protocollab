@@ -1,35 +1,22 @@
-all: generate
+.PHONY: all clean wireshark-ip wireshark-session wireshark-tls-weak wireshark-tls-sni
 
-.PHONY: all generate fetch-samples make-samples test clean \
-        wireshark-ip wireshark-session wireshark-tls-weak wireshark-tls-sni
+all: results/ip_scoped.lua results/session_id.lua results/tls_weak.lua results/tls_sni.lua
 
-# Generate Lua dissectors from YAML specifications
-generate:
-	./tools/generate_all.sh
+results/%.lua: */%.yaml
+	mkdir -p results
+	protocollab generate wireshark $< -o $@
 
-# Run automated tshark tests against all generated dissectors
-test: generate
-	./tools/test_dissectors.sh
+wireshark-ip: all
+	./tools/run_wireshark.sh ip_scoped
 
-# Download real public pcap files (not committed; placed as real_sample.*)
-fetch-samples:
-	./tools/fetch_samples.sh
+wireshark-session: all
+	./tools/run_wireshark.sh session_id
 
-# Regenerate the committed synthetic sample.pcap files from scratch
-make-samples:
-	python tools/make_samples.py
+wireshark-tls-weak: all
+	./tools/run_wireshark.sh tls_weak_cipher
+
+wireshark-tls-sni: all
+	./tools/run_wireshark.sh tls_sni_analysis
 
 clean:
 	rm -rf results/
-
-wireshark-ip: generate
-	./tools/run_wireshark.sh ip_scoped
-
-wireshark-session: generate
-	./tools/run_wireshark.sh session_id
-
-wireshark-tls-weak: generate
-	./tools/run_wireshark.sh tls_weak_cipher
-
-wireshark-tls-sni: generate
-	./tools/run_wireshark.sh tls_sni_analysis

@@ -32,4 +32,5 @@ instances:
     # 0x00FF = TLS_FALLBACK_SCSV             (demo only: signals downgrade attack intent)
     wireshark:
       type: bool
+      filter-only: true
       label: Weak Cipher

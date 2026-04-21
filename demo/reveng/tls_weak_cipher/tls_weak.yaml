@@ -1,0 +1,10 @@
+meta:
+  id: tls_weak
+imports:
+  - tls_handshake_mini
+instances:
+  has_weak_cipher:
+    value: any(c in [0x0005,0x0012,0x0013,0x002C,0x00FF] for c in tls_handshake_mini.ciphersuites)
+    wireshark:
+      type: bool
+      label: "Weak Cipher"

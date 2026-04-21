@@ -1,29 +1,17 @@
 meta:
   id: session_demo
   endian: be
-  title: "Session Demo Frame"
-  description: "Demonstrates symmetric session-key derivation from src/dst IP and service port"
-
 seq:
   - id: src_ip
     type: u4
-    doc: "Source IPv4 address as a 32-bit integer"
   - id: dst_ip
     type: u4
-    doc: "Destination IPv4 address as a 32-bit integer"
   - id: service_port
     type: u2
-    doc: "Service port (e.g. 80, 443, 1234)"
-
 instances:
-  session_key:
-    value: src_ip ^ dst_ip
-    wireshark:
-      type: string
-      label: Session Key
-
+  session_id_int: '((src_ip < dst_ip ? src_ip : dst_ip) << 32) | (src_ip < dst_ip ? dst_ip : src_ip)'
   session_with_service:
-    value: (src_ip ^ dst_ip) ^ service_port
+    value: '(session_id_int << 16) | service_port'
     wireshark:
-      type: string
-      label: Session with Service
+      type: uint64
+      label: "Session with Service"

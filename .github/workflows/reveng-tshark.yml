@@ -1,0 +1,45 @@
+name: Demo RevEng (tshark)
+
+env:
+  POETRY_VERSION: "2.3.3"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  reveng-tshark:
+    name: RevEng tshark checks (Python 3.12)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Poetry
+        run: python -m pip install poetry==${POETRY_VERSION}
+
+      - name: Install project dependencies
+        run: >
+          python -m poetry install
+          --extras "validator-jsonscreamer validator-fastjsonschema"
+
+      - name: Install tshark
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+
+      - name: Show tool versions
+        run: |
+          tshark --version | head -1
+          python -m poetry run protocollab --version
+
+      - name: Generate Lua dissectors for demo/reveng
+        run: python -m poetry run bash demo/reveng/tools/generate_all.sh
+
+      - name: Run tshark assertions for demo/reveng
+        run: python -m poetry run bash demo/reveng/tools/test_dissectors.sh

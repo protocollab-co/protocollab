@@ -82,9 +82,16 @@ echo ""
 
 # _tshark_fields <pcap> <lua> <field> ...
 # Runs tshark and outputs one value per frame for the requested field(s).
+_user_dlt_pref() {
+    local lua="$1"
+    local proto_name
+    proto_name=$(basename "$lua" .lua)
+    printf 'uat:user_dlts:"User 0 (DLT=147)","%s","0","","0",""' "$proto_name"
+}
+
 _tshark_fields() {
     local pcap="$1" lua="$2"; shift 2
-    tshark -r "$pcap" -X "lua_script:${lua}" -T fields "$@" 2>/dev/null
+    tshark -o "$(_user_dlt_pref "$lua")" -r "$pcap" -X "lua_script:${lua}" -T fields "$@" 2>/dev/null
 }
 
 # assert_values <label> <pcap> <lua> <field> <expected_val> [<expected_val> …]
@@ -117,7 +124,7 @@ assert_count() {
     local label="$1" pcap="$2" lua="$3" filter="$4" expected="$5"
 
     local count
-    count=$(tshark -r "$pcap" -X "lua_script:${lua}" -Y "$filter" 2>/dev/null \
+    count=$(tshark -o "$(_user_dlt_pref "$lua")" -r "$pcap" -X "lua_script:${lua}" -Y "$filter" 2>/dev/null \
             | wc -l)
     count=${count// /}
 
@@ -236,7 +243,7 @@ PCAP="tls_weak_cipher/sample.pcap"
 LUA="results/tls_weak_cipher.lua"
 
 # Total decoded frames
-TOTAL=$(tshark -r "$PCAP" -X "lua_script:${LUA}" 2>/dev/null | wc -l)
+TOTAL=$(tshark -o "$(_user_dlt_pref "$LUA")" -r "$PCAP" -X "lua_script:${LUA}" 2>/dev/null | wc -l)
 TOTAL=${TOTAL// /}
 if [ "$TOTAL" -eq 2 ]; then
     _pass "total decoded frames = 2"

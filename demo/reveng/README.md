@@ -7,28 +7,48 @@
 - `tls_weak_cipher`
 - `tls_sni_analysis`
 
-## Требования
+## Requirements
 
-- `protocollab` в `PATH`
-- `wireshark` в `PATH`
+- `pc` in `PATH` (preferred CLI entrypoint installed by this repo)
+- `wireshark` in `PATH` for GUI launch
+- `tshark` in `PATH` for automated assertions
 
-Если `protocollab` не установлен:
+Если CLI ещё не установлен:
 
 ```bash
 cd ../..
 pip install -e .
 ```
 
-## Быстрый старт
+## Quick start
 
 ```bash
 cd demo/reveng
+./tools/generate_all.sh
+./tools/test_dissectors.sh
+```
+
+Или через Makefile:
+
+```bash
 make all
 ```
 
-Команда создаст Lua-диссекторы в `results/`.
+Сгенерированные Lua-диссекторы пишутся в `results/`.
 
-## Открытие Wireshark
+## Available scripts
+
+```bash
+./tools/fetch_samples.sh       # download public real_sample.* captures
+./tools/make_samples.py        # regenerate synthetic sample.pcap fixtures
+./tools/generate_all.sh        # generate Lua dissectors
+./tools/test_dissectors.sh     # run tshark assertions for all cases
+./tools/run_wireshark.sh ip_scoped
+```
+
+`generate_all.sh`, `test_dissectors.sh` и `run_wireshark.sh` already configure the required `DLT_USER0` mapping automatically.
+
+## Open Wireshark
 
 ```bash
 make wireshark-ip
@@ -37,20 +57,37 @@ make wireshark-tls-weak
 make wireshark-tls-sni
 ```
 
-## Загрузка реальных pcap
+## Download real pcaps
 
 ```bash
 cd demo/reveng
-curl -L -o ip_scoped/sample.pcap "https://wiki.wireshark.org/SampleCaptures?action=raw&download=ipv4frags.pcap"
-cp ip_scoped/sample.pcap session_id/sample.pcap
-
-curl -L -o tls_weak_cipher/sample.pcap "https://github.com/Lekensteyn/wireshark-notes/raw/master/tls/http2-16-ssl.pcapng" || \
-curl -L -o tls_weak_cipher/sample.pcap "https://raw.githubusercontent.com/Lekensteyn/wireshark-notes/master/tls/http2-16-ssl.pcapng" || \
-curl -L -o tls_weak_cipher/sample.pcap "https://github.com/Lekensteyn/wireshark-notes/raw/master/tls/imap-ssl.pcapng"
-
-cp tls_weak_cipher/sample.pcap tls_sni_analysis/sample.pcap
+./tools/fetch_samples.sh --force
 ```
 
-## Проверка ожидаемого поведения
+Это создаёт `real_sample.*` в подпапках кейсов. Эти файлы игнорируются через `.gitignore`.
 
-Используйте `expected.txt` в каждой подпапке кейса.
+## Regenerate synthetic fixtures
+
+```bash
+cd demo/reveng
+python tools/make_samples.py
+```
+
+Скрипт пересоздаёт tracked `sample.pcap` fixtures, которые используются `tshark`-тестами.
+
+## Manual CI workflow
+
+В репозитории есть отдельный manual-only GitHub Actions workflow:
+
+- `.github/workflows/reveng-tshark.yml`
+
+Он запускается только через `workflow_dispatch` и выполняет:
+
+1. установку Poetry dependencies
+2. установку `tshark`
+3. генерацию Lua-диссекторов
+4. запуск `./tools/test_dissectors.sh`
+
+## Expected behavior
+
+Используйте `expected.txt` в каждой подпапке кейса как краткую памятку по фильтрам и ожидаемым значениям.

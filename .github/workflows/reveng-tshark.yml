@@ -36,7 +36,7 @@ jobs:
       - name: Show tool versions
         run: |
           tshark --version | head -1
-          python -m poetry run protocollab --version
+          python -m poetry run pc --help | head -1
 
       - name: Generate Lua dissectors for demo/reveng
         run: python -m poetry run bash demo/reveng/tools/generate_all.sh

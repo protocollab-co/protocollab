@@ -24,6 +24,7 @@ instances:
     value: sni_length > 20
     wireshark:
       type: bool
+      filter-only: true
       label: SNI Anomaly
 
   sni_category:
